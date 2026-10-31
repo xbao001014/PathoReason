@@ -1,0 +1,6 @@
+.skill-command-menu { box-sizing: border-box; }
+.composer-select-option.skill-command-option { display: flex; flex-direction: column; align-items: stretch; gap: var(--spacing-4); white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.skill-command-option strong { color: var(--color-ink); font-size: var(--text-body); font-weight: var(--weight-support); }
+.skill-command-option span,.skill-command-option small { color: var(--color-text-secondary); font-size: var(--text-caption); font-weight: var(--weight-body); }
+.skill-command-option[aria-disabled="true"] strong { color: var(--color-text-muted); }
+.skill-command-empty { padding: var(--spacing-16); font-size: var(--text-body); color: var(--color-text-secondary); }
