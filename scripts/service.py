@@ -56,6 +56,7 @@ def start(name):
         env["OPENCODE_DISABLE_PROJECT_CONFIG"]="true"
         env["OPENCODE_DISABLE_EXTERNAL_SKILLS"]="true"
         env["OPENCODE_DISABLE_AUTOUPDATE"]="true"
+        env["OPENCODE_ENABLE_EXA"]="1"  # Native search for non-Zen providers; permission still applies.
         env["DEEPSEEK_API_KEY"]=credential()
         command=[cfg["opencode_binary"],"serve","--pure","--hostname","127.0.0.1","--port",str(port)]
         cwd=data/"projects/runtime";cwd.mkdir(exist_ok=True)

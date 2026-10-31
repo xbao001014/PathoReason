@@ -18,8 +18,9 @@
       {
         "id": "baseline",
         "title": "基线研究",
-        "description": "建立可复现的基线和开发评估。",
+        "description": "结合方法库与近期文献选择比较模型，审核公平协议和实现缺口，再准备可复现实验。",
         "skill_ids": [
+          "benchmark-design",
           "mil_baseline",
           "paper-lookup"
         ]

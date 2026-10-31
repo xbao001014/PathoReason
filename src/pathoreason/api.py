@@ -145,7 +145,7 @@ async def business_call(body:BusinessRequest,request:Request):
     return await asyncio.to_thread(service().business.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.5-p5-process'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.6-p5-benchmark'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

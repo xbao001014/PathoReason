@@ -7,7 +7,7 @@ name = "pathoreason"
 version = "0.6.0"
 description = "PathoReason project, conversation and research artifact contracts"
 requires-python = ">=3.14,<3.15"
-dependencies = ["pydantic==2.13.5", "fastapi==0.141.1", "uvicorn==0.54.0", "httpx==0.28.1", "jsonschema==4.26.0"]
+dependencies = ["pydantic==2.13.5", "fastapi==0.141.1", "uvicorn==0.54.0", "httpx==0.28.1", "jsonschema==4.26.0", "pypdf==6.21.4"]
 
 [project.optional-dependencies]
 dev = ["pytest==9.1.1"]

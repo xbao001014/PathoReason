@@ -18,7 +18,8 @@ def tool_summary(part):
     if name == 'skill':
         from .formal import TITLES
         titles = {**TITLES, 'results-explanation': '结果解读',
-                  'pathology-data-api': '病理接口数据接入'}
+                  'pathology-data-api': '病理接口数据接入',
+                  'benchmark-design': 'Benchmark 选型与比较方案'}
         inputs = state.get('input') or {}
         skill = inputs.get('name') if isinstance(inputs, dict) else None
         if isinstance(skill, str) and skill in titles:

@@ -39,6 +39,7 @@ def formal_rules(directory, settings=None):
           for k in ['read', 'glob', 'grep', 'list', 'skill']],
         *[{'permission': k, 'pattern': '*', 'action': policy.action(k)}
           for k in ['bash', 'edit', 'webfetch', 'external_directory']],
+        {'permission': 'websearch', 'pattern': '*', 'action': policy.action('webfetch')},
         # Trusted project directories are already inside the study's access boundary.
         *([{'permission': 'external_directory', 'pattern': p, 'action': 'allow'}
            for p in [directory+'/*', '/home/bxn/projects/PathoReason/*']]
