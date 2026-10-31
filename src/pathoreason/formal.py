@@ -16,6 +16,7 @@ class StudyBudget(BaseModel):
     model_config=ConfigDict(extra='forbid')
     max_turns:int=Field(ge=1,le=1000)
     max_wall_seconds:int=Field(ge=60,le=86400)
+    max_turn_wall_seconds:int=Field(default=86400,ge=60,le=604800)
 class StudyCreate(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
     request_key:c.Identifier
@@ -34,6 +35,8 @@ class FormalConfiguration(RuntimeConfiguration):
     permission_revision:int|None=None
     execution_scope:Literal['standard','dialogue','inspection']='standard'
     gpu_binding:GpuBinding|None=None
+    time_accounting:Literal['legacy_wall','tool_excluded_v1']='legacy_wall'
+    max_turn_wall_seconds:int=Field(default=86400,ge=60,le=604800)
 class StudyView(BaseModel):
     schema_version:Literal['pathoreason.study/1']='pathoreason.study/1'
     project_id:str
@@ -41,6 +44,9 @@ class StudyView(BaseModel):
     budget:StudyBudget
     used_turns:int
     used_wall_seconds:float
+    used_budget_seconds:float=0
+    excluded_tool_seconds:float=0
+    legacy_wall_seconds:float=0
     phase:str='prepared'
     scientific_approval:Literal[False]=False
     revision:str
@@ -62,7 +68,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.10-p5-hardware'
+    release:str='0.6.11-p5-process-budget'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}
@@ -123,12 +129,15 @@ class Formal:
     def view(self,pid):
         self.s.store.project(pid);record=self.record(pid)
         if not record:return None
-        with self.s.store.connect() as db:rows=db.execute('SELECT created_at,document FROM turns WHERE project_id=?',(pid,)).fetchall()
-        used=sum(max(0,(datetime.fromisoformat(json.loads(r['document']).get('finished_at') or now())-datetime.fromisoformat(r['created_at'])).total_seconds()) for r in rows)
-        return StudyView(project_id=pid,workspace=record['workspace'],budget=record['budget'],used_turns=len(rows),used_wall_seconds=used,revision=record['revision'])
+        from .timing import totals
+        with self.s.store.connect() as db:rows=self.s.store.budget_rows(db,pid)
+        used=totals(rows)
+        return StudyView(project_id=pid,workspace=record['workspace'],budget=record['budget'],used_turns=len(rows),used_wall_seconds=used['wall_seconds'],used_budget_seconds=used['budget_seconds'],excluded_tool_seconds=used['tool_seconds'],legacy_wall_seconds=used['legacy_seconds'],revision=record['revision'])
     def create(self,body):
         if not self.enabled():raise Conflict('formal_server_only')
-        digest=c.canonical_digest(body.model_dump(mode='json'))
+        payload=body.model_dump(mode='json')
+        if 'max_turn_wall_seconds' not in body.budget.model_fields_set:payload['budget'].pop('max_turn_wall_seconds',None)
+        digest=c.canonical_digest(payload)
         with self.s.store.connect() as db:old=db.execute('SELECT project_id,input_digest FROM formal_studies WHERE request_key=?',(body.request_key,)).fetchone()
         if old:
             if old['input_digest']!=digest:raise Conflict('idempotency_key_conflict')
@@ -168,7 +177,7 @@ Existing researcher workflows, complete matrices, source hashes, budgets, patien
 
 All new inputs, plans, scripts and outputs belong to this workspace or its isolated /data/bxn/PathoReason/studies/{pid} storage. For legacy engine commands set PYTHONDONTWRITEBYTECODE=1 and AUTORESEARCH_COMPUTE_CONFIG to this workspace's compute.json. It does not authorize training. Check the frozen plan, resource budget and operator approval before any real compute, data fetch or paid image request. Preserve the original engine gates; native command approval does not replace scientific/author review.
 
-The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled). Interpret brief everyday requests using relevant context and existing authorization. For clear reversible revisions, inherit unchanged parameters and produce the requested draft with stated assumptions. Ask only the missing consequential choice; do not demand a complete technical prompt or reconfirm a unique accepted proposal. Resolve simple ambiguity before loading unrelated protocols. Reply concisely in the user's language.
+The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} accounted seconds. New turns exclude only recorded native tool intervals (including approval waits within those intervals); historical wall-time charges are retained. This is a conservative Agent-time estimate, not provider billing or GPU time. Each new turn additionally has a {record['budget'].get('max_turn_wall_seconds',86400)} second wall cap. Do not keep the model polling a long training process: use the approved executor's persistent job/receipt workflow when available, return its real status, and resume analysis after completion; do not invent job support or detach untracked commands to bypass limits. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled). Interpret brief everyday requests using relevant context and existing authorization. For clear reversible revisions, inherit unchanged parameters and produce the requested draft with stated assumptions. Ask only the missing consequential choice; do not demand a complete technical prompt or reconfirm a unique accepted proposal. Resolve simple ambiguity before loading unrelated protocols. Reply concisely in the user's language.
 
 Resolve a missing user choice with the dialogue tool before exploration when context suffices. For actual baseline selection, experiment planning or comparison work, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch. For validation-protocol-only revisions, reuse existing candidate/source evidence and read benchmark-design validation-protocols.md. Use benchmark-plan/2 to distinguish fixed holdout from cross-validation, verify actual split status, and preserve old plans and any frozen patient membership.
 

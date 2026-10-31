@@ -15,6 +15,12 @@ def tool_summary(part):
     state = part.get('state') or {}
     name = part.get('tool', 'tool')
     summary = LABELS.get(name, '调用工具')
+    detail={'kind':name,'repeat_key':None}
+    if name=='bash':
+        from .command_activity import command_activity
+        inputs=state.get('input') or {}
+        detail=command_activity(inputs.get('command') if isinstance(inputs,dict) else None)
+        summary=detail.pop('summary')
     if name == 'skill':
         from .formal import TITLES
         titles = {**TITLES, 'results-explanation': '结果解读',
@@ -30,7 +36,7 @@ def tool_summary(part):
     if all(type(t) in (int, float) and math.isfinite(t) for t in (start, end)) and 0 <= start <= end:
         duration = int(end - start)
     return {'id': part['id'], 'name': name, 'status': state.get('status', 'unknown'),
-            'summary': summary, 'duration_ms': duration}
+            'summary': summary, 'duration_ms': duration, **detail}
 
 
 def activity_phase(messages):

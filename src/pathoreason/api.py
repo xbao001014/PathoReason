@@ -43,7 +43,11 @@ class TurnInput(BaseModel):
     skill_id:str|None=None
     execution_mode:Literal['discuss','synthetic','research']='discuss'
     artifact_ids:list[c.Identifier]=Field(default_factory=list,max_length=20)
+from .timing import TurnTiming
+
 class ToolSummary(BaseModel):
+    kind:str|None=None
+    repeat_key:str|None=None
     id:str;name:str;status:str
     summary:str|None=None
     duration_ms:int|None=Field(default=None,ge=0)
@@ -62,6 +66,7 @@ class Usage(BaseModel):
     cached_input_tokens:int|None=None
     cost:float|None=None
 class TurnView(BaseModel):
+    timing:TurnTiming|None=None
     guidance:GuidanceView|None=None
     turn:c.Turn
     reasoning_effort:ReasoningEffort|None=None
@@ -109,7 +114,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.10',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.11',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -156,7 +161,7 @@ async def offer_guidance(body:OfferInput,request:Request):
     async with service().lock:return service().guidance.publish(body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.10-p5-hardware'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.11-p5-process-budget'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

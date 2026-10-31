@@ -23,6 +23,8 @@ class Store:
         with self.connect() as db:
             db.execute("PRAGMA journal_mode=WAL")
             db.executescript("""
+            CREATE TABLE IF NOT EXISTS turn_process_projection(turn_id TEXT PRIMARY KEY REFERENCES turns(id), source_sha256 TEXT NOT NULL, document TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS turn_timing(turn_id TEXT PRIMARY KEY REFERENCES turns(id), document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY);
             INSERT OR IGNORE INTO schema_migrations VALUES(1);
             CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,document TEXT NOT NULL);
@@ -100,10 +102,32 @@ class Store:
         if row and row['input_digest']!=digest:raise Conflict("idempotency_key_conflict")
         return dict(row) if row else None
     def budget_rows(self,db,project_id=None):
-        if project_id:return db.execute('SELECT created_at,document FROM turns WHERE project_id=?',(project_id,)).fetchall()
+        fields='SELECT t.id,t.created_at,t.document,x.document AS timing FROM turns t LEFT JOIN turn_timing x ON x.turn_id=t.id'
+        if project_id:return db.execute(fields+' WHERE t.project_id=?',(project_id,)).fetchall()
         has_formal=db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='formal_studies'").fetchone()
-        if has_formal:return db.execute('SELECT created_at,document FROM turns WHERE project_id NOT IN (SELECT project_id FROM formal_studies)').fetchall()
-        return db.execute('SELECT created_at,document FROM turns').fetchall()
+        if has_formal:return db.execute(fields+' WHERE t.project_id NOT IN (SELECT project_id FROM formal_studies)').fetchall()
+        return db.execute(fields).fetchall()
+    def process_tools(self,row):
+        import hashlib
+        original=json.loads(row['tools'])
+        if row['status'] in ACTIVE:return original
+        with self.connect() as db:projection=db.execute('SELECT source_sha256,document FROM turn_process_projection WHERE turn_id=?',(row['id'],)).fetchone()
+        if projection and projection[0]==hashlib.sha256(row['tools'].encode()).hexdigest():return json.loads(projection[1])
+        return original
+    def timing(self,tid):
+        from .timing import seconds
+        row=self.turn(tid)
+        with self.connect() as db:record=db.execute('SELECT document FROM turn_timing WHERE turn_id=?',(tid,)).fetchone()
+        return seconds(row,json.loads(record[0]) if record else None)
+    def observe_timing(self,tid,messages):
+        from .timing import observe,bounds
+        with self.connect(True) as db:
+            record=db.execute('SELECT document FROM turn_timing WHERE turn_id=?',(tid,)).fetchone()
+            if not record:return
+            row=db.execute('SELECT * FROM turns WHERE id=?',(tid,)).fetchone()
+            start,end=bounds(row)
+            document=observe(json.loads(record[0]),messages,row['native_message_id'],start,end)
+            db.execute('UPDATE turn_timing SET document=? WHERE turn_id=?',(encoded(document),tid))
     def create_turn(self,turn,text,artifact_ids,skill_digest,digest,native_id,context,invocation,max_turns=12,max_wall_seconds=1200,runtime_config=None,budget_project_id=None,on_create=None):
         with self.connect(True) as db:
             self.check_conversation(db,turn.conversation_id,writable=True)
@@ -113,13 +137,16 @@ class Store:
                 return dict(row),False
             previous=self.budget_rows(db,budget_project_id)
             if len(previous)>=max_turns:raise Conflict("acceptance_budget_exhausted")
-            used=sum(max(0,(datetime.fromisoformat(json.loads(item['document']).get('finished_at') or now())-datetime.fromisoformat(item['created_at'])).total_seconds()) for item in previous)
+            from .timing import totals
+            used=totals(previous)['budget_seconds']
             if used>=max_wall_seconds:raise Conflict("acceptance_budget_exhausted")
             if db.execute("SELECT 1 FROM turns WHERE status IN ('queued','running','interrupt_requested','recovery_required')").fetchone():raise Conflict("runtime_busy")
             db.execute("INSERT INTO turns(id,conversation_id,project_id,request_key,input_digest,status,document,user_text,artifact_ids,skill_digest,native_message_id,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",(turn.id,turn.conversation_id,turn.project_id,turn.request_key,digest,turn.status,encoded(turn),text,encoded(artifact_ids),skill_digest,native_id,now()))
             db.execute("INSERT INTO context_snapshots VALUES(?,?)",(turn.id,encoded(context)))
             if runtime_config is not None:db.execute("INSERT OR IGNORE INTO runtime_configs VALUES(?,?)",(turn.config_digest,encoded(runtime_config)))
             if invocation:db.execute("INSERT INTO skill_invocations VALUES(?,?)",(turn.id,encoded(invocation)))
+            if runtime_config and runtime_config.get('time_accounting')=='tool_excluded_v1':
+                db.execute('INSERT INTO turn_timing VALUES(?,?)',(turn.id,encoded({'mode':'tool_excluded_v1','spans':{}})))
             if on_create:on_create(db)
             self._event(db,turn.conversation_id,{"kind":"turn_status","turn_id":turn.id,"status":"queued"})
         return self.turn(turn.id),True

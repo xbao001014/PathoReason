@@ -92,7 +92,7 @@ class Service:
         with self.store.connect() as db:
             frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['config_digest'],)).fetchone()
         effort=json.loads(frozen[0]).get('reasoning_effort') if frozen else None
-        return {'reasoning_effort':effort,'turn':turn,'user_text':row['user_text'],'text':row['text'],'tools':json.loads(row['tools']),'usage':usage,'artifact_ids':json.loads(row['artifact_ids']),'report_id':row['report_id'],'guidance':self.guidance.view(row['id'])}
+        return {'timing':self.store.timing(turn['id']),'reasoning_effort':effort,'turn':turn,'user_text':row['user_text'],'text':row['text'],'tools':self.store.process_tools(row),'usage':usage,'artifact_ids':json.loads(row['artifact_ids']),'report_id':row['report_id'],'guidance':self.guidance.view(row['id'])}
     async def submit(self,cid,request):
         digest=c.canonical_digest(request)
         existing=self.store.existing(cid,request['request_key'],digest)
@@ -152,6 +152,7 @@ class Service:
                 runtime_config.update(agent='pathoreason-formal',study_revision=study['revision'],permission_settings=permissions.settings,permission_revision=permissions.revision)
                 chosen=next((o for o in guidance_context['proposal']['options'] if o['id']==guidance_context['selected_option_id']),None) if guidance_context else None
                 runtime_config['execution_scope']={'clarify':'dialogue','inspect':'inspection'}.get(chosen['scope'],'standard') if chosen else 'standard'
+                runtime_config.update(time_accounting='tool_excluded_v1',max_turn_wall_seconds=study['budget'].get('max_turn_wall_seconds',86400))
                 gpu_binding=self.gpu_settings.frozen(cid)
                 if gpu_binding:runtime_config['gpu_binding']=gpu_binding
             if effort is not None:runtime_config['reasoning_effort']=effort
@@ -271,6 +272,7 @@ class Service:
                     network_failures+=1;self.state(tid,'recovery_required','runtime_connection_lost')
                     if network_failures>=30:return
                     await asyncio.sleep(1);continue
+                self.store.observe_timing(tid,messages)
                 visible=visible_response(messages,row['native_message_id'])
                 usage=visible['usage'];usage['compaction_observed']=visible['compacted'];usage['context_limit_tokens']=usage.get('context_limit_tokens') or json.loads(row['document'])['model']['context_limit_tokens']
                 latest=self.store.turn(tid)['text']
@@ -298,10 +300,15 @@ class Service:
                     if row['status']=='recovery_required':self.state(tid,'running')
                 with self.store.connect() as db:
                     records=self.store.budget_rows(db,row['project_id'] if self.formal.record(row['project_id']) else None)
-                elapsed=sum(max(0,(datetime.fromisoformat(json.loads(item['document']).get('finished_at') or now())-datetime.fromisoformat(item['created_at'])).total_seconds()) for item in records)
+                from .timing import totals
+                elapsed=totals(records)['budget_seconds']
                 study=self.formal.record(row['project_id'])
                 if elapsed>(study['budget'] if study else self.config.get('p1_test_limits',{})).get('max_wall_seconds',1200):
                     await self.runtime.abort(sid,directory);self.state(tid,'failed','turn_time_limit');return
+                with self.store.connect() as db:
+                    frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()[0])
+                if frozen.get('time_accounting')=='tool_excluded_v1' and self.store.timing(tid).wall_seconds>frozen['max_turn_wall_seconds']:
+                    await self.runtime.abort(sid,directory);self.state(tid,'failed','turn_wall_time_limit');return
                 await asyncio.sleep(.4)
         except asyncio.CancelledError:
             # Native OpenCode is independent and continues; startup reconciles this persisted turn.

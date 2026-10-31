@@ -1,0 +1,55 @@
+{
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy_wall",
+        "tool_excluded_v1"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "wall_seconds": {
+      "minimum": 0,
+      "title": "Wall Seconds",
+      "type": "number"
+    },
+    "budget_seconds": {
+      "minimum": 0,
+      "title": "Budget Seconds",
+      "type": "number"
+    },
+    "agent_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agent Seconds"
+    },
+    "tool_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tool Seconds"
+    }
+  },
+  "required": [
+    "mode",
+    "wall_seconds",
+    "budget_seconds"
+  ],
+  "title": "TurnTiming",
+  "type": "object"
+}

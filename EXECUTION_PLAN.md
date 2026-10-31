@@ -239,3 +239,7 @@ v0.5：按用户要求改为左侧三入口与研究类别/流程二级 Skill �
 统一整合 side 进程交接，服务器版本 0.6.10-p5-hardware。硬件页只读展示 CPU/内存/NVIDIA GPU 指标，可见时轮询；正式对话下方按 UUID 选择后续新计算任务的显卡。选择生成独立 compute 快照，冻结进新回合，compute_exec.py 启动入口设置 CUDA_VISIBLE_DEVICES 与 AUTORESEARCH_COMPUTE_CONFIG。原项目模板、运行中任务、授权和预算不改；选择不预留资源，也不是 GPU 沙箱。已有模板索引/UUID 不一致时由界面提示重新选择，不在发布时代改。
 
 保留 0.6.9 Guidance、范围权限及恢复入口；契约从最终合并代码重生成，历史快照保留。最终 221 项测试通过、1 跳过，TypeScript/Vite 构建通过；浏览器和发布证据见 [硬件功能](docs/p5/HARDWARE.md) 及 /data/bxn/PathoReason/acceptance/hardware-20261031/main-integration。无模型调用或真实训练；当前为工程/集成验收，模型选用启动入口与真实 GPU 训练尚待后续验证。只重启服务器应用，本机及 OpenCode 不重启。
+
+## 2026-11-01 执行过程与 Agent 计时
+
+0.6.11-p5-process-budget：按实际命令结构展示安全动作摘要，仅重复读取/状态类调用允许展开式合并；训练等调用逐条展示。新正式回合的 Agent 预算排除已记录工具区间并集，保留总历时、旧扣账及单回合墙钟上限。历史展示通过校验原生身份的旁表投影更新，不改研究结果或原回合记录。238 项测试通过、1 跳过，构建及三宽度浏览器验证通过；无新增模型调用或训练，未新增后台调度器。详见 [执行过程与计时](docs/p5/PROCESS_BUDGET.md)。
