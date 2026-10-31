@@ -7,7 +7,7 @@ LABELS = {
     'grep': '检索文件内容', 'list': '列出目录', 'webfetch': '读取网页',
     'websearch': '搜索网页', 'skill': '加载 Skill', 'task': '调用子任务',
     'todowrite': '更新任务清单', 'todoread': '读取任务清单',
-    'pathoreason_research': '调用研究工具',
+    'pathoreason_research': '调用研究工具', 'pathoreason_dialogue_offer': '提供下一步选择',
 }
 
 

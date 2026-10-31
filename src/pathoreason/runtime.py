@@ -44,9 +44,9 @@ class OpenCode:
     async def create_formal(self,directory,title):
         from .permission_settings import formal_rules
         return await self.call('POST','/session',directory,{'title':title,'agent':'pathoreason-formal','permission':formal_rules(directory)})
-    async def configure_formal_permissions(self,session,directory,settings):
+    async def configure_formal_permissions(self,session,directory,settings,execution_scope="standard"):
         from .permission_settings import formal_rules
-        rules=formal_rules(directory,settings)
+        rules=formal_rules(directory,settings,execution_scope)
         # OpenCode 1.18 appends PATCH rules; last matching rule wins.
         current=await self.call('GET',f'/session/{session}',directory)
         if current.get('permission', [])[-len(rules):] != rules:

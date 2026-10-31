@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "Choice": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 50,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Description",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "clarify",
+            "plan",
+            "inspect"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "scope"
+      ],
+      "title": "Choice",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "clarification",
+        "next_step"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/Choice"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Options",
+      "type": "array"
+    },
+    "artifact_ids": {
+      "items": {
+        "maxLength": 160,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Artifact Ids",
+      "type": "array"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "source_turn_id": {
+      "title": "Source Turn Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "available",
+        "selected",
+        "stale",
+        "unavailable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "selected_option_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Option Id"
+    },
+    "selected_turn_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Turn Id"
+    }
+  },
+  "required": [
+    "kind",
+    "question",
+    "options",
+    "id",
+    "source_turn_id",
+    "status"
+  ],
+  "title": "GuidanceView",
+  "type": "object"
+}

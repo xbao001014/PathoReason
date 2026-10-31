@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "guidance_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Guidance Id",
+      "type": "string"
+    },
+    "option_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Option Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "guidance_id",
+    "option_id"
+  ],
+  "title": "Selection",
+  "type": "object"
+}

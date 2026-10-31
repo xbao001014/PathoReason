@@ -31,6 +31,7 @@ class FormalConfiguration(RuntimeConfiguration):
     study_revision:c.Digest
     permission_settings:PermissionSettings|None=None
     permission_revision:int|None=None
+    execution_scope:Literal['standard','dialogue','inspection']='standard'
 class StudyView(BaseModel):
     schema_version:Literal['pathoreason.study/1']='pathoreason.study/1'
     project_id:str
@@ -59,7 +60,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.8-p5-dialogue'
+    release:str='0.6.9-p5-guidance'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}
@@ -159,7 +160,7 @@ class Formal:
         return f'''# PathoReason real study workspace
 
 Project: {pid}. Workspace: {record['workspace']}.
-Read {ROOT}/docs/p5/OPERATOR.md and load relevant migrated skills from {ROOT}/.agents/skills. Use OpenCode + DeepSeek; use the configured Seedream helper for conceptual raster figures. Do not invoke Codex/Gemini/OpenRouter or delegate to unconfigured agents.
+For substantive work, read {ROOT}/docs/p5/OPERATOR.md and load relevant migrated skills from {ROOT}/.agents/skills. Use OpenCode + DeepSeek; use the configured Seedream helper for conceptual raster figures. Do not invoke Codex/Gemini/OpenRouter or delegate to unconfigured agents.
 
 Existing researcher workflows, complete matrices, source hashes, budgets, patient grouping, held-out data boundaries and author gates remain in effect. Do not reduce an agreed design merely to finish. Do not modify or restart historical experiments. Reusable source: {self.s.config.get('legacy_root','/home/bxn/projects/auto-research')} (read-only).
 
@@ -167,7 +168,7 @@ All new inputs, plans, scripts and outputs belong to this workspace or its isola
 
 The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled). Interpret brief everyday requests using relevant context and existing authorization. For clear reversible revisions, inherit unchanged parameters and produce the requested draft with stated assumptions. Ask only the missing consequential choice; do not demand a complete technical prompt or reconfirm a unique accepted proposal. Resolve simple ambiguity before loading unrelated protocols. Reply concisely in the user's language.
 
-For baseline selection, experiment planning or comparison review, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch. For validation-protocol-only revisions, reuse existing candidate/source evidence and read benchmark-design validation-protocols.md. Use benchmark-plan/2 to distinguish fixed holdout from cross-validation, verify actual split status, and preserve old plans and any frozen patient membership.
+Resolve a missing user choice with the dialogue tool before exploration when context suffices. For actual baseline selection, experiment planning or comparison work, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch. For validation-protocol-only revisions, reuse existing candidate/source evidence and read benchmark-design validation-protocols.md. Use benchmark-plan/2 to distinguish fixed holdout from cross-validation, verify actual split status, and preserve old plans and any frozen patient membership.
 
 For pathology API data acquisition, load the native pathology-data-api skill and its protocol reference before choosing a helper. The old study_io.py data command is only for the legacy Limit-based endpoint; use the skill helper for the authenticated PageIndex/PageSize protocol. Use {ROOT}/scripts/study_io.py image for one versioned Seedream candidate and publish to register actual outputs in the workbench. Do not put credential values or patient details in public chat. Source API records and feature tensors are different: resolve the returned remote paths and verify input completeness before training. Status and scientific approval derive from source evidence, not prose.
 '''

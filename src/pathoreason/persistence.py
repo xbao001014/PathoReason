@@ -104,7 +104,7 @@ class Store:
         has_formal=db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='formal_studies'").fetchone()
         if has_formal:return db.execute('SELECT created_at,document FROM turns WHERE project_id NOT IN (SELECT project_id FROM formal_studies)').fetchall()
         return db.execute('SELECT created_at,document FROM turns').fetchall()
-    def create_turn(self,turn,text,artifact_ids,skill_digest,digest,native_id,context,invocation,max_turns=12,max_wall_seconds=1200,runtime_config=None,budget_project_id=None):
+    def create_turn(self,turn,text,artifact_ids,skill_digest,digest,native_id,context,invocation,max_turns=12,max_wall_seconds=1200,runtime_config=None,budget_project_id=None,on_create=None):
         with self.connect(True) as db:
             self.check_conversation(db,turn.conversation_id,writable=True)
             row=db.execute("SELECT * FROM turns WHERE conversation_id=? AND request_key=?",(turn.conversation_id,turn.request_key)).fetchone()
@@ -120,6 +120,7 @@ class Store:
             db.execute("INSERT INTO context_snapshots VALUES(?,?)",(turn.id,encoded(context)))
             if runtime_config is not None:db.execute("INSERT OR IGNORE INTO runtime_configs VALUES(?,?)",(turn.config_digest,encoded(runtime_config)))
             if invocation:db.execute("INSERT INTO skill_invocations VALUES(?,?)",(turn.id,encoded(invocation)))
+            if on_create:on_create(db)
             self._event(db,turn.conversation_id,{"kind":"turn_status","turn_id":turn.id,"status":"queued"})
         return self.turn(turn.id),True
     def _event(self,db,cid,payload):

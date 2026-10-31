@@ -31,12 +31,12 @@ class PermissionSettingsView(BaseModel):
     settings: PermissionSettings
     applies_to: Literal['next_turn'] = 'next_turn'
 
-def formal_rules(directory, settings=None):
+def formal_rules(directory, settings=None, execution_scope="standard"):
     policy = settings or PermissionSettings()
-    return [
+    rules = [
         {'permission': '*', 'pattern': '*', 'action': 'deny'},
         *[{'permission': k, 'pattern': '*', 'action': 'allow'}
-          for k in ['read', 'glob', 'grep', 'list', 'skill']],
+          for k in ['read', 'glob', 'grep', 'list', 'skill', 'pathoreason_dialogue_offer']],
         *[{'permission': k, 'pattern': '*', 'action': policy.action(k)}
           for k in ['bash', 'edit', 'webfetch', 'external_directory']],
         {'permission': 'websearch', 'pattern': '*', 'action': policy.action('webfetch')},
@@ -46,8 +46,14 @@ def formal_rules(directory, settings=None):
           if policy.external_directory != 'deny' else []),
         *[{'permission': 'read', 'pattern': p, 'action': 'deny'} for p in
           ['*.env', '*.env.*', '*/.config/pathoreason/*', '*image-generation*.json',
-           '*opencode-password', '*business-token']],
+           '*opencode-password', '*business-token', '*guidance-token']],
     ]
+
+    if execution_scope not in ('standard','dialogue','inspection'):raise ValueError('invalid_execution_scope')
+    denied=['bash','edit','webfetch','websearch'] if execution_scope!='standard' else []
+    if execution_scope=='dialogue':denied+=['read','glob','grep','list','skill','external_directory']
+    rules.extend({'permission':tool,'pattern':'*','action':'deny'} for tool in denied)
+    return rules
 
 class ConversationPermissions:
     def __init__(self, formal):

@@ -143,7 +143,8 @@ class ConversationLifecycle:
         # native session. No standalone file memory is registered by this version.
         with self.s.store.connect(True) as db:
             self._check_idle(db, cid)
-            for table in ['context_snapshots', 'p4_context_projections', 'skill_invocations']:
+            db.execute('DELETE FROM conversation_guidance WHERE conversation_id=?',(cid,))
+            for table in ['context_snapshots', 'p4_context_projections', 'skill_invocations', 'turn_guidance_context']:
                 db.execute('DELETE FROM ' + table + ' WHERE turn_id IN (SELECT id FROM turns WHERE conversation_id=?)', (cid,))
             db.execute("UPDATE business_turns SET context='null' WHERE turn_id IN (SELECT id FROM turns WHERE conversation_id=?)", (cid,))
             db.execute('DELETE FROM events WHERE conversation_id=?', (cid,))

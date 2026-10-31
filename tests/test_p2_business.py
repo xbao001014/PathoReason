@@ -74,7 +74,7 @@ def test_internal_bridge_requires_private_auth(fixture):
     from fastapi.testclient import TestClient
     from pathoreason.api import app
     svc,*_=fixture
-    path=svc.data/'runtime/control/business-token';path.parent.mkdir(parents=True);path.write_text('server-private-token');path.chmod(0o600)
+    path=svc.data/'runtime/control/business-token';path.parent.mkdir(parents=True,exist_ok=True);path.write_text('server-private-token');path.chmod(0o600)
     app.state.service=svc
     client=TestClient(app)
     r=client.post('/internal/business',json={'turn_id':'turn_fake','target':'prj_fake','grant':'a'*64,'operation':'inspect'})

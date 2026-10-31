@@ -16,7 +16,7 @@ def study(s,key='study_one',turns=2):
 
 def formal_runtime(r):
  r.create_formal=r.create;r.prompt_formal=r.prompt
- async def configure(*args):pass
+ async def configure(*args,**kwargs):pass
  r.configure_formal_permissions=configure
 
 

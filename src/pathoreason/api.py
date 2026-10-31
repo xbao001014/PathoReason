@@ -20,6 +20,7 @@ from .permission_settings import PermissionSettingsView,PermissionSettingsUpdate
 from .schema_v2 import ProjectDomainView,ArtifactRecord,ContextSnapshotV2,LegacyHistoryEntry,TransferBundle,RuntimeConfiguration
 from .business import BusinessRequest,BusinessView,BusinessArtifact
 from typing import Literal
+from .guidance import GuidanceView,Selection,OfferInput
 
 class ProjectInput(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
@@ -31,6 +32,7 @@ class ConversationInput(BaseModel):
 from .reasoning import ReasoningEffort,ReasoningOptions
 
 class TurnInput(BaseModel):
+    guidance_selection:Selection|None=None
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
     request_key:c.Identifier
     text:str=Field(min_length=1,max_length=16000)
@@ -58,6 +60,7 @@ class Usage(BaseModel):
     cached_input_tokens:int|None=None
     cost:float|None=None
 class TurnView(BaseModel):
+    guidance:GuidanceView|None=None
     turn:c.Turn
     reasoning_effort:ReasoningEffort|None=None
     user_text:str
@@ -144,8 +147,14 @@ async def business_call(body:BusinessRequest,request:Request):
     if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'business_bridge_auth_required')
     return await asyncio.to_thread(service().business.call,body)
 
+@app.post('/internal/guidance',include_in_schema=False)
+async def offer_guidance(body:OfferInput,request:Request):
+    expected='Bearer '+service().guidance.token()
+    if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'guidance_bridge_auth_required')
+    async with service().lock:return service().guidance.publish(body)
+
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.8-p5-dialogue'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.9-p5-guidance'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
@@ -169,7 +178,7 @@ async def conversation(cid:str):
     row=service().store.conversation(cid)
     return {'context':service().context.view(cid),'conversation':json.loads(row['document']),'turns':[service().view(r) for r in service().store.turns(cid)]}
 @app.post('/api/v1/conversations/{cid}/turns',response_model=TurnView,status_code=202)
-async def submit(cid:str,body:TurnInput):return await service().submit(cid,body.model_dump(exclude={'reasoning_effort'} if body.reasoning_effort is None else set()))
+async def submit(cid:str,body:TurnInput):return await service().submit(cid,body.model_dump(exclude=({'reasoning_effort'} if body.reasoning_effort is None else set())|({'guidance_selection'} if body.guidance_selection is None else set())))
 @app.post('/api/v1/turns/{tid}/interrupt',response_model=TurnView)
 async def interrupt(tid:str):return await service().interrupt(tid)
 @app.post('/api/v1/turns/{tid}/reconcile',response_model=TurnView)
