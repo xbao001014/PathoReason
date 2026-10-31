@@ -59,7 +59,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.7-p5-holdout'
+    release:str='0.6.8-p5-dialogue'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}
@@ -90,7 +90,7 @@ def project_skills(server):
         base=ROOT/'skills'/name
         refs=[str(p.relative_to(ROOT))+'#sha256='+hashlib.sha256(p.read_bytes()).hexdigest()
               for p in sorted(base.rglob('*')) if p.is_file() and p.suffix in {'.md','.py'}]
-        raw={'schema_version':'pathoreason/1','id':name,'version':'0.2.0' if name=='benchmark-design' else '0.1.0',
+        raw={'schema_version':'pathoreason/1','id':name,'version':'0.3.0' if name=='benchmark-design' else '0.1.0',
              'title':title,'description':description,
              'input_schema_ref':'urn:pathoreason:study:1','output_schema_ref':'urn:pathoreason:artifact:3',
              'instruction_refs':refs,'capability_refs':['pathoreason:formal_study'],
@@ -165,7 +165,7 @@ Existing researcher workflows, complete matrices, source hashes, budgets, patien
 
 All new inputs, plans, scripts and outputs belong to this workspace or its isolated /data/bxn/PathoReason/studies/{pid} storage. For legacy engine commands set PYTHONDONTWRITEBYTECODE=1 and AUTORESEARCH_COMPUTE_CONFIG to this workspace's compute.json. It does not authorize training. Check the frozen plan, resource budget and operator approval before any real compute, data fetch or paid image request. Preserve the original engine gates; native command approval does not replace scientific/author review.
 
-The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled).
+The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled). Interpret brief everyday requests using relevant context and existing authorization. For clear reversible revisions, inherit unchanged parameters and produce the requested draft with stated assumptions. Ask only the missing consequential choice; do not demand a complete technical prompt or reconfirm a unique accepted proposal. Resolve simple ambiguity before loading unrelated protocols. Reply concisely in the user's language.
 
 For baseline selection, experiment planning or comparison review, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch. For validation-protocol-only revisions, reuse existing candidate/source evidence and read benchmark-design validation-protocols.md. Use benchmark-plan/2 to distinguish fixed holdout from cross-validation, verify actual split status, and preserve old plans and any frozen patient membership.
 

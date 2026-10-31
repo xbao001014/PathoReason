@@ -133,3 +133,7 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 ## 2026-10-31 留出法方案支持
 
 服务器 0.6.7-p5-holdout，详见 [留出法支持](docs/p5/HOLDOUT_SUPPORT.md)。benchmark-design 0.2.0 使用 benchmark-plan/2 显式区分 holdout/cross_validation；固定留出法 folds/cv_runs=0，数据划分种子与训练种子分开。旧 /1 CV 保持可读；新 /2 CV 至少两折。冻结状态需要真实名单引用和 SHA，检查通过不等于名单语义/科学/训练授权。目标 Agent 已自行生成 v6 留出方案并通过检查（24 fits、24 次测试推理，划分 proposed）；旧 1689 文件未改。199 项测试通过；累计 9/40 回合、3737.631704/7200 秒，训练仍未授权。
+
+## 2026-10-31 日常短句交互验证
+
+已部署 0.6.8-p5-dialogue：正式 Agent 的上下文/默认推进/最小澄清规则、benchmark-design 0.3.0、小型本轮附件的经 SHA 校验有界摘录。先读 [实际结果与限制](docs/p5/CONVERSATIONAL_INTERACTION.md)。201 项工程测试通过、1 跳过；模型 7 回合耗尽独立 1200 秒预算（含审批），不得重置。留出法短句可交付修订；多选确认仍有无关文件读取和冗长回复；模糊运行回合超时，未完成澄清。减少种子、唯一确认、更多数据、冻结划分修改尚未运行，不能宣布日常交互全面通过。真实 GIST 项目和模型输出未由开发助手改写。

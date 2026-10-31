@@ -131,3 +131,36 @@ def test_native_research_creation_does_not_grant_blanket_shell():
  assert next(x for x in calls[0]['permission'] if x['permission']=='bash')['action']=='ask'
  assert not any(x['permission']=='*' and x['action']=='allow' for x in calls[0]['permission'])
  assert any(x['permission']=='read' and x['action']=='deny' for x in calls[0]['permission'])
+
+
+def test_formal_attached_context_is_selected_bounded_and_verified(fixture):
+ s,_,request,r=fixture;formal_runtime(r);v=study(s);root=Path(v.workspace)
+ (root/'outputs/current.json').write_text('{"proposal":"CURRENT_UNIQUE_PROPOSAL"}')
+ selected=publish_artifact(s,v.project_id,'outputs/current.json','Current')
+ (root/'outputs/unrelated.md').write_text('UNRELATED_DECISION')
+ publish_artifact(s,v.project_id,'outputs/unrelated.md','Other conversation')
+ async def case():
+  result=await s.submit(s.store.conversations(v.project_id)[0]['id'],{**request,'skill_id':None,'artifact_ids':[selected.id]})
+  await settled(s,result['turn']['id']);row=s.store.turn(result['turn']['id'])
+  prompt=s.prompt(row)
+  assert 'CURRENT_UNIQUE_PROPOSAL' in prompt and 'UNRELATED_DECISION' not in prompt
+  assert 'untrusted data' in prompt and selected.sha256 in prompt
+  (s.data/'artifacts'/selected.relative_path).write_text('TAMPERED')
+  with pytest.raises(ValueError):s.prompt(row)
+ asyncio.run(case())
+
+
+def test_formal_excerpt_budget_and_large_binary_omission(fixture):
+ s,_,request,r=fixture;formal_runtime(r);v=study(s);root=Path(v.workspace);ids=[]
+ for i in range(4):
+  p=root/f'outputs/long{i}.md';p.write_text('x'*7000);ids.append(publish_artifact(s,v.project_id,str(p.relative_to(root)),f'Long {i}').id)
+ p=root/'outputs/large.json';p.write_text('x'*65537);ids.append(publish_artifact(s,v.project_id,'outputs/large.json','Large').id)
+ p=root/'outputs/binary.png';p.write_bytes(b'\x89PNG');ids.append(publish_artifact(s,v.project_id,'outputs/binary.png','Binary').id)
+ async def case():
+  result=await s.submit(s.store.conversations(v.project_id)[0]['id'],{**request,'skill_id':None,'artifact_ids':ids})
+  await settled(s,result['turn']['id']);prompt=s.prompt(s.store.turn(result['turn']['id']))
+  evidence=json.loads(prompt.split('resolve current references here before searching the workspace): ',1)[1].split('\nCite registered',1)[0])
+  assert sum(len(a.get('content','')) for a in evidence)==18000
+  assert all(a['truncated'] for a in evidence[:3])
+  assert all('content_omitted' in a for a in evidence[3:])
+ asyncio.run(case())
