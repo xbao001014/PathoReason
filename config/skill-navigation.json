@@ -10,6 +10,7 @@
         "description": "绑定数据与资源，明确研究问题、任务和评价标准。",
         "skill_ids": [
           "dataset_intake",
+          "pathology-data-api",
           "academic-research-suite",
           "histolab"
         ]

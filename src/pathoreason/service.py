@@ -55,8 +55,8 @@ class Service:
                 skill.update(runtime_readiness='unavailable',unavailable_reason='业务执行在服务器环境开放；本机支持成果解读与上下文取数')
             skill['digest']=c.canonical_digest({k:v for k,v in skill.items() if k!='digest'})
             c.SkillDefinition.model_validate(skill)
-        from .formal import migrated_skills
-        return result+migrated_skills(self.formal.enabled())
+        from .formal import migrated_skills,project_skills
+        return result+migrated_skills(self.formal.enabled())+project_skills(self.formal.enabled())
     def credential_ready(self):
         return getattr(self.runtime,'authenticated',False) if self.runtime_name=='codex' else bool(credential())
     def inference_verified(self,model=None):

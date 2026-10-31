@@ -59,7 +59,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.1-p5-permissions'
+    release:str='0.6.3-p5-data-skill'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}
@@ -77,6 +77,25 @@ def migrated_skills(server):
         raw={'schema_version':'pathoreason/1','id':name,'version':'0.6.0','title':TITLES[name],'description':'已迁移原 Skill 与配套资源；正式研究中按阶段加载，完整真实流程待验收。','input_schema_ref':'urn:pathoreason:study:1','output_schema_ref':'urn:pathoreason:artifact:3','instruction_refs':[item['destination']+'/SKILL.md#sha256='+hashlib.sha256(path.read_bytes()).hexdigest()],'capability_refs':['pathoreason:formal_study'],'workflow_template_refs':[],'runtime_support':['opencode'],'required_inputs':['研究问题、实际证据与阶段对应输入'],'required_tools':['native_skill','reviewed_workspace_execution'],'implementation_status':'implemented','evidence_scope':'contract_only','runtime_readiness':'ready' if server else 'unavailable','unavailable_reason':None if server else '正式试验在 bxn-server 进行'}
         result.append(c.SkillDefinition(**raw,digest=c.canonical_digest(raw)).model_dump(mode='json'))
     return result
+
+
+def project_skills(server):
+    """Project-owned native skills, separate from immutable upstream migration evidence."""
+    base=ROOT/'skills/pathology-data-api'
+    refs=[str(p.relative_to(ROOT))+'#sha256='+hashlib.sha256(p.read_bytes()).hexdigest()
+          for p in sorted(base.rglob('*')) if p.is_file() and p.suffix in {'.md','.py'}]
+    raw={'schema_version':'pathoreason/1','id':'pathology-data-api','version':'0.1.0',
+         'title':'病理接口数据接入',
+         'description':'按病种读取分页接口，核对患者/标本/切片关联、来源回执与中断续跑；工程检查通过，真实基模行为待验证。',
+         'input_schema_ref':'urn:pathoreason:study:1','output_schema_ref':'urn:pathoreason:artifact:3',
+         'instruction_refs':refs,'capability_refs':['pathoreason:formal_study'],
+         'workflow_template_refs':[],'runtime_support':['opencode'],
+         'required_inputs':['病种、接口协议及已授权数据范围'],
+         'required_tools':['native_skill','reviewed_workspace_execution'],
+         'implementation_status':'implemented','evidence_scope':'contract_only',
+         'runtime_readiness':'ready' if server else 'unavailable',
+         'unavailable_reason':None if server else '正式试验数据接入在 bxn-server 进行'}
+    return [c.SkillDefinition(**raw,digest=c.canonical_digest(raw)).model_dump(mode='json')]
 
 class Formal:
     def __init__(self,s):
@@ -141,9 +160,9 @@ Existing researcher workflows, complete matrices, source hashes, budgets, patien
 
 All new inputs, plans, scripts and outputs belong to this workspace or its isolated /data/bxn/PathoReason/studies/{pid} storage. For legacy engine commands set PYTHONDONTWRITEBYTECODE=1 and AUTORESEARCH_COMPUTE_CONFIG to this workspace's compute.json. It does not authorize training. Check the frozen plan, resource budget and operator approval before any real compute, data fetch or paid image request. Preserve the original engine gates; native command approval does not replace scientific/author review.
 
-The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan and request the corresponding approval in a subsequent user turn. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled).
+The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled).
 
-Use {ROOT}/scripts/study_io.py data to fetch the configured endpoint into inputs, image to generate one versioned Seedream candidate, and publish to register actual outputs in the workbench. Do not put credential values or patient details in public chat. Source API records and feature tensors are different: resolve the returned remote paths and verify input completeness before training. Status and scientific approval derive from source evidence, not prose.
+For pathology API data acquisition, load the native pathology-data-api skill and its protocol reference before choosing a helper. The old study_io.py data command is only for the legacy Limit-based endpoint; use the skill helper for the authenticated PageIndex/PageSize protocol. Use {ROOT}/scripts/study_io.py image for one versioned Seedream candidate and publish to register actual outputs in the workbench. Do not put credential values or patient details in public chat. Source API records and feature tensors are different: resolve the returned remote paths and verify input completeness before training. Status and scientific approval derive from source evidence, not prose.
 '''
     def prompt(self,row):
         record=self.record(row['project_id'])
