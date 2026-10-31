@@ -1,0 +1,612 @@
+{
+  "$defs": {
+    "BudgetQuantity": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "research",
+            "unit",
+            "planner",
+            "candidate",
+            "repair",
+            "confirmation",
+            "reported_usage"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "minutes",
+            "wall_seconds",
+            "gpu_seconds",
+            "worker_wall_seconds",
+            "calls",
+            "candidates",
+            "runs",
+            "attempts"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "source_pointer": {
+          "title": "Source Pointer",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "scope",
+        "unit",
+        "value",
+        "source_pointer"
+      ],
+      "title": "BudgetQuantity",
+      "type": "object"
+    },
+    "ComputeSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime"
+        },
+        "gpu_ids": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gpu Ids"
+        },
+        "cpu_threads": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cpu Threads"
+        },
+        "memory_gb": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Memory Gb"
+        },
+        "feature_cache_mb": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Feature Cache Mb"
+        },
+        "protocol": {
+          "additionalProperties": true,
+          "title": "Protocol",
+          "type": "object"
+        }
+      },
+      "title": "ComputeSettings",
+      "type": "object"
+    },
+    "MetricView": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "split": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Split"
+        },
+        "direction": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Direction"
+        },
+        "target_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Id"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "aggregation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregation"
+        }
+      },
+      "required": [
+        "name",
+        "split",
+        "direction"
+      ],
+      "title": "MetricView",
+      "type": "object"
+    },
+    "SemanticIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "source_value": {
+          "default": null,
+          "title": "Source Value"
+        },
+        "canonical_value": {
+          "default": null,
+          "title": "Canonical Value"
+        }
+      },
+      "required": [
+        "code",
+        "field"
+      ],
+      "title": "SemanticIssue",
+      "type": "object"
+    },
+    "TaskSemantics": {
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "enum": [
+            "task_spec",
+            "legacy_fields",
+            "synthetic_plan",
+            "task_project",
+            "unspecified"
+          ],
+          "title": "Authority",
+          "type": "string"
+        },
+        "task_schema_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Task Schema Version"
+        },
+        "family": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Family"
+        },
+        "targets": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Targets",
+          "type": "array"
+        },
+        "objective": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Objective"
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MetricView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "evaluation": {
+          "items": {
+            "$ref": "#/$defs/MetricView"
+          },
+          "title": "Evaluation",
+          "type": "array"
+        },
+        "bag_level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bag Level"
+        },
+        "target_level": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Level"
+        },
+        "split_group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Split Group"
+        },
+        "source_task": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Task"
+        }
+      },
+      "required": [
+        "authority"
+      ],
+      "title": "TaskSemantics",
+      "type": "object"
+    },
+    "WorkflowNodeView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stages",
+          "type": "array"
+        },
+        "gate_stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gate Stage"
+        },
+        "gate_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gate Hint"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "stages",
+        "current"
+      ],
+      "title": "WorkflowNodeView",
+      "type": "object"
+    },
+    "WorkflowProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason.workflow-view/1",
+          "default": "pathoreason.workflow-view/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Version"
+        },
+        "source_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Digest",
+          "type": "string"
+        },
+        "definition_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Definition Digest",
+          "type": "string"
+        },
+        "definition": {
+          "additionalProperties": true,
+          "title": "Definition",
+          "type": "object"
+        },
+        "current_stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Current Stage"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/WorkflowNodeView"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "execution_authority": {
+          "const": false,
+          "default": false,
+          "title": "Execution Authority",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "source_version",
+        "source_digest",
+        "definition_digest",
+        "definition",
+        "current_stage",
+        "nodes"
+      ],
+      "title": "WorkflowProjection",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.research/1",
+      "default": "pathoreason.research/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_kind": {
+      "enum": [
+        "legacy_experiment",
+        "synthetic_plan",
+        "task_project"
+      ],
+      "title": "Source Kind",
+      "type": "string"
+    },
+    "source_id": {
+      "title": "Source Id",
+      "type": "string"
+    },
+    "source_files": {
+      "additionalProperties": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "title": "Source Files",
+      "type": "object"
+    },
+    "source_payload": {
+      "additionalProperties": true,
+      "title": "Source Payload",
+      "type": "object"
+    },
+    "semantics": {
+      "$ref": "#/$defs/TaskSemantics"
+    },
+    "compute": {
+      "$ref": "#/$defs/ComputeSettings"
+    },
+    "invocation_settings": {
+      "additionalProperties": true,
+      "title": "Invocation Settings",
+      "type": "object"
+    },
+    "budgets": {
+      "items": {
+        "$ref": "#/$defs/BudgetQuantity"
+      },
+      "title": "Budgets",
+      "type": "array"
+    },
+    "workflow": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkflowProjection"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "compatibility": {
+      "enum": [
+        "compatible",
+        "legacy_unresolved",
+        "conflict"
+      ],
+      "title": "Compatibility",
+      "type": "string"
+    },
+    "issues": {
+      "items": {
+        "$ref": "#/$defs/SemanticIssue"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "execution_authority": {
+      "const": false,
+      "default": false,
+      "title": "Execution Authority",
+      "type": "boolean"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "source_kind",
+    "source_id",
+    "source_files",
+    "source_payload",
+    "semantics",
+    "compute",
+    "invocation_settings",
+    "budgets",
+    "compatibility",
+    "issues",
+    "digest"
+  ],
+  "title": "ResearchDefinition",
+  "type": "object"
+}

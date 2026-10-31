@@ -1,0 +1,102 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.runtime/2",
+      "default": "pathoreason.runtime/2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "runtime": {
+      "const": "codex",
+      "default": "codex",
+      "title": "Runtime",
+      "type": "string"
+    },
+    "runtime_version": {
+      "minLength": 1,
+      "title": "Runtime Version",
+      "type": "string"
+    },
+    "native_session_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Native Session Id"
+    },
+    "state": {
+      "enum": [
+        "unbound",
+        "bound",
+        "closed"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "storage_namespace": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Storage Namespace",
+      "type": "string"
+    },
+    "workspace_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "auth_ref": {
+      "const": "local_codex_login",
+      "default": "local_codex_login",
+      "title": "Auth Ref",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "runtime_version",
+    "native_session_id",
+    "state",
+    "storage_namespace",
+    "workspace_id",
+    "created_at"
+  ],
+  "title": "LocalBinding",
+  "type": "object"
+}

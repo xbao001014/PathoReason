@@ -1,0 +1,163 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "minLength": 1,
+      "title": "Version",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "input_schema_ref": {
+      "minLength": 1,
+      "title": "Input Schema Ref",
+      "type": "string"
+    },
+    "output_schema_ref": {
+      "minLength": 1,
+      "title": "Output Schema Ref",
+      "type": "string"
+    },
+    "instruction_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Instruction Refs",
+      "type": "array"
+    },
+    "capability_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Capability Refs",
+      "type": "array"
+    },
+    "workflow_template_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Workflow Template Refs",
+      "type": "array"
+    },
+    "runtime_support": {
+      "items": {
+        "enum": [
+          "codex",
+          "opencode"
+        ],
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Runtime Support",
+      "type": "array"
+    },
+    "required_inputs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Required Inputs",
+      "type": "array"
+    },
+    "required_tools": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Required Tools",
+      "type": "array"
+    },
+    "implementation_status": {
+      "enum": [
+        "planned",
+        "adapter_pending",
+        "implemented"
+      ],
+      "title": "Implementation Status",
+      "type": "string"
+    },
+    "evidence_scope": {
+      "enum": [
+        "none",
+        "contract_only",
+        "synthetic",
+        "real_scenario"
+      ],
+      "title": "Evidence Scope",
+      "type": "string"
+    },
+    "runtime_readiness": {
+      "enum": [
+        "unchecked",
+        "unavailable",
+        "ready"
+      ],
+      "title": "Runtime Readiness",
+      "type": "string"
+    },
+    "unavailable_reason": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Unavailable Reason"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "version",
+    "title",
+    "description",
+    "input_schema_ref",
+    "output_schema_ref",
+    "instruction_refs",
+    "capability_refs",
+    "workflow_template_refs",
+    "runtime_support",
+    "required_inputs",
+    "required_tools",
+    "implementation_status",
+    "evidence_scope",
+    "runtime_readiness",
+    "unavailable_reason",
+    "digest"
+  ],
+  "title": "SkillDefinition",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:SkillDefinition"
+}

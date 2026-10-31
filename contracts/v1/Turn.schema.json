@@ -1,0 +1,241 @@
+{
+  "$defs": {
+    "ModelDescriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "context_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Context Limit Tokens"
+        },
+        "input_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Input Limit Tokens"
+        },
+        "output_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Output Limit Tokens"
+        },
+        "tool_support": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "unknown"
+          ],
+          "title": "Tool Support",
+          "type": "string"
+        },
+        "usage_source": {
+          "enum": [
+            "runtime",
+            "provider",
+            "estimated",
+            "unknown"
+          ],
+          "title": "Usage Source",
+          "type": "string"
+        },
+        "metadata_source": {
+          "minLength": 1,
+          "title": "Metadata Source",
+          "type": "string"
+        },
+        "availability": {
+          "enum": [
+            "catalog_only",
+            "authenticated",
+            "inference_verified",
+            "unavailable"
+          ],
+          "title": "Availability",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runtime",
+        "provider",
+        "model",
+        "context_limit_tokens",
+        "input_limit_tokens",
+        "output_limit_tokens",
+        "tool_support",
+        "usage_source",
+        "metadata_source",
+        "availability"
+      ],
+      "title": "ModelDescriptor",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "runtime_binding_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Runtime Binding Id",
+      "type": "string"
+    },
+    "request_key": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Request Key",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "queued",
+        "running",
+        "interrupt_requested",
+        "completed",
+        "interrupted",
+        "failed",
+        "recovery_required"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "model": {
+      "$ref": "#/$defs/ModelDescriptor"
+    },
+    "config_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Config Digest",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Finished At"
+    },
+    "native_turn_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Native Turn Id"
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Error Code"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "runtime_binding_id",
+    "request_key",
+    "status",
+    "model",
+    "config_digest",
+    "created_at",
+    "finished_at",
+    "native_turn_id",
+    "error_code"
+  ],
+  "title": "Turn",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:Turn"
+}

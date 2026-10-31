@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manuscript to LaTeX"
+  short_description: "Build and audit journal-ready LaTeX packages"
+  default_prompt: "Use $manuscript-to-latex to convert my frozen manuscript into a compiled, audited LaTeX submission package without changing scientific claims."

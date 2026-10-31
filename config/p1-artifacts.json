@@ -1,0 +1,14 @@
+[
+  {
+    "id": "art_results_figure",
+    "title": "开发复验结果图",
+    "relative_path": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/artifacts/result.png",
+    "sha256": "d3194024f2c49d02cdebc524d59489b87e2de4b8d9136423c4502e501a4b4c18"
+  },
+  {
+    "id": "art_method_figure",
+    "title": "实例上下文残差方法图",
+    "relative_path": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/artifacts/method-v2-style/method-v2-style.png",
+    "sha256": "ba872e9fb2f78c28855f8a1754065fa957077fdec507aefb73288fd6c4296e8a"
+  }
+]

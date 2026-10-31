@@ -1,0 +1,23 @@
+{
+  "journal_id": "generic",
+  "journal_name": "Generic scientific manuscript",
+  "publisher": null,
+  "guide_url": null,
+  "profile_checked_on": null,
+  "article_type": null,
+  "review_model": "unknown",
+  "abstract_max_words": null,
+  "abstract_style": "not_specified",
+  "body_max_words": null,
+  "title_max_characters": null,
+  "keywords_min": null,
+  "keywords_max": null,
+  "figures_tables_max": null,
+  "references_max": null,
+  "english": "consistent",
+  "number_sections": true,
+  "highlights": "unknown",
+  "graphical_abstract": "unknown",
+  "initial_format": "submission_neutral",
+  "latex_source_accepted": true
+}

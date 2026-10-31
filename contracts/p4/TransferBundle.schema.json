@@ -1,0 +1,642 @@
+{
+  "$defs": {
+    "ArtifactIndex": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "document",
+            "figure",
+            "table",
+            "report",
+            "source_bundle"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "media_type": {
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "storage_root": {
+          "enum": [
+            "legacy_evidence",
+            "pathoreason_artifacts"
+          ],
+          "title": "Storage Root",
+          "type": "string"
+        },
+        "relative_path": {
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/LegacyResourceRef"
+        },
+        "run_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegacyResourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage_ref": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stage Ref"
+        },
+        "verification_scope": {
+          "enum": [
+            "indexed",
+            "bytes_verified",
+            "scientifically_reviewed"
+          ],
+          "title": "Verification Scope",
+          "type": "string"
+        },
+        "evidence_role": {
+          "enum": [
+            "development",
+            "synthetic",
+            "manuscript_review",
+            "independent_test",
+            "not_assessed"
+          ],
+          "title": "Evidence Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "title",
+        "kind",
+        "media_type",
+        "storage_root",
+        "relative_path",
+        "sha256",
+        "size_bytes",
+        "source_ref",
+        "run_ref",
+        "stage_ref",
+        "verification_scope",
+        "evidence_role"
+      ],
+      "title": "ArtifactIndex",
+      "type": "object"
+    },
+    "ArtifactProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason.provenance/1",
+          "default": "pathoreason.provenance/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/ProvenanceHop"
+        },
+        "transfers": {
+          "items": {
+            "$ref": "#/$defs/ProvenanceHop"
+          },
+          "maxItems": 32,
+          "title": "Transfers",
+          "type": "array"
+        },
+        "basis": {
+          "enum": [
+            "local_record",
+            "p3_handoff_record",
+            "handoff_manifest"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "verification": {
+          "const": "integrity_only_not_scientific_approval",
+          "default": "integrity_only_not_scientific_approval",
+          "title": "Verification",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin",
+        "basis"
+      ],
+      "title": "ArtifactProvenance",
+      "type": "object"
+    },
+    "BusinessArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/2",
+          "default": "pathoreason/2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "document",
+            "figure",
+            "table",
+            "report",
+            "source_bundle"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "media_type": {
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "storage_root": {
+          "const": "pathoreason_artifacts",
+          "default": "pathoreason_artifacts",
+          "title": "Storage Root",
+          "type": "string"
+        },
+        "relative_path": {
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/WorkflowRef"
+        },
+        "run_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WorkflowRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage_ref": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stage Ref"
+        },
+        "verification_scope": {
+          "enum": [
+            "indexed",
+            "bytes_verified",
+            "scientifically_reviewed"
+          ],
+          "title": "Verification Scope",
+          "type": "string"
+        },
+        "evidence_role": {
+          "enum": [
+            "development",
+            "synthetic",
+            "manuscript_review",
+            "independent_test",
+            "not_assessed"
+          ],
+          "title": "Evidence Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "title",
+        "kind",
+        "media_type",
+        "relative_path",
+        "sha256",
+        "size_bytes",
+        "source_ref",
+        "run_ref",
+        "stage_ref",
+        "verification_scope",
+        "evidence_role"
+      ],
+      "title": "BusinessArtifact",
+      "type": "object"
+    },
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    },
+    "ProvenanceHop": {
+      "additionalProperties": false,
+      "properties": {
+        "environment": {
+          "enum": [
+            "local",
+            "bxn-server",
+            "unknown"
+          ],
+          "title": "Environment",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "artifact_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "handoff_digest": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Handoff Digest"
+        }
+      },
+      "required": [
+        "environment",
+        "project_id",
+        "artifact_id",
+        "sha256"
+      ],
+      "title": "ProvenanceHop",
+      "type": "object"
+    },
+    "ResearchProject": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "objective": {
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/LegacyResourceRef"
+          },
+          "title": "Resources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "objective",
+        "revision",
+        "created_at",
+        "status",
+        "resources"
+      ],
+      "title": "ResearchProject",
+      "type": "object"
+    },
+    "TransferArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ArtifactIndex"
+            },
+            {
+              "$ref": "#/$defs/BusinessArtifact"
+            }
+          ],
+          "title": "Metadata"
+        },
+        "content_base64": {
+          "maxLength": 2700000,
+          "title": "Content Base64",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/ArtifactProvenance"
+        }
+      },
+      "required": [
+        "metadata",
+        "content_base64",
+        "provenance"
+      ],
+      "title": "TransferArtifact",
+      "type": "object"
+    },
+    "TransferPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "const": "pathoreason.handoff/2",
+          "default": "pathoreason.handoff/2",
+          "title": "Version",
+          "type": "string"
+        },
+        "source_environment": {
+          "enum": [
+            "local",
+            "bxn-server"
+          ],
+          "title": "Source Environment",
+          "type": "string"
+        },
+        "source_runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Source Runtime",
+          "type": "string"
+        },
+        "project": {
+          "$ref": "#/$defs/ResearchProject"
+        },
+        "constraints": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Constraints",
+          "type": "array"
+        },
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/TransferArtifact"
+          },
+          "maxItems": 20,
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "created_at": {
+          "maxLength": 40,
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_environment",
+        "source_runtime",
+        "project",
+        "constraints",
+        "artifacts",
+        "created_at"
+      ],
+      "title": "TransferPayload",
+      "type": "object"
+    },
+    "WorkflowRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason.business/1",
+          "default": "pathoreason.business/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "const": "pathoreason.synthetic_mil",
+          "default": "pathoreason.synthetic_mil",
+          "title": "Adapter",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "resource_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "const": "manifest_sha256",
+          "default": "manifest_sha256",
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "resource_id",
+        "revision"
+      ],
+      "title": "WorkflowRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "payload": {
+      "$ref": "#/$defs/TransferPayload"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "payload",
+    "digest"
+  ],
+  "title": "TransferBundle",
+  "type": "object"
+}

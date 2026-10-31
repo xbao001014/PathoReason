@@ -1,0 +1,104 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "ordinal": {
+      "minimum": 0,
+      "title": "Ordinal",
+      "type": "integer"
+    },
+    "role": {
+      "enum": [
+        "user",
+        "assistant",
+        "tool",
+        "system"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "text",
+        "artifact_reference",
+        "tool_summary"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "text": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Text"
+    },
+    "artifact_id": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Artifact Id"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "turn_id",
+    "ordinal",
+    "role",
+    "kind",
+    "text",
+    "artifact_id"
+  ],
+  "title": "MessagePart",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:MessagePart"
+}

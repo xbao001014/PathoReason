@@ -1,0 +1,891 @@
+{
+  "$defs": {
+    "BusinessAction": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "turn_id": {
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "title": "Expected Revision",
+          "type": "string"
+        },
+        "plan_digest": {
+          "title": "Plan Digest",
+          "type": "string"
+        },
+        "workflow_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workflow Status"
+        },
+        "tool_succeeded": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool Succeeded"
+        }
+      },
+      "required": [
+        "id",
+        "operation",
+        "status",
+        "turn_id",
+        "expected_revision",
+        "plan_digest"
+      ],
+      "title": "BusinessAction",
+      "type": "object"
+    },
+    "BusinessEvent": {
+      "properties": {
+        "seq": {
+          "title": "Seq",
+          "type": "integer"
+        },
+        "scope": {
+          "const": "domain",
+          "default": "domain",
+          "title": "Scope",
+          "type": "string"
+        },
+        "producer": {
+          "title": "Producer",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "turn_id": {
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "action_id": {
+          "title": "Action Id",
+          "type": "string"
+        },
+        "at": {
+          "title": "At",
+          "type": "number"
+        }
+      },
+      "required": [
+        "seq",
+        "producer",
+        "kind",
+        "status",
+        "turn_id",
+        "action_id",
+        "at"
+      ],
+      "title": "BusinessEvent",
+      "type": "object"
+    },
+    "BusinessView": {
+      "properties": {
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "scope": {
+          "const": "synthetic",
+          "default": "synthetic",
+          "title": "Scope",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "plan_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plan Digest"
+        },
+        "question": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question"
+        },
+        "completed_units": {
+          "default": 0,
+          "title": "Completed Units",
+          "type": "integer"
+        },
+        "total_units": {
+          "default": 8,
+          "title": "Total Units",
+          "type": "integer"
+        },
+        "failed_units": {
+          "default": 0,
+          "title": "Failed Units",
+          "type": "integer"
+        },
+        "used_worker_seconds": {
+          "default": 0,
+          "title": "Used Worker Seconds",
+          "type": "number"
+        },
+        "reserved_worker_seconds": {
+          "default": 0,
+          "title": "Reserved Worker Seconds",
+          "type": "number"
+        },
+        "usage_accounting": {
+          "const": "cumulative_worker_wall_seconds_not_cpu_process_time",
+          "default": "cumulative_worker_wall_seconds_not_cpu_process_time",
+          "title": "Usage Accounting",
+          "type": "string"
+        },
+        "scientific_status": {
+          "const": "not_assessed",
+          "default": "not_assessed",
+          "title": "Scientific Status",
+          "type": "string"
+        },
+        "independent_confirmation_verified": {
+          "const": false,
+          "default": false,
+          "title": "Independent Confirmation Verified",
+          "type": "boolean"
+        },
+        "submission_ready": {
+          "const": false,
+          "default": false,
+          "title": "Submission Ready",
+          "type": "boolean"
+        },
+        "goal_achieved_dev": {
+          "default": false,
+          "title": "Goal Achieved Dev",
+          "type": "boolean"
+        },
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/BusinessAction"
+          },
+          "title": "Actions",
+          "type": "array"
+        },
+        "revisions": {
+          "items": {
+            "$ref": "#/$defs/PlanRevision"
+          },
+          "title": "Revisions",
+          "type": "array"
+        },
+        "events": {
+          "items": {
+            "$ref": "#/$defs/BusinessEvent"
+          },
+          "title": "Events",
+          "type": "array"
+        },
+        "artifact_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "available_operations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Available Operations",
+          "type": "array"
+        },
+        "error_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Type"
+        }
+      },
+      "required": [
+        "project_id",
+        "status",
+        "revision"
+      ],
+      "title": "BusinessView",
+      "type": "object"
+    },
+    "FormalPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "environment": {
+          "enum": [
+            "local",
+            "bxn-server"
+          ],
+          "title": "Environment",
+          "type": "string"
+        },
+        "execution_mode": {
+          "const": "research",
+          "default": "research",
+          "title": "Execution Mode",
+          "type": "string"
+        },
+        "max_turns": {
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "max_wall_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Wall Seconds",
+          "type": "number"
+        },
+        "concurrency": {
+          "const": 1,
+          "default": 1,
+          "title": "Concurrency",
+          "type": "integer"
+        },
+        "automatic_retries": {
+          "const": 0,
+          "default": 0,
+          "title": "Automatic Retries",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "runtime",
+        "environment",
+        "max_turns",
+        "max_wall_seconds"
+      ],
+      "title": "FormalPolicy",
+      "type": "object"
+    },
+    "ModelDescriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "context_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Context Limit Tokens"
+        },
+        "input_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Input Limit Tokens"
+        },
+        "output_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Output Limit Tokens"
+        },
+        "tool_support": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "unknown"
+          ],
+          "title": "Tool Support",
+          "type": "string"
+        },
+        "usage_source": {
+          "enum": [
+            "runtime",
+            "provider",
+            "estimated",
+            "unknown"
+          ],
+          "title": "Usage Source",
+          "type": "string"
+        },
+        "metadata_source": {
+          "minLength": 1,
+          "title": "Metadata Source",
+          "type": "string"
+        },
+        "availability": {
+          "enum": [
+            "catalog_only",
+            "authenticated",
+            "inference_verified",
+            "unavailable"
+          ],
+          "title": "Availability",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runtime",
+        "provider",
+        "model",
+        "context_limit_tokens",
+        "input_limit_tokens",
+        "output_limit_tokens",
+        "tool_support",
+        "usage_source",
+        "metadata_source",
+        "availability"
+      ],
+      "title": "ModelDescriptor",
+      "type": "object"
+    },
+    "PermissionSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "ask",
+          "enum": [
+            "ask",
+            "auto",
+            "custom"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "bash": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Bash",
+          "type": "string"
+        },
+        "edit": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Edit",
+          "type": "string"
+        },
+        "webfetch": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Webfetch",
+          "type": "string"
+        },
+        "external_directory": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "External Directory",
+          "type": "string"
+        }
+      },
+      "title": "PermissionSettings",
+      "type": "object"
+    },
+    "PlanRevision": {
+      "properties": {
+        "before": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Before"
+        },
+        "after": {
+          "title": "After",
+          "type": "string"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Feedback"
+        },
+        "learning_rate": {
+          "title": "Learning Rate",
+          "type": "number"
+        },
+        "action_id": {
+          "title": "Action Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "title": "Turn Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "before",
+        "after",
+        "feedback",
+        "learning_rate",
+        "action_id",
+        "turn_id"
+      ],
+      "title": "PlanRevision",
+      "type": "object"
+    },
+    "SkillDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "input_schema_ref": {
+          "minLength": 1,
+          "title": "Input Schema Ref",
+          "type": "string"
+        },
+        "output_schema_ref": {
+          "minLength": 1,
+          "title": "Output Schema Ref",
+          "type": "string"
+        },
+        "instruction_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Instruction Refs",
+          "type": "array"
+        },
+        "capability_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Capability Refs",
+          "type": "array"
+        },
+        "workflow_template_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Workflow Template Refs",
+          "type": "array"
+        },
+        "runtime_support": {
+          "items": {
+            "enum": [
+              "codex",
+              "opencode"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Runtime Support",
+          "type": "array"
+        },
+        "required_inputs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Required Inputs",
+          "type": "array"
+        },
+        "required_tools": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Required Tools",
+          "type": "array"
+        },
+        "implementation_status": {
+          "enum": [
+            "planned",
+            "adapter_pending",
+            "implemented"
+          ],
+          "title": "Implementation Status",
+          "type": "string"
+        },
+        "evidence_scope": {
+          "enum": [
+            "none",
+            "contract_only",
+            "synthetic",
+            "real_scenario"
+          ],
+          "title": "Evidence Scope",
+          "type": "string"
+        },
+        "runtime_readiness": {
+          "enum": [
+            "unchecked",
+            "unavailable",
+            "ready"
+          ],
+          "title": "Runtime Readiness",
+          "type": "string"
+        },
+        "unavailable_reason": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unavailable Reason"
+        },
+        "digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "title",
+        "description",
+        "input_schema_ref",
+        "output_schema_ref",
+        "instruction_refs",
+        "capability_refs",
+        "workflow_template_refs",
+        "runtime_support",
+        "required_inputs",
+        "required_tools",
+        "implementation_status",
+        "evidence_scope",
+        "runtime_readiness",
+        "unavailable_reason",
+        "digest"
+      ],
+      "title": "SkillDefinition",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.runtime-config/2",
+      "default": "pathoreason.runtime-config/2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "execution_mode": {
+      "const": "research",
+      "default": "research",
+      "title": "Execution Mode",
+      "type": "string"
+    },
+    "business_context": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BusinessView"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "agent": {
+      "const": "pathoreason-formal",
+      "default": "pathoreason-formal",
+      "title": "Agent",
+      "type": "string"
+    },
+    "skill": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SkillDefinition"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "opencode": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Opencode"
+    },
+    "runtime": {
+      "enum": [
+        "codex",
+        "opencode"
+      ],
+      "title": "Runtime",
+      "type": "string"
+    },
+    "environment": {
+      "enum": [
+        "local",
+        "bxn-server"
+      ],
+      "title": "Environment",
+      "type": "string"
+    },
+    "context_policy": {
+      "const": "native_compaction_with_authoritative_project_reload",
+      "title": "Context Policy",
+      "type": "string"
+    },
+    "model_descriptor": {
+      "$ref": "#/$defs/ModelDescriptor"
+    },
+    "invocation_policy": {
+      "$ref": "#/$defs/FormalPolicy"
+    },
+    "codex": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Codex"
+    },
+    "native_config_digest": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Native Config Digest"
+    },
+    "reasoning_effort": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "high",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reasoning Effort"
+    },
+    "study_revision": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Study Revision",
+      "type": "string"
+    },
+    "permission_settings": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PermissionSettings"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "permission_revision": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Permission Revision"
+    }
+  },
+  "required": [
+    "business_context",
+    "model",
+    "skill",
+    "opencode",
+    "runtime",
+    "environment",
+    "context_policy",
+    "model_descriptor",
+    "invocation_policy",
+    "study_revision"
+  ],
+  "title": "FormalConfiguration",
+  "type": "object"
+}

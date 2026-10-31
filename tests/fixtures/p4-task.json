@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "family": "regression",
+  "targets": [
+    {
+      "id": "outcome",
+      "kind": "continuous",
+      "column": "outcome",
+      "classes": null,
+      "unit": null,
+      "minimum": null,
+      "maximum": null,
+      "missing": "error",
+      "threshold": null,
+      "transform": "identity",
+      "time_column": null,
+      "event_column": null,
+      "event_value": null,
+      "censored_value": null,
+      "time_unit": null,
+      "time_origin": null,
+      "censoring": null
+    }
+  ],
+  "target_level": "patient",
+  "bag_level": "case",
+  "split_group": "patient_id",
+  "objective": {
+    "loss": "mse",
+    "target_weights": {},
+    "normalization": "observed_per_target",
+    "strategy": "per_bag",
+    "ties": null
+  },
+  "selection": {
+    "metric": {
+      "name": "rmse",
+      "target_id": "outcome",
+      "split": "val",
+      "direction": "minimize",
+      "aggregation": "per_target",
+      "unit": null,
+      "prediction": "value",
+      "time_points": []
+    },
+    "fold_aggregation": "mean_complete_folds"
+  },
+  "evaluation": [
+    {
+      "name": "rmse",
+      "target_id": "outcome",
+      "split": "test",
+      "direction": "minimize",
+      "aggregation": "per_target",
+      "unit": null,
+      "prediction": "value",
+      "time_points": []
+    }
+  ]
+}

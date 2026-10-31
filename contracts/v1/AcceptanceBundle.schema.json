@@ -1,0 +1,1647 @@
+{
+  "$defs": {
+    "ArtifactIndex": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "document",
+            "figure",
+            "table",
+            "report",
+            "source_bundle"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "media_type": {
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "storage_root": {
+          "enum": [
+            "legacy_evidence",
+            "pathoreason_artifacts"
+          ],
+          "title": "Storage Root",
+          "type": "string"
+        },
+        "relative_path": {
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/LegacyResourceRef"
+        },
+        "run_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegacyResourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage_ref": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stage Ref"
+        },
+        "verification_scope": {
+          "enum": [
+            "indexed",
+            "bytes_verified",
+            "scientifically_reviewed"
+          ],
+          "title": "Verification Scope",
+          "type": "string"
+        },
+        "evidence_role": {
+          "enum": [
+            "development",
+            "synthetic",
+            "manuscript_review",
+            "independent_test",
+            "not_assessed"
+          ],
+          "title": "Evidence Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "title",
+        "kind",
+        "media_type",
+        "storage_root",
+        "relative_path",
+        "sha256",
+        "size_bytes",
+        "source_ref",
+        "run_ref",
+        "stage_ref",
+        "verification_scope",
+        "evidence_role"
+      ],
+      "title": "ArtifactIndex",
+      "type": "object"
+    },
+    "ContextSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "project_revision": {
+          "exclusiveMinimum": 0,
+          "title": "Project Revision",
+          "type": "integer"
+        },
+        "goal": {
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "constraints": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/LegacyResourceRef"
+          },
+          "title": "Source Refs",
+          "type": "array"
+        },
+        "decision_refs": {
+          "items": {
+            "$ref": "#/$defs/LegacyResourceRef"
+          },
+          "title": "Decision Refs",
+          "type": "array"
+        },
+        "active_run_refs": {
+          "items": {
+            "$ref": "#/$defs/LegacyResourceRef"
+          },
+          "title": "Active Run Refs",
+          "type": "array"
+        },
+        "artifact_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "pending_items": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Pending Items",
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "project_revision",
+        "goal",
+        "constraints",
+        "source_refs",
+        "decision_refs",
+        "active_run_refs",
+        "artifact_ids",
+        "pending_items",
+        "created_at",
+        "digest"
+      ],
+      "title": "ContextSnapshot",
+      "type": "object"
+    },
+    "Conversation": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "active_runtime_binding_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Active Runtime Binding Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "title",
+        "status",
+        "active_runtime_binding_id",
+        "created_at"
+      ],
+      "title": "Conversation",
+      "type": "object"
+    },
+    "DomainEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "scope": {
+          "const": "domain",
+          "default": "domain",
+          "title": "Scope",
+          "type": "string"
+        },
+        "producer": {
+          "enum": [
+            "legacy_adapter",
+            "domain_service"
+          ],
+          "title": "Producer",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "resource_observed",
+            "artifact_indexed",
+            "workflow_state_changed"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "authority_ref": {
+          "$ref": "#/$defs/LegacyResourceRef"
+        },
+        "source_event_key": {
+          "minLength": 1,
+          "title": "Source Event Key",
+          "type": "string"
+        },
+        "observed_status": {
+          "minLength": 1,
+          "title": "Observed Status",
+          "type": "string"
+        },
+        "correlation_turn_id": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Correlation Turn Id"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "seq",
+        "occurred_at",
+        "producer",
+        "kind",
+        "authority_ref",
+        "source_event_key",
+        "observed_status",
+        "correlation_turn_id"
+      ],
+      "title": "DomainEvent",
+      "type": "object"
+    },
+    "ExecutionIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "target_ref": {
+          "$ref": "#/$defs/LegacyResourceRef"
+        },
+        "expected_revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Revision",
+          "type": "string"
+        },
+        "operation": {
+          "minLength": 1,
+          "title": "Operation",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "arguments_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Arguments Digest",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "validated",
+            "dispatched",
+            "rejected",
+            "reconciled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "run_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LegacyResourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "turn_id",
+        "target_ref",
+        "expected_revision",
+        "operation",
+        "idempotency_key",
+        "arguments_digest",
+        "status",
+        "run_ref"
+      ],
+      "title": "ExecutionIntent",
+      "type": "object"
+    },
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    },
+    "MessagePart": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "ordinal": {
+          "minimum": 0,
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "role": {
+          "enum": [
+            "user",
+            "assistant",
+            "tool",
+            "system"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "text",
+            "artifact_reference",
+            "tool_summary"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Text"
+        },
+        "artifact_id": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Artifact Id"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "turn_id",
+        "ordinal",
+        "role",
+        "kind",
+        "text",
+        "artifact_id"
+      ],
+      "title": "MessagePart",
+      "type": "object"
+    },
+    "ModelDescriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "context_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Context Limit Tokens"
+        },
+        "input_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Input Limit Tokens"
+        },
+        "output_limit_tokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Output Limit Tokens"
+        },
+        "tool_support": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "unknown"
+          ],
+          "title": "Tool Support",
+          "type": "string"
+        },
+        "usage_source": {
+          "enum": [
+            "runtime",
+            "provider",
+            "estimated",
+            "unknown"
+          ],
+          "title": "Usage Source",
+          "type": "string"
+        },
+        "metadata_source": {
+          "minLength": 1,
+          "title": "Metadata Source",
+          "type": "string"
+        },
+        "availability": {
+          "enum": [
+            "catalog_only",
+            "authenticated",
+            "inference_verified",
+            "unavailable"
+          ],
+          "title": "Availability",
+          "type": "string"
+        }
+      },
+      "required": [
+        "runtime",
+        "provider",
+        "model",
+        "context_limit_tokens",
+        "input_limit_tokens",
+        "output_limit_tokens",
+        "tool_support",
+        "usage_source",
+        "metadata_source",
+        "availability"
+      ],
+      "title": "ModelDescriptor",
+      "type": "object"
+    },
+    "ResearchProject": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "objective": {
+          "minLength": 1,
+          "title": "Objective",
+          "type": "string"
+        },
+        "revision": {
+          "exclusiveMinimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/LegacyResourceRef"
+          },
+          "title": "Resources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "objective",
+        "revision",
+        "created_at",
+        "status",
+        "resources"
+      ],
+      "title": "ResearchProject",
+      "type": "object"
+    },
+    "RuntimeBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "runtime": {
+          "enum": [
+            "codex",
+            "opencode"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "runtime_version": {
+          "minLength": 1,
+          "title": "Runtime Version",
+          "type": "string"
+        },
+        "native_session_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Native Session Id"
+        },
+        "state": {
+          "enum": [
+            "unbound",
+            "bound",
+            "closed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "storage_namespace": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Storage Namespace",
+          "type": "string"
+        },
+        "workspace_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "auth_ref": {
+          "enum": [
+            "server_codex_login",
+            "server_provider_credential"
+          ],
+          "title": "Auth Ref",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "runtime",
+        "runtime_version",
+        "native_session_id",
+        "state",
+        "storage_namespace",
+        "workspace_id",
+        "auth_ref",
+        "created_at"
+      ],
+      "title": "RuntimeBinding",
+      "type": "object"
+    },
+    "RuntimeEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "runtime_binding_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Runtime Binding Id",
+          "type": "string"
+        },
+        "seq": {
+          "exclusiveMinimum": 0,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "source_event_key": {
+          "minLength": 1,
+          "title": "Source Event Key",
+          "type": "string"
+        },
+        "scope": {
+          "const": "runtime",
+          "default": "runtime",
+          "title": "Scope",
+          "type": "string"
+        },
+        "producer": {
+          "const": "runtime_adapter",
+          "default": "runtime_adapter",
+          "title": "Producer",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/RuntimePayload"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "turn_id",
+        "runtime_binding_id",
+        "seq",
+        "occurred_at",
+        "source_event_key",
+        "payload"
+      ],
+      "title": "RuntimeEvent",
+      "type": "object"
+    },
+    "RuntimePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "turn_status",
+            "text_delta",
+            "tool_summary",
+            "usage",
+            "compaction",
+            "error"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        },
+        "part_id": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Part Id"
+        },
+        "turn_status": {
+          "anyOf": [
+            {
+              "enum": [
+                "queued",
+                "running",
+                "interrupt_requested",
+                "completed",
+                "interrupted",
+                "failed",
+                "recovery_required"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turn Status"
+        },
+        "input_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Tokens"
+        },
+        "output_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Tokens"
+        },
+        "context_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Tokens"
+        },
+        "usage_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "runtime",
+                "provider",
+                "estimated",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Usage Source"
+        },
+        "usage_scope": {
+          "anyOf": [
+            {
+              "enum": [
+                "turn",
+                "cumulative",
+                "context_window"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Usage Scope"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "RuntimePayload",
+      "type": "object"
+    },
+    "SkillDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        },
+        "title": {
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "input_schema_ref": {
+          "minLength": 1,
+          "title": "Input Schema Ref",
+          "type": "string"
+        },
+        "output_schema_ref": {
+          "minLength": 1,
+          "title": "Output Schema Ref",
+          "type": "string"
+        },
+        "instruction_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Instruction Refs",
+          "type": "array"
+        },
+        "capability_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Capability Refs",
+          "type": "array"
+        },
+        "workflow_template_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Workflow Template Refs",
+          "type": "array"
+        },
+        "runtime_support": {
+          "items": {
+            "enum": [
+              "codex",
+              "opencode"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Runtime Support",
+          "type": "array"
+        },
+        "required_inputs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Required Inputs",
+          "type": "array"
+        },
+        "required_tools": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Required Tools",
+          "type": "array"
+        },
+        "implementation_status": {
+          "enum": [
+            "planned",
+            "adapter_pending",
+            "implemented"
+          ],
+          "title": "Implementation Status",
+          "type": "string"
+        },
+        "evidence_scope": {
+          "enum": [
+            "none",
+            "contract_only",
+            "synthetic",
+            "real_scenario"
+          ],
+          "title": "Evidence Scope",
+          "type": "string"
+        },
+        "runtime_readiness": {
+          "enum": [
+            "unchecked",
+            "unavailable",
+            "ready"
+          ],
+          "title": "Runtime Readiness",
+          "type": "string"
+        },
+        "unavailable_reason": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unavailable Reason"
+        },
+        "digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "title",
+        "description",
+        "input_schema_ref",
+        "output_schema_ref",
+        "instruction_refs",
+        "capability_refs",
+        "workflow_template_refs",
+        "runtime_support",
+        "required_inputs",
+        "required_tools",
+        "implementation_status",
+        "evidence_scope",
+        "runtime_readiness",
+        "unavailable_reason",
+        "digest"
+      ],
+      "title": "SkillDefinition",
+      "type": "object"
+    },
+    "SkillInvocation": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "skill_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Skill Id",
+          "type": "string"
+        },
+        "skill_version": {
+          "minLength": 1,
+          "title": "Skill Version",
+          "type": "string"
+        },
+        "skill_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Skill Digest",
+          "type": "string"
+        },
+        "input_artifact_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "title": "Input Artifact Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "turn_id",
+        "skill_id",
+        "skill_version",
+        "skill_digest",
+        "input_artifact_ids"
+      ],
+      "title": "SkillInvocation",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "conversation_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "runtime_binding_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Runtime Binding Id",
+          "type": "string"
+        },
+        "request_key": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Request Key",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "interrupt_requested",
+            "completed",
+            "interrupted",
+            "failed",
+            "recovery_required"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelDescriptor"
+        },
+        "config_digest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Config Digest",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "finished_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Finished At"
+        },
+        "native_turn_id": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Native Turn Id"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error Code"
+        }
+      },
+      "required": [
+        "id",
+        "project_id",
+        "conversation_id",
+        "runtime_binding_id",
+        "request_key",
+        "status",
+        "model",
+        "config_digest",
+        "created_at",
+        "finished_at",
+        "native_turn_id",
+        "error_code"
+      ],
+      "title": "Turn",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Offline contract fixture; not a database or a runtime launch request.",
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "fixture_kind": {
+      "const": "contract_only",
+      "default": "contract_only",
+      "title": "Fixture Kind",
+      "type": "string"
+    },
+    "project": {
+      "$ref": "#/$defs/ResearchProject"
+    },
+    "skills": {
+      "items": {
+        "$ref": "#/$defs/SkillDefinition"
+      },
+      "title": "Skills",
+      "type": "array"
+    },
+    "conversation": {
+      "$ref": "#/$defs/Conversation"
+    },
+    "binding": {
+      "$ref": "#/$defs/RuntimeBinding"
+    },
+    "turns": {
+      "items": {
+        "$ref": "#/$defs/Turn"
+      },
+      "title": "Turns",
+      "type": "array"
+    },
+    "invocations": {
+      "items": {
+        "$ref": "#/$defs/SkillInvocation"
+      },
+      "title": "Invocations",
+      "type": "array"
+    },
+    "messages": {
+      "items": {
+        "$ref": "#/$defs/MessagePart"
+      },
+      "title": "Messages",
+      "type": "array"
+    },
+    "context": {
+      "$ref": "#/$defs/ContextSnapshot"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/ArtifactIndex"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    },
+    "runtime_events": {
+      "items": {
+        "$ref": "#/$defs/RuntimeEvent"
+      },
+      "title": "Runtime Events",
+      "type": "array"
+    },
+    "domain_events": {
+      "items": {
+        "$ref": "#/$defs/DomainEvent"
+      },
+      "title": "Domain Events",
+      "type": "array"
+    },
+    "intents": {
+      "items": {
+        "$ref": "#/$defs/ExecutionIntent"
+      },
+      "title": "Intents",
+      "type": "array"
+    }
+  },
+  "required": [
+    "project",
+    "skills",
+    "conversation",
+    "binding",
+    "turns",
+    "invocations",
+    "messages",
+    "context",
+    "artifacts",
+    "runtime_events",
+    "domain_events",
+    "intents"
+  ],
+  "title": "AcceptanceBundle",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:AcceptanceBundle"
+}

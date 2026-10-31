@@ -1,0 +1,512 @@
+{
+  "$defs": {
+    "LabelThreshold": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "direction": {
+          "default": "ge",
+          "enum": [
+            "ge",
+            "gt",
+            "le",
+            "lt"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "negative_label": {
+          "default": "low",
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "title": "Negative Label",
+          "type": "string"
+        },
+        "positive_label": {
+          "default": "high",
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "title": "Positive Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "LabelThreshold",
+      "type": "object"
+    },
+    "MetricSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "title": "Name",
+          "type": "string"
+        },
+        "target_id": {
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "train",
+            "val",
+            "test",
+            "external"
+          ],
+          "title": "Split",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "minimize",
+            "maximize"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "aggregation": {
+          "default": "per_target",
+          "enum": [
+            "per_target",
+            "macro",
+            "micro",
+            "equal_train_standardized"
+          ],
+          "title": "Aggregation",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "prediction": {
+          "enum": [
+            "probabilities",
+            "labels",
+            "value",
+            "risk",
+            "survival_curve"
+          ],
+          "title": "Prediction",
+          "type": "string"
+        },
+        "time_points": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Time Points",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "target_id",
+        "split",
+        "direction",
+        "prediction"
+      ],
+      "title": "MetricSpec",
+      "type": "object"
+    },
+    "ObjectiveSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "loss": {
+          "enum": [
+            "cross_entropy",
+            "binary_cross_entropy",
+            "mse",
+            "mae",
+            "huber",
+            "cox"
+          ],
+          "title": "Loss",
+          "type": "string"
+        },
+        "target_weights": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Target Weights",
+          "type": "object"
+        },
+        "normalization": {
+          "const": "observed_per_target",
+          "default": "observed_per_target",
+          "title": "Normalization",
+          "type": "string"
+        },
+        "strategy": {
+          "default": "per_bag",
+          "enum": [
+            "per_bag",
+            "full_risk_set"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "ties": {
+          "anyOf": [
+            {
+              "enum": [
+                "breslow",
+                "efron"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ties"
+        }
+      },
+      "required": [
+        "loss"
+      ],
+      "title": "ObjectiveSpec",
+      "type": "object"
+    },
+    "SelectionSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "$ref": "#/$defs/MetricSpec"
+        },
+        "fold_aggregation": {
+          "const": "mean_complete_folds",
+          "default": "mean_complete_folds",
+          "title": "Fold Aggregation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metric"
+      ],
+      "title": "SelectionSpec",
+      "type": "object"
+    },
+    "TargetSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "pattern": ".*\\S.*",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "binary",
+            "categorical",
+            "continuous",
+            "survival"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "column": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Column"
+        },
+        "classes": {
+          "anyOf": [
+            {
+              "items": {
+                "minLength": 1,
+                "pattern": ".*\\S.*",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classes"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "minimum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum"
+        },
+        "maximum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum"
+        },
+        "missing": {
+          "default": "error",
+          "enum": [
+            "error",
+            "mask",
+            "drop"
+          ],
+          "title": "Missing",
+          "type": "string"
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LabelThreshold"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "transform": {
+          "default": "identity",
+          "enum": [
+            "identity",
+            "standardize",
+            "log1p"
+          ],
+          "title": "Transform",
+          "type": "string"
+        },
+        "time_column": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Column"
+        },
+        "event_column": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Column"
+        },
+        "event_value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Value"
+        },
+        "censored_value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Censored Value"
+        },
+        "time_unit": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Unit"
+        },
+        "time_origin": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "pattern": ".*\\S.*",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Origin"
+        },
+        "censoring": {
+          "anyOf": [
+            {
+              "const": "right",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Censoring"
+        }
+      },
+      "required": [
+        "id",
+        "kind"
+      ],
+      "title": "TargetSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": 1,
+      "enum": [
+        1,
+        2
+      ],
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "family": {
+      "enum": [
+        "classification",
+        "regression",
+        "survival"
+      ],
+      "title": "Family",
+      "type": "string"
+    },
+    "targets": {
+      "items": {
+        "$ref": "#/$defs/TargetSpec"
+      },
+      "minItems": 1,
+      "title": "Targets",
+      "type": "array"
+    },
+    "target_level": {
+      "enum": [
+        "patient",
+        "slide"
+      ],
+      "title": "Target Level",
+      "type": "string"
+    },
+    "bag_level": {
+      "enum": [
+        "case",
+        "slide"
+      ],
+      "title": "Bag Level",
+      "type": "string"
+    },
+    "split_group": {
+      "minLength": 1,
+      "pattern": ".*\\S.*",
+      "title": "Split Group",
+      "type": "string"
+    },
+    "objective": {
+      "$ref": "#/$defs/ObjectiveSpec"
+    },
+    "selection": {
+      "$ref": "#/$defs/SelectionSpec"
+    },
+    "evaluation": {
+      "items": {
+        "$ref": "#/$defs/MetricSpec"
+      },
+      "minItems": 1,
+      "title": "Evaluation",
+      "type": "array"
+    }
+  },
+  "required": [
+    "family",
+    "targets",
+    "target_level",
+    "bag_level",
+    "split_group",
+    "objective",
+    "selection",
+    "evaluation"
+  ],
+  "title": "TaskSpec",
+  "type": "object"
+}

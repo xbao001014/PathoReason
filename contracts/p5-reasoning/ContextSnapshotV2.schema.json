@@ -1,0 +1,476 @@
+{
+  "$defs": {
+    "ArtifactReference": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "artifact",
+          "default": "artifact",
+          "title": "Kind",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "artifact_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "artifact_id",
+        "sha256"
+      ],
+      "title": "ArtifactReference",
+      "type": "object"
+    },
+    "BusinessReference": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "business",
+          "default": "business",
+          "title": "Kind",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "workflow",
+            "decision",
+            "run"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/WorkflowRef"
+        }
+      },
+      "required": [
+        "role",
+        "reference"
+      ],
+      "title": "BusinessReference",
+      "type": "object"
+    },
+    "FormalRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason.formal/1",
+          "default": "pathoreason.formal/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "const": "pathoreason.formal_study",
+          "default": "pathoreason.formal_study",
+          "title": "Adapter",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "const": "file_sha256",
+          "default": "file_sha256",
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "resource_id",
+        "revision"
+      ],
+      "title": "FormalRef",
+      "type": "object"
+    },
+    "FormalReference": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "formal",
+          "default": "formal",
+          "title": "Kind",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/FormalRef"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "title": "FormalReference",
+      "type": "object"
+    },
+    "LegacyReference": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "legacy",
+          "default": "legacy",
+          "title": "Kind",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/LegacyResourceRef"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "title": "LegacyReference",
+      "type": "object"
+    },
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    },
+    "WorkflowRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason.business/1",
+          "default": "pathoreason.business/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "const": "pathoreason.synthetic_mil",
+          "default": "pathoreason.synthetic_mil",
+          "title": "Adapter",
+          "type": "string"
+        },
+        "project_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "resource_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "const": "manifest_sha256",
+          "default": "manifest_sha256",
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "resource_id",
+        "revision"
+      ],
+      "title": "WorkflowRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "pathoreason.context/2",
+      "enum": [
+        "pathoreason.context/2",
+        "pathoreason.context/3"
+      ],
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "project_revision": {
+      "exclusiveMinimum": 0,
+      "title": "Project Revision",
+      "type": "integer"
+    },
+    "goal": {
+      "minLength": 1,
+      "title": "Goal",
+      "type": "string"
+    },
+    "constraints": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Constraints",
+      "type": "array"
+    },
+    "source_refs": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "artifact": "#/$defs/ArtifactReference",
+            "business": "#/$defs/BusinessReference",
+            "formal": "#/$defs/FormalReference",
+            "legacy": "#/$defs/LegacyReference"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/LegacyReference"
+          },
+          {
+            "$ref": "#/$defs/BusinessReference"
+          },
+          {
+            "$ref": "#/$defs/ArtifactReference"
+          },
+          {
+            "$ref": "#/$defs/FormalReference"
+          }
+        ]
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "decision_refs": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "artifact": "#/$defs/ArtifactReference",
+            "business": "#/$defs/BusinessReference",
+            "formal": "#/$defs/FormalReference",
+            "legacy": "#/$defs/LegacyReference"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/LegacyReference"
+          },
+          {
+            "$ref": "#/$defs/BusinessReference"
+          },
+          {
+            "$ref": "#/$defs/ArtifactReference"
+          },
+          {
+            "$ref": "#/$defs/FormalReference"
+          }
+        ]
+      },
+      "title": "Decision Refs",
+      "type": "array"
+    },
+    "active_run_refs": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "artifact": "#/$defs/ArtifactReference",
+            "business": "#/$defs/BusinessReference",
+            "formal": "#/$defs/FormalReference",
+            "legacy": "#/$defs/LegacyReference"
+          },
+          "propertyName": "kind"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/LegacyReference"
+          },
+          {
+            "$ref": "#/$defs/BusinessReference"
+          },
+          {
+            "$ref": "#/$defs/ArtifactReference"
+          },
+          {
+            "$ref": "#/$defs/FormalReference"
+          }
+        ]
+      },
+      "title": "Active Run Refs",
+      "type": "array"
+    },
+    "artifact_ids": {
+      "items": {
+        "maxLength": 160,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "type": "string"
+      },
+      "title": "Artifact Ids",
+      "type": "array"
+    },
+    "artifact_refs": {
+      "items": {
+        "$ref": "#/$defs/ArtifactReference"
+      },
+      "title": "Artifact Refs",
+      "type": "array"
+    },
+    "pending_items": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Pending Items",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "origin_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Origin Version"
+    },
+    "origin_digest": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Origin Digest"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "project_revision",
+    "goal",
+    "constraints",
+    "source_refs",
+    "decision_refs",
+    "active_run_refs",
+    "artifact_ids",
+    "artifact_refs",
+    "pending_items",
+    "created_at",
+    "digest"
+  ],
+  "title": "ContextSnapshotV2",
+  "type": "object"
+}

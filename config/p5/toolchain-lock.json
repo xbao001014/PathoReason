@@ -1,0 +1,18 @@
+[
+  {
+    "repository": "rstudio/tinytex-releases",
+    "tag": "v2026.10",
+    "asset": "TinyTeX-linux-x86_64-v2026.10.tar.xz",
+    "sha256": "54fec1c79ab437d2d52e2f918bdb738c85779d654a93e62cc44f022e227692b5",
+    "size_bytes": 151904844,
+    "upstream_digest_verified": true
+  },
+  {
+    "repository": "jgm/pandoc",
+    "tag": "3.13",
+    "asset": "pandoc-3.13-linux-amd64.tar.gz",
+    "sha256": "38aa33b325a2bc96a4c39409631212db55702f564250bcdbead180b3bf646389",
+    "size_bytes": 36101020,
+    "upstream_digest_verified": true
+  }
+]

@@ -1,0 +1,117 @@
+{
+  "schema_version": "pathoreason.runtime-lock/1",
+  "codex": {
+    "version": "0.164.0",
+    "transport": "stdio",
+    "command": [
+      "codex",
+      "app-server"
+    ],
+    "required_methods": [
+      "initialize",
+      "account/read",
+      "model/list",
+      "thread/start",
+      "thread/resume",
+      "turn/start",
+      "turn/interrupt",
+      "skills/list",
+      "thread/compact/start"
+    ],
+    "auth": "environment_specific_codex_login",
+    "auth_probe": {
+      "request_ok": true,
+      "present": false,
+      "type": null,
+      "requires_openai_auth": true,
+      "inference_verified": false
+    },
+    "preferred_model": "gpt-6.1-sol",
+    "reasoning_effort": "low",
+    "model_status": "catalog_only",
+    "schema_manifest_sha256": "dad123376515a3bb0290d87ca6c30f6202fe2e5e075fb2e2426d735467b5f590",
+    "schema_file_count": 320,
+    "required_methods_verified": [
+      "initialize",
+      "account/read",
+      "model/list",
+      "thread/start",
+      "thread/resume",
+      "turn/start",
+      "turn/interrupt",
+      "skills/list",
+      "thread/compact/start"
+    ],
+    "acceptance_environment": "local",
+    "server_login_entry": "implemented_auth_only",
+    "server_inference_required": false,
+    "auth_probe_environment": "bxn-server",
+    "local_version_status": "verified_0.165.0",
+    "preferred_model_scope": "historical_server_catalog_only",
+    "historical_server_probe_retained": true
+  },
+  "opencode": {
+    "version": "1.18.33",
+    "phase": "P1",
+    "protocol_status": "real_session_stream_stop_recovery_verified",
+    "acceptance_environment": "bxn-server",
+    "provider": "deepseek-direct",
+    "model": "deepseek-v4-pro",
+    "model_status": "inference_verified",
+    "context_basics_phase": "P1",
+    "context_advanced_phase": "P3",
+    "openapi_sha256": "67a9c8036e63776d80376ecd34c022d13a26615c5e5722e1c301250942588088",
+    "native_storage": "/data/bxn/PathoReason/runtime/opencode",
+    "protocol_evidence": "/data/bxn/PathoReason/acceptance/p1-20261030/native-protocol-verification.json",
+    "real_acceptance_evidence": "/data/bxn/PathoReason/acceptance/p1-live-20261030/live-verification.json",
+    "context_advanced_status": "manual_compaction_and_post_compaction_turn_verified_P3"
+  },
+  "tools": {
+    "node": "v24.22.1",
+    "npm": "11.19.1",
+    "uv": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+  },
+  "frontend_baseline": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "5.7.3",
+    "vite": "6.4.3",
+    "@vitejs/plugin-react": "4.7.0",
+    "react-markdown": "10.1.0",
+    "remark-gfm": "4.0.1",
+    "vitest": "3.2.7"
+  },
+  "backend_p1": {
+    "fastapi": "0.141.1",
+    "uvicorn": "0.54.0"
+  },
+  "runtime_executables": {
+    "codex": {
+      "path": "/home/bxn/projects/auto-research/.venv/bin/codex",
+      "resolved_path": "/home/bxn/.nvm/versions/node/v24.22.1/lib/node_modules/@openai/codex/bin/codex.js",
+      "sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70"
+    },
+    "opencode": {
+      "path": "/home/bxn/projects/auto-research/.venv/bin/opencode",
+      "resolved_path": "/home/bxn/projects/auto-research/.tools/node_modules/opencode-ai/bin/opencode.exe",
+      "sha256": "0abbb7c32ab0294c0a7bfa2705f9ff0df5dce5ab721d1f00cccfe393f2a11427"
+    }
+  },
+  "plan_revision": "v0.5",
+  "primary_server_runtime": "opencode",
+  "codex_local_p3": {
+    "version": "0.165.0",
+    "environment": "local",
+    "auth": "existing_local_login_reference",
+    "native_storage": "~/.local/share/PathoReason/runtime/codex",
+    "models": [
+      "gpt-6.1-sol",
+      "gpt-6-luna"
+    ],
+    "catalog_source": "model/list + local model cache effective context percentage",
+    "protocol_manifest_sha256": "d5bfbe8582aa4ed87842213f8a4c4e7da709303622861d6c4fcc8b928242f3cc",
+    "schema_file_count": 320,
+    "inference_verified": true,
+    "business_scope": "read_only_project_context_and_artifacts"
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "$defs": {
+    "RuntimePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "turn_status",
+            "text_delta",
+            "tool_summary",
+            "usage",
+            "compaction",
+            "error"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text"
+        },
+        "part_id": {
+          "anyOf": [
+            {
+              "maxLength": 160,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Part Id"
+        },
+        "turn_status": {
+          "anyOf": [
+            {
+              "enum": [
+                "queued",
+                "running",
+                "interrupt_requested",
+                "completed",
+                "interrupted",
+                "failed",
+                "recovery_required"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turn Status"
+        },
+        "input_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Tokens"
+        },
+        "output_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Tokens"
+        },
+        "context_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context Tokens"
+        },
+        "usage_source": {
+          "anyOf": [
+            {
+              "enum": [
+                "runtime",
+                "provider",
+                "estimated",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Usage Source"
+        },
+        "usage_scope": {
+          "anyOf": [
+            {
+              "enum": [
+                "turn",
+                "cumulative",
+                "context_window"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Usage Scope"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "RuntimePayload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "runtime_binding_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Runtime Binding Id",
+      "type": "string"
+    },
+    "seq": {
+      "exclusiveMinimum": 0,
+      "title": "Seq",
+      "type": "integer"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "source_event_key": {
+      "minLength": 1,
+      "title": "Source Event Key",
+      "type": "string"
+    },
+    "scope": {
+      "const": "runtime",
+      "default": "runtime",
+      "title": "Scope",
+      "type": "string"
+    },
+    "producer": {
+      "const": "runtime_adapter",
+      "default": "runtime_adapter",
+      "title": "Producer",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/RuntimePayload"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "turn_id",
+    "runtime_binding_id",
+    "seq",
+    "occurred_at",
+    "source_event_key",
+    "payload"
+  ],
+  "title": "RuntimeEvent",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:RuntimeEvent"
+}

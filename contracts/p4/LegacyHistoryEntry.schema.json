@@ -1,0 +1,160 @@
+{
+  "$defs": {
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.legacy-history/1",
+      "default": "pathoreason.legacy-history/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "origin": {
+      "const": "legacy_import",
+      "default": "legacy_import",
+      "title": "Origin",
+      "type": "string"
+    },
+    "source_kind": {
+      "enum": [
+        "review",
+        "repair"
+      ],
+      "title": "Source Kind",
+      "type": "string"
+    },
+    "source_ref": {
+      "$ref": "#/$defs/LegacyResourceRef"
+    },
+    "source_record_id": {
+      "title": "Source Record Id",
+      "type": "string"
+    },
+    "source_record_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Record Digest",
+      "type": "string"
+    },
+    "occurred_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Occurred At"
+    },
+    "question": {
+      "title": "Question",
+      "type": "string"
+    },
+    "answer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Answer"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "native_session_id": {
+      "default": null,
+      "title": "Native Session Id",
+      "type": "null"
+    },
+    "executable": {
+      "const": false,
+      "default": false,
+      "title": "Executable",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "source_kind",
+    "source_ref",
+    "source_record_id",
+    "source_record_digest",
+    "occurred_at",
+    "question",
+    "status"
+  ],
+  "title": "LegacyHistoryEntry",
+  "type": "object"
+}

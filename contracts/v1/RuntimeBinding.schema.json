@@ -1,0 +1,110 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "runtime": {
+      "enum": [
+        "codex",
+        "opencode"
+      ],
+      "title": "Runtime",
+      "type": "string"
+    },
+    "runtime_version": {
+      "minLength": 1,
+      "title": "Runtime Version",
+      "type": "string"
+    },
+    "native_session_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Native Session Id"
+    },
+    "state": {
+      "enum": [
+        "unbound",
+        "bound",
+        "closed"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "storage_namespace": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Storage Namespace",
+      "type": "string"
+    },
+    "workspace_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "auth_ref": {
+      "enum": [
+        "server_codex_login",
+        "server_provider_credential"
+      ],
+      "title": "Auth Ref",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "runtime",
+    "runtime_version",
+    "native_session_id",
+    "state",
+    "storage_namespace",
+    "workspace_id",
+    "auth_ref",
+    "created_at"
+  ],
+  "title": "RuntimeBinding",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:RuntimeBinding"
+}

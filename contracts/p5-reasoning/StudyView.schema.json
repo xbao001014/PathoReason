@@ -1,0 +1,79 @@
+{
+  "$defs": {
+    "StudyBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "max_turns": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "max_wall_seconds": {
+          "maximum": 86400,
+          "minimum": 60,
+          "title": "Max Wall Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_turns",
+        "max_wall_seconds"
+      ],
+      "title": "StudyBudget",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.study/1",
+      "default": "pathoreason.study/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "workspace": {
+      "title": "Workspace",
+      "type": "string"
+    },
+    "budget": {
+      "$ref": "#/$defs/StudyBudget"
+    },
+    "used_turns": {
+      "title": "Used Turns",
+      "type": "integer"
+    },
+    "used_wall_seconds": {
+      "title": "Used Wall Seconds",
+      "type": "number"
+    },
+    "phase": {
+      "default": "prepared",
+      "title": "Phase",
+      "type": "string"
+    },
+    "scientific_approval": {
+      "const": false,
+      "default": false,
+      "title": "Scientific Approval",
+      "type": "boolean"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "workspace",
+    "budget",
+    "used_turns",
+    "used_wall_seconds",
+    "revision"
+  ],
+  "title": "StudyView",
+  "type": "object"
+}

@@ -1,0 +1,21 @@
+/* Semantic colors override monochrome surfaces only for actual status indicators. */
+:root {
+  --status-neutral: #525252; --status-neutral-bg: #f5f5f5; --status-neutral-border: #d4d4d4;
+  --status-info: #1d4ed8; --status-info-bg: #eff6ff; --status-info-border: #93c5fd;
+  --status-success: #166534; --status-success-bg: #f0fdf4; --status-success-border: #86efac;
+  --status-warning: #92400e; --status-warning-bg: #fffbeb; --status-warning-border: #fcd34d;
+  --status-danger: #b91c1c; --status-danger-bg: #fef2f2; --status-danger-border: #fca5a5;
+}
+.status-neutral {--status-fg:var(--status-neutral);--status-bg:var(--status-neutral-bg);--status-border:var(--status-neutral-border)}
+.status-info {--status-fg:var(--status-info);--status-bg:var(--status-info-bg);--status-border:var(--status-info-border)}
+.status-success {--status-fg:var(--status-success);--status-bg:var(--status-success-bg);--status-border:var(--status-success-border)}
+.status-warning {--status-fg:var(--status-warning);--status-bg:var(--status-warning-bg);--status-border:var(--status-warning-border)}
+.status-danger {--status-fg:var(--status-danger);--status-bg:var(--status-danger-bg);--status-border:var(--status-danger-border)}
+.tool-skill-card .tag.status-badge[class*="status-"],.status-badge[class*="status-"],.tool-strip>span[class*="status-"],.runtime-badge[class*="status-"] {
+  color:var(--status-fg);background:var(--status-bg);border:1px solid var(--status-border);
+  border-radius:var(--radius-badges);font-size:var(--text-caption);font-weight:500;padding:4px 10px;line-height:1.5;
+}
+.connection-dot[class*="status-"],.runtime-badge .connection-dot {background:var(--status-fg)}
+.status-text[class*="status-"] {color:var(--status-fg)}
+.turn-error[class*="status-"] {color:var(--status-fg);background:var(--status-bg);border:1px solid var(--status-border)}
+.stages .current .stage-index{color:var(--status-info);background:var(--status-info-bg);border-color:var(--status-info-border)}

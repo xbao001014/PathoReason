@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "project_revision": {
+      "exclusiveMinimum": 0,
+      "title": "Project Revision",
+      "type": "integer"
+    },
+    "goal": {
+      "minLength": 1,
+      "title": "Goal",
+      "type": "string"
+    },
+    "constraints": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Constraints",
+      "type": "array"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/LegacyResourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "decision_refs": {
+      "items": {
+        "$ref": "#/$defs/LegacyResourceRef"
+      },
+      "title": "Decision Refs",
+      "type": "array"
+    },
+    "active_run_refs": {
+      "items": {
+        "$ref": "#/$defs/LegacyResourceRef"
+      },
+      "title": "Active Run Refs",
+      "type": "array"
+    },
+    "artifact_ids": {
+      "items": {
+        "maxLength": 160,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "type": "string"
+      },
+      "title": "Artifact Ids",
+      "type": "array"
+    },
+    "pending_items": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Pending Items",
+      "type": "array"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "project_revision",
+    "goal",
+    "constraints",
+    "source_refs",
+    "decision_refs",
+    "active_run_refs",
+    "artifact_ids",
+    "pending_items",
+    "created_at",
+    "digest"
+  ],
+  "title": "ContextSnapshot",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:ContextSnapshot"
+}

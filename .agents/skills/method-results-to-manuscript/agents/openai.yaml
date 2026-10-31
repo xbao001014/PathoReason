@@ -1,0 +1,4 @@
+interface:
+  display_name: "Method & Results to Manuscript"
+  short_description: "Convert completed methods and results into a paper"
+  default_prompt: "Use $method-results-to-manuscript to turn this project's verified methodology and experiment records into a staged, evidence-grounded manuscript while preserving the originals."

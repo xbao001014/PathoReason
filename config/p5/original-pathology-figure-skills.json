@@ -1,0 +1,59 @@
+{
+  "schema": "pathology-figure-skills/1",
+  "skills": [
+    {
+      "name": "scientific-schematics",
+      "repository": "https://github.com/K-Dense-AI/scientific-agent-skills",
+      "revision": "593377bb048752abb0152deab9fbb1083a6087df",
+      "path": "skills/scientific-schematics",
+      "files": {
+        "SKILL.md": "e15d761ef88013c98fd5b19cc144aba7336e20dbadf340db17bd1ba2227d1d69",
+        "UPSTREAM_LICENSE.md": "09b02a3c9df3053c55531d503357a9c7cde275970e6c3ceaa1ddf5f0e90b40c1",
+        "references/best_practices.md": "a991e1f2219feaffea93360c39cb5a7102c7cd8985c0c7aafc68fa617d3b8581",
+        "references/iterative_refinement.md": "f151ecba3c786b55f6f4b505ddca01957deabbc8f5dc9dcd0d3e27e766c3da75",
+        "scripts/example_usage.sh": "921e4c2332f83cafa75491be4bb92dd863c86cd9118ef0e04028a7eb74a9ae0b",
+        "scripts/generate_schematic.py": "0c81ce099d5ab9aa3d3c486aa9bd3e81ee1117e18a54db14bb0a68de61eaa4bc",
+        "scripts/generate_schematic_ai.py": "7316f2df92f442b8c60a5dd2bd8b504e17449d4be89352e5af24be2239700046"
+      },
+      "execution": "design_guidance_host_image_route"
+    },
+    {
+      "name": "histolab",
+      "repository": "https://github.com/K-Dense-AI/scientific-agent-skills",
+      "revision": "593377bb048752abb0152deab9fbb1083a6087df",
+      "path": "skills/histolab",
+      "files": {
+        "SKILL.md": "af0c6c98951d02cab64e904504a8ab97b815a461e99744134da0e7dd57189331",
+        "UPSTREAM_LICENSE.md": "09b02a3c9df3053c55531d503357a9c7cde275970e6c3ceaa1ddf5f0e90b40c1",
+        "references/core_capabilities.md": "4fe619353f18b777bdf06802c47d6dfcd986dc0c2c9897110b343e77b378b61c",
+        "references/filters_preprocessing.md": "69a8a29ad4a3a7f7cef339829d2537128a01bc8b0d38a7e86bed17de067a78c0",
+        "references/slide_management.md": "ca00855c4d5f07ea4800d846c2f0e7479b8500e8e6e355c81e527ac5e736ed9b",
+        "references/tile_extraction.md": "2ccc97eb7e41aa5c2cf2f3c2e6de37b82279bc653df707d411fc4569159df656",
+        "references/tissue_masks.md": "86e6ae5bc9b0016da8d67cd09dfc03e0ef73de28da103976aca586494ad4081b",
+        "references/typical_workflows.md": "2cea51e844087bc215aa5c78de6317d19425ca8265cdd5929416a0c01f0f4660",
+        "references/visualization.md": "b5d07ffb9e88ab2d78536072800653da8f1167bf11afe6dc5bacec074e7168bc"
+      },
+      "execution": "optional_local_wsi_runtime_not_installed"
+    },
+    {
+      "name": "pathology-mil-paper-figures",
+      "version": "1.1.0",
+      "origin": "project_local",
+      "path": ".agents/skills/pathology-mil-paper-figures",
+      "repository": "project-local",
+      "revision": "1.1.0",
+      "provenance": "Created from explicit user specification; /root global skill was unreadable for bxn",
+      "execution": "evidence_constrained_workflow",
+      "files": {
+        "SKILL.md": "952ea9278bcf12df79f4f612c2e22d7560f378815c9c672165291e8829f5ad10",
+        "references/auto-research-integration.md": "3d54b70132b3759e0b049054b310e79c786bbda10e69214b8bcd79ff47bc7d61",
+        "references/evidence-and-provenance.md": "73b4653eb0c4e79eb7b80ab892f0f85e35844ab008a5121240b346640353f81d",
+        "references/figure-taxonomy.md": "c279c1a4c40e166e72c3fdcb0c635eafc48776b1955ebd7bd6d8deda27a38fad",
+        "references/layout-and-qa.md": "fc3874571056cdad34e3248adeb121ca79876753390fc8fd2debac77c248ef43",
+        "references/task-recipes.md": "a4b14312c00d18cdaf99928bdb2014e9c24ebae1b86e7b22d68bed4874e608db"
+      }
+    }
+  ],
+  "router": ".agents/skills/pathology-figures/SKILL.md",
+  "numeric_plots": ".agents/skills/scientific-visualization/SKILL.md"
+}

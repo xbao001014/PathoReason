@@ -1,0 +1,23 @@
+{
+  "journal_id": "modern-pathology",
+  "journal_name": "Modern Pathology",
+  "publisher": "Elsevier",
+  "guide_url": "https://www.sciencedirect.com/journal/modern-pathology/publish/guide-for-authors",
+  "profile_checked_on": "2026-09-15",
+  "article_type": "Research Article",
+  "review_model": "single_anonymized",
+  "abstract_max_words": 300,
+  "abstract_style": "unstructured",
+  "body_max_words": 7000,
+  "title_max_characters": 150,
+  "keywords_min": null,
+  "keywords_max": null,
+  "figures_tables_max": 8,
+  "references_max": 100,
+  "english": "American",
+  "number_sections": false,
+  "highlights": "not_specified",
+  "graphical_abstract": "not_specified",
+  "initial_format": "your_paper_your_way",
+  "latex_source_accepted": true
+}

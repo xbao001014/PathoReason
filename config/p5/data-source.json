@@ -1,0 +1,13 @@
+{
+  "schema_version": "pathoreason.data-source/1",
+  "endpoint": "http://ai.gzfxyl.cn/api/v1/pathology/diseases/slides",
+  "method": "GET",
+  "query_fields": ["DiseaseName", "Limit"],
+  "default_limit": 1000,
+  "max_response_bytes": 33554432,
+  "timeout_seconds": 60,
+  "credential_env": null,
+  "credential_header": null,
+  "source": "auto-research/data_api.png",
+  "verified_scope": "configuration_from_existing_repository; live_fetch_pending"
+}

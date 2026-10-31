@@ -1,0 +1,42 @@
+{
+  "schema_version": "pathoreason.config/1",
+  "data_root": "/data/bxn/PathoReason",
+  "legacy_root": "/home/bxn/projects/auto-research",
+  "host": "127.0.0.1",
+  "api_port": 8520,
+  "web_dev_port": 8521,
+  "opencode_port": 8522,
+  "codex_binary": "/home/bxn/projects/auto-research/.venv/bin/codex",
+  "opencode_binary": "/home/bxn/projects/auto-research/.venv/bin/opencode",
+  "auth_mode": "server_provider_credential",
+  "p0_inference_calls": 0,
+  "p1_test_limits": {
+    "max_turns": 12,
+    "max_wall_seconds": 1200,
+    "concurrency": 1,
+    "automatic_retries": 0,
+    "status": "enforced_application_limits",
+    "provider_spend_limit": {
+      "amount": null,
+      "currency": null,
+      "status": "to_be_set_for_integration"
+    }
+  },
+  "execution_environment": "bxn-server",
+  "primary_runtime": "opencode",
+  "plan_revision": "v0.5",
+  "provider": {
+    "id": "deepseek-direct",
+    "model": "deepseek-v4-pro",
+    "endpoint": "https://api.deepseek.com/v1",
+    "credential_ref": "DEEPSEEK_API_KEY",
+    "readiness": "credential_missing"
+  },
+  "codex": {
+    "server_login_entry": "implemented_auth_only",
+    "server_inference_required": false,
+    "acceptance_environment": "local",
+    "local_auth": "local_codex_login"
+  },
+  "credential_file": "/home/bxn/.config/pathoreason/credentials.env"
+}

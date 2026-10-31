@@ -1,0 +1,79 @@
+[
+  {
+    "id": "pathology_mil",
+    "title": "病理 MIL 研究",
+    "description": "围绕全切片图像的多实例学习研究，从任务定义到论文交付。",
+    "stages": [
+      {
+        "id": "intake",
+        "title": "数据与任务定义",
+        "description": "绑定数据与资源，明确研究问题、任务和评价标准。",
+        "skill_ids": [
+          "dataset_intake",
+          "academic-research-suite",
+          "histolab"
+        ]
+      },
+      {
+        "id": "baseline",
+        "title": "基线研究",
+        "description": "建立可复现的基线和开发评估。",
+        "skill_ids": [
+          "mil_baseline",
+          "paper-lookup"
+        ]
+      },
+      {
+        "id": "mechanism",
+        "title": "机制与消融",
+        "description": "提出机制假设，组织对照与消融验证。",
+        "skill_ids": [
+          "mechanism_study"
+        ]
+      },
+      {
+        "id": "results",
+        "title": "结果解读与汇报",
+        "description": "梳理证据、指标与研究边界，形成带来源的解读。",
+        "skill_ids": [
+          "results_explanation",
+          "statistical-analysis",
+          "scientific-visualization"
+        ]
+      },
+      {
+        "id": "manuscript",
+        "title": "论文编写",
+        "description": "将已有研究组织为稿件，保留结论与来源的对应关系。",
+        "skill_ids": [
+          "manuscript",
+          "method-results-to-manuscript",
+          "scientific-writing",
+          "citation-management",
+          "peer-review"
+        ]
+      },
+      {
+        "id": "figures",
+        "title": "图件与排版交付",
+        "description": "整理研究图件、稿件版式与可供审阅的成果。",
+        "skill_ids": [
+          "figures_typesetting",
+          "pathology-figures",
+          "pathology-mil-paper-figures",
+          "scientific-schematics",
+          "manuscript-to-latex"
+        ]
+      },
+      {
+        "id": "recovery",
+        "title": "排障与恢复",
+        "description": "贯穿各流程阶段，核对失败原因并恢复已有任务。",
+        "skill_ids": [
+          "repair_recovery"
+        ],
+        "cross_stage": true
+      }
+    ]
+  }
+]

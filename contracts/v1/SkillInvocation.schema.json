@@ -1,0 +1,80 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "skill_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Skill Id",
+      "type": "string"
+    },
+    "skill_version": {
+      "minLength": 1,
+      "title": "Skill Version",
+      "type": "string"
+    },
+    "skill_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Skill Digest",
+      "type": "string"
+    },
+    "input_artifact_ids": {
+      "items": {
+        "maxLength": 160,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "type": "string"
+      },
+      "title": "Input Artifact Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "turn_id",
+    "skill_id",
+    "skill_version",
+    "skill_digest",
+    "input_artifact_ids"
+  ],
+  "title": "SkillInvocation",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:SkillInvocation"
+}

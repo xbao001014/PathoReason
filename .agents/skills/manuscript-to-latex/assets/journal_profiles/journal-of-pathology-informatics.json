@@ -1,0 +1,23 @@
+{
+  "journal_id": "journal-of-pathology-informatics",
+  "journal_name": "Journal of Pathology Informatics",
+  "publisher": "Elsevier",
+  "guide_url": "https://www.sciencedirect.com/journal/journal-of-pathology-informatics/publish/guide-for-authors",
+  "profile_checked_on": "2026-09-15",
+  "article_type": "Research article",
+  "review_model": "double_anonymized",
+  "abstract_max_words": 250,
+  "abstract_style": "not_specified",
+  "body_max_words": null,
+  "title_max_characters": null,
+  "keywords_min": 1,
+  "keywords_max": 7,
+  "figures_tables_max": null,
+  "references_max": null,
+  "english": "American_or_British_consistent",
+  "number_sections": true,
+  "highlights": "encouraged_3_to_5_max_85_characters_each",
+  "graphical_abstract": "encouraged_separate_file_min_531x1328_hxw",
+  "initial_format": "editable_sources_required",
+  "latex_source_accepted": true
+}

@@ -1,0 +1,23 @@
+.permission-trigger {border:1px solid var(--color-hairline);border-radius:var(--radius-buttons);background:var(--color-canvas);color:var(--color-ink);padding:var(--spacing-8) var(--spacing-12);font-size:var(--text-body);white-space:nowrap}
+.permission-dialog {max-width:560px;width:calc(100vw - 32px)}
+.permission-dialog .dialog-body {display:flex;flex-direction:column;gap:var(--spacing-24)}
+.permission-dialog fieldset {border:0;padding:0;margin:0;min-width:0}
+.permission-dialog legend {font-weight:600;margin-bottom:var(--spacing-12)}
+.permission-dialog .dialog-body p,.permission-dialog .dialog-body footer {margin:0}
+.permission-modes {display:flex;gap:var(--spacing-12);flex-wrap:wrap}
+.permission-dialog .permission-modes label {display:flex;flex-direction:row;align-items:center;gap:var(--spacing-8);margin:0;padding:var(--spacing-12);border:1px solid var(--color-hairline);border-radius:var(--radius-buttons);font-size:var(--text-body);cursor:pointer}
+.permission-dialog .permission-modes label:has(input:checked) {background:var(--color-canvas);border-color:var(--color-control-border);font-weight:var(--weight-support)}
+.permission-dialog .permission-modes input {width:16px;height:16px;padding:0;margin:0;flex:none;accent-color:var(--color-ink)}
+.permission-dialog .permission-tools {display:grid;gap:var(--spacing-8);width:256px;max-width:100%}
+.permission-dialog .permission-tools legend {font-weight:var(--weight-support);color:var(--color-text-secondary);margin-bottom:var(--spacing-8)}
+.permission-dialog .permission-tools label {display:grid;grid-template-columns:minmax(0,1fr) 128px;align-items:center;gap:var(--spacing-12);margin:0;font-size:var(--text-body)}
+.permission-tools .composer-select-form {width:100%;min-height:var(--control-height-compact);padding-block:var(--spacing-4)}
+.permission-notes {display:flex;flex-direction:column;gap:var(--spacing-8)}
+.permission-scope,.permission-dialog details {color:var(--color-text-secondary);font-size:var(--text-body)}
+.permission-dialog summary {cursor:pointer}
+.permission-dialog .permission-notes details[open] p {margin-top:var(--spacing-12);margin-bottom:var(--spacing-8)}
+.permission-consequence {color:var(--color-ink)}
+.permission-patterns {overflow-wrap:anywhere}
+@media(max-width:760px){.permission-modes{gap:var(--spacing-8)}.permission-dialog .permission-modes label{padding:var(--spacing-12) var(--spacing-8)}.permission-dialog{width:calc(100vw - 16px)}}
+.permission-dialog .permission-modes input:focus-visible {outline:none}
+.permission-dialog .permission-modes label:has(input:focus-visible) {outline:2px solid var(--color-control-border);outline-offset:2px}

@@ -1,0 +1,469 @@
+{
+  "schema_version": "pathoreason/1",
+  "fixture_kind": "contract_only",
+  "project": {
+    "schema_version": "pathoreason/1",
+    "id": "prj_cesc_reading",
+    "title": "CESC 成果解读",
+    "objective": "解释已有开发证据并定位论文审阅稿",
+    "revision": 1,
+    "created_at": "2026-10-30T05:00:00Z",
+    "status": "active",
+    "resources": [
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_shared_context_replication_20261028_analysis/CONCLUSIONS.json",
+        "revision": "f083c60831d589b2818c127b00a7b74fbd4cc6b3ba7db44b40502da0a2fd4264",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/_manuscript_pipeline/pipeline_index.json",
+        "revision": "e2296d56a3d0ba0b0cf2e5212ebdf78f91bcaeea1c2e10f6340ea80dfe787cc8",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/DELIVERABLES/CESC_manuscript.pdf",
+        "revision": "b033889e765c376c24adfbcd6b7ff7fbe74fcf90f12fa8631c421f9c604e9043",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.experiment",
+        "resource_id": "11e2e1f03fe84ca38bf34b6315c8e3da",
+        "revision": "ca2375b973e7c4d4fff6623d1485bccc41a49442b2fe1db2f2de05c3ed3fd6d4",
+        "revision_kind": "manifest_sha256",
+        "access": "read_only"
+      }
+    ]
+  },
+  "skills": [
+    {
+      "schema_version": "pathoreason/1",
+      "id": "results_explanation",
+      "version": "0.1.0",
+      "title": "结果解读与研究汇报",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:research_reporting"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "9b40b4f10fc4d80cad9b9161ec06593d610d10b647c629b8bcbdc7dd33bf41f5"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "dataset_intake",
+      "version": "0.1.0",
+      "title": "数据接入与任务定义",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:dataset_intake"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "3dfb67392c0537d184b1f10b79e937e097343f309b88832735be9b0704f139ee"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "mil_baseline",
+      "version": "0.1.0",
+      "title": "病理 MIL 基线研究",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:auto_mil"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "a507c66dfceab57d28c89a3543ff570162ad6540a41cce2f57e2770149526d5f"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "mechanism_study",
+      "version": "0.1.0",
+      "title": "机制假设与消融研究",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:performance_loop"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "947f9bc9f53abcbc05c7ad354391c34d068ad6952c40ba2490d599935e3c9cb9"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "manuscript",
+      "version": "0.1.0",
+      "title": "研究成果转论文",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:manuscript_pipeline"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "cfdc179ac1a0ddb144f8b6b3f1c2cf9c874b292d140774cd0aeb38f78f9f3bcc"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "figures_typesetting",
+      "version": "0.1.0",
+      "title": "图件与论文排版",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:manuscript_assets"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "c942ef71313d30b566f49b57775b95892f888713feedcda7a484b30150db6140"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "repair_recovery",
+      "version": "0.1.0",
+      "title": "实验排障与恢复",
+      "description": "既有能力的产品目录；PathoReason 运行时适配尚未接入。",
+      "input_schema_ref": "urn:pathoreason:contracts:v1:ArtifactIndex",
+      "output_schema_ref": "urn:pathoreason:contracts:v1:MessagePart",
+      "instruction_refs": [],
+      "capability_refs": [
+        "auto_research:workbench"
+      ],
+      "workflow_template_refs": [],
+      "runtime_support": [
+        "codex",
+        "opencode"
+      ],
+      "required_inputs": [
+        "project resource bindings"
+      ],
+      "required_tools": [
+        "legacy evidence reader"
+      ],
+      "implementation_status": "adapter_pending",
+      "evidence_scope": "contract_only",
+      "runtime_readiness": "unavailable",
+      "unavailable_reason": "PathoReason runtime adapter pending; server Codex authentication missing",
+      "digest": "0d1c3046cf755df8559239fd0bb1543382fd582e37a65e4583270d475ba6c572"
+    }
+  ],
+  "conversation": {
+    "schema_version": "pathoreason/1",
+    "id": "conv_p0_fixture",
+    "project_id": "prj_cesc_reading",
+    "title": "P0 offline contract example",
+    "status": "open",
+    "active_runtime_binding_id": "bind_p0_fixture",
+    "created_at": "2026-10-30T05:00:00Z"
+  },
+  "binding": {
+    "schema_version": "pathoreason/1",
+    "id": "bind_p0_fixture",
+    "project_id": "prj_cesc_reading",
+    "conversation_id": "conv_p0_fixture",
+    "runtime": "codex",
+    "runtime_version": "0.164.0",
+    "native_session_id": null,
+    "state": "unbound",
+    "storage_namespace": "prj_cesc_reading",
+    "workspace_id": "prj_cesc_reading",
+    "auth_ref": "server_codex_login",
+    "created_at": "2026-10-30T05:00:00Z"
+  },
+  "turns": [
+    {
+      "schema_version": "pathoreason/1",
+      "id": "turn_p0_fixture",
+      "project_id": "prj_cesc_reading",
+      "conversation_id": "conv_p0_fixture",
+      "runtime_binding_id": "bind_p0_fixture",
+      "request_key": "req_p0_fixture",
+      "status": "queued",
+      "model": {
+        "schema_version": "pathoreason/1",
+        "runtime": "codex",
+        "provider": "openai",
+        "model": "gpt-6.1-sol",
+        "context_limit_tokens": null,
+        "input_limit_tokens": null,
+        "output_limit_tokens": null,
+        "tool_support": "unknown",
+        "usage_source": "unknown",
+        "metadata_source": "p0 runtime model/list; inference not verified",
+        "availability": "catalog_only"
+      },
+      "config_digest": "f6c3ff25b572141416a5045c6ed96e86c79693e02d43172faaf756de1042bc53",
+      "created_at": "2026-10-30T05:00:00Z",
+      "finished_at": null,
+      "native_turn_id": null,
+      "error_code": null
+    }
+  ],
+  "invocations": [
+    {
+      "schema_version": "pathoreason/1",
+      "id": "inv_p0_fixture",
+      "project_id": "prj_cesc_reading",
+      "conversation_id": "conv_p0_fixture",
+      "turn_id": "turn_p0_fixture",
+      "skill_id": "results_explanation",
+      "skill_version": "0.1.0",
+      "skill_digest": "9b40b4f10fc4d80cad9b9161ec06593d610d10b647c629b8bcbdc7dd33bf41f5",
+      "input_artifact_ids": [
+        "art_conclusions",
+        "art_pipeline",
+        "art_pdf"
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "schema_version": "pathoreason/1",
+      "id": "msg_p0_fixture",
+      "project_id": "prj_cesc_reading",
+      "conversation_id": "conv_p0_fixture",
+      "turn_id": "turn_p0_fixture",
+      "ordinal": 0,
+      "role": "user",
+      "kind": "text",
+      "text": "解释已有 CESC 结果，并定位论文审阅稿。",
+      "artifact_id": null
+    }
+  ],
+  "context": {
+    "schema_version": "pathoreason/1",
+    "id": "ctx_p0_fixture",
+    "project_id": "prj_cesc_reading",
+    "project_revision": 1,
+    "goal": "解释已有开发证据并定位论文审阅稿",
+    "constraints": [
+      "不新增训练或访问封存",
+      "开发准入、研究目标和作者审阅分别呈现"
+    ],
+    "source_refs": [
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_shared_context_replication_20261028_analysis/CONCLUSIONS.json",
+        "revision": "f083c60831d589b2818c127b00a7b74fbd4cc6b3ba7db44b40502da0a2fd4264",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/_manuscript_pipeline/pipeline_index.json",
+        "revision": "e2296d56a3d0ba0b0cf2e5212ebdf78f91bcaeea1c2e10f6340ea80dfe787cc8",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/DELIVERABLES/CESC_manuscript.pdf",
+        "revision": "b033889e765c376c24adfbcd6b7ff7fbe74fcf90f12fa8631c421f9c604e9043",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.experiment",
+        "resource_id": "11e2e1f03fe84ca38bf34b6315c8e3da",
+        "revision": "ca2375b973e7c4d4fff6623d1485bccc41a49442b2fe1db2f2de05c3ed3fd6d4",
+        "revision_kind": "manifest_sha256",
+        "access": "read_only"
+      }
+    ],
+    "decision_refs": [],
+    "active_run_refs": [],
+    "artifact_ids": [
+      "art_conclusions",
+      "art_pipeline",
+      "art_pdf"
+    ],
+    "pending_items": [
+      "P1 认证与真实会话适配"
+    ],
+    "created_at": "2026-10-30T05:00:00Z",
+    "digest": "d27ede0109f55c09af235946348203a13dbd6b0b4ad5e50b8c52b29ea62209e7"
+  },
+  "artifacts": [
+    {
+      "schema_version": "pathoreason/1",
+      "id": "art_conclusions",
+      "project_id": "prj_cesc_reading",
+      "title": "CESC development conclusions",
+      "kind": "report",
+      "media_type": "application/json",
+      "storage_root": "legacy_evidence",
+      "relative_path": "cesc_shared_context_replication_20261028_analysis/CONCLUSIONS.json",
+      "sha256": "f083c60831d589b2818c127b00a7b74fbd4cc6b3ba7db44b40502da0a2fd4264",
+      "size_bytes": 10117,
+      "source_ref": {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_shared_context_replication_20261028_analysis/CONCLUSIONS.json",
+        "revision": "f083c60831d589b2818c127b00a7b74fbd4cc6b3ba7db44b40502da0a2fd4264",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      "run_ref": null,
+      "stage_ref": null,
+      "verification_scope": "bytes_verified",
+      "evidence_role": "development"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "art_pipeline",
+      "project_id": "prj_cesc_reading",
+      "title": "Manuscript review status",
+      "kind": "report",
+      "media_type": "application/json",
+      "storage_root": "legacy_evidence",
+      "relative_path": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/_manuscript_pipeline/pipeline_index.json",
+      "sha256": "e2296d56a3d0ba0b0cf2e5212ebdf78f91bcaeea1c2e10f6340ea80dfe787cc8",
+      "size_bytes": 790,
+      "source_ref": {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/53a69e70219c4a1ca00a43e6fda8752a/_manuscript_pipeline/pipeline_index.json",
+        "revision": "e2296d56a3d0ba0b0cf2e5212ebdf78f91bcaeea1c2e10f6340ea80dfe787cc8",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      "run_ref": null,
+      "stage_ref": null,
+      "verification_scope": "bytes_verified",
+      "evidence_role": "manuscript_review"
+    },
+    {
+      "schema_version": "pathoreason/1",
+      "id": "art_pdf",
+      "project_id": "prj_cesc_reading",
+      "title": "CESC manuscript review copy",
+      "kind": "document",
+      "media_type": "application/pdf",
+      "storage_root": "legacy_evidence",
+      "relative_path": "cesc_manuscript_delivery_20261029/DELIVERABLES/CESC_manuscript.pdf",
+      "sha256": "b033889e765c376c24adfbcd6b7ff7fbe74fcf90f12fa8631c421f9c604e9043",
+      "size_bytes": 6968660,
+      "source_ref": {
+        "schema_version": "pathoreason/1",
+        "adapter": "auto_research.evidence_file",
+        "resource_id": "cesc_manuscript_delivery_20261029/DELIVERABLES/CESC_manuscript.pdf",
+        "revision": "b033889e765c376c24adfbcd6b7ff7fbe74fcf90f12fa8631c421f9c604e9043",
+        "revision_kind": "file_sha256",
+        "access": "read_only"
+      },
+      "run_ref": null,
+      "stage_ref": null,
+      "verification_scope": "bytes_verified",
+      "evidence_role": "manuscript_review"
+    }
+  ],
+  "runtime_events": [],
+  "domain_events": [],
+  "intents": []
+}

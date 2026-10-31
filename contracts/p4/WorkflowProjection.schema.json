@@ -1,0 +1,137 @@
+{
+  "$defs": {
+    "WorkflowNodeView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "stages": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Stages",
+          "type": "array"
+        },
+        "gate_stage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gate Stage"
+        },
+        "gate_hint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gate Hint"
+        },
+        "current": {
+          "title": "Current",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "stages",
+        "current"
+      ],
+      "title": "WorkflowNodeView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.workflow-view/1",
+      "default": "pathoreason.workflow-view/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Version"
+    },
+    "source_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Digest",
+      "type": "string"
+    },
+    "definition_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Definition Digest",
+      "type": "string"
+    },
+    "definition": {
+      "additionalProperties": true,
+      "title": "Definition",
+      "type": "object"
+    },
+    "current_stage": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Current Stage"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/WorkflowNodeView"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "execution_authority": {
+      "const": false,
+      "default": false,
+      "title": "Execution Authority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "source_version",
+    "source_digest",
+    "definition_digest",
+    "definition",
+    "current_stage",
+    "nodes"
+  ],
+  "title": "WorkflowProjection",
+  "type": "object"
+}

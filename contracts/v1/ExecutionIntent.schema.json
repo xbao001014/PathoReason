@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "LegacyResourceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "pathoreason/1",
+          "default": "pathoreason/1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "adapter": {
+          "enum": [
+            "auto_research.experiment",
+            "auto_research.task_project",
+            "auto_research.evidence_file"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "revision_kind": {
+          "enum": [
+            "file_sha256",
+            "manifest_sha256"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "access": {
+          "const": "read_only",
+          "default": "read_only",
+          "title": "Access",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter",
+        "resource_id",
+        "revision",
+        "revision_kind"
+      ],
+      "title": "LegacyResourceRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason/1",
+      "default": "pathoreason/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "project_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "target_ref": {
+      "$ref": "#/$defs/LegacyResourceRef"
+    },
+    "expected_revision": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Expected Revision",
+      "type": "string"
+    },
+    "operation": {
+      "minLength": 1,
+      "title": "Operation",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "arguments_digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Arguments Digest",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "proposed",
+        "validated",
+        "dispatched",
+        "rejected",
+        "reconciled"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "run_ref": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LegacyResourceRef"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "project_id",
+    "conversation_id",
+    "turn_id",
+    "target_ref",
+    "expected_revision",
+    "operation",
+    "idempotency_key",
+    "arguments_digest",
+    "status",
+    "run_ref"
+  ],
+  "title": "ExecutionIntent",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pathoreason:contracts:v1:ExecutionIntent"
+}

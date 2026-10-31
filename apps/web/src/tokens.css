@@ -1,0 +1,78 @@
+/* Source of truth: /design.md. Neutral surfaces, readable ink, semantic status exceptions. */
+:root {
+  --color-canvas: #f5f5f5;
+  --color-paper: #ffffff;
+  --color-surface-alt: #fafafa;
+  --color-control-fill: #eaeaea;
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #171717;
+  --color-mid-gray: #737373;
+  --color-text-secondary: #404040;
+  --color-text-muted: #626262;
+  --color-hairline: #e5e5e5;
+  --color-control-border: #a3a3a3;
+  --color-ember: #e7000b;
+  --font-geist: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'SimHei', sans-serif;
+  --text-caption: 12px;
+  --text-body: 14px;
+  --text-body-lg: 16px;
+  --text-subheading: 18px;
+  --text-heading-sm: 24px;
+  --text-heading: 30px;
+  --text-heading-lg: 36px;
+  --text-display: 48px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-48: 48px;
+  --radius-cards: 24px;
+  --radius-buttons: 18px;
+  --radius-inputs: 18px;
+  --radius-badges: 18px;
+  --control-height-compact: 36px;
+  --select-chevron-size: 16px;
+  --select-end-inset: var(--spacing-16);
+  --select-label-gap: var(--spacing-8);
+  --select-menu-padding: var(--spacing-8);
+  --select-popup-gap: var(--spacing-8);
+  --select-viewport-inset: var(--spacing-12);
+  --select-menu-max-height: 320px;
+  --shadow-card: 0 0 0 1px rgb(23 23 23 / 5%), 0 1px 3px rgb(0 0 0 / 10%), 0 1px 2px -1px rgb(0 0 0 / 10%);
+  --text-card-title: var(--text-heading-sm);
+  --text-card-title-compact: var(--text-subheading);
+  --text-metric: var(--text-heading-lg);
+  --weight-primary: 600;
+  --weight-support: 500;
+  --weight-body: 400;
+  --card-padding: 28px;
+  --card-padding-compact: 20px;
+  --card-padding-input: 20px;
+  --card-gap: 24px;
+  --page-max-width: 1280px;
+  --chat-gutter: 28px;
+  --project-space-width: 320px;
+  --sidebar-transition: 280ms;
+  --shell-inset: 12px;
+  --shell-gap: 12px;
+  --shadow-shell: 0 2px 8px rgb(23 23 23 / 4%);
+  --muted: var(--color-text-muted);
+  --line: var(--color-hairline);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --card-padding: 24px;
+    --card-padding-compact: 16px;
+    --card-gap: 16px;
+    --chat-gutter: 16px;
+    --shell-inset: 8px;
+    --shell-gap: 8px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1150px) {
+  :root { --project-space-width: 280px; }
+}
