@@ -30,6 +30,10 @@ class Service:
         self.formal=Formal(self)
         from .conversation_lifecycle import ConversationLifecycle
         self.conversations=ConversationLifecycle(self)
+        from .hardware import HardwareMonitor
+        from .gpu_settings import ConversationGpuSettings
+        self.hardware=HardwareMonitor(self.config.get('execution_environment','local'))
+        self.gpu_settings=ConversationGpuSettings(self)
         from .guidance import Guidance
         self.guidance=Guidance(self)
     def seed(self):
@@ -148,6 +152,8 @@ class Service:
                 runtime_config.update(agent='pathoreason-formal',study_revision=study['revision'],permission_settings=permissions.settings,permission_revision=permissions.revision)
                 chosen=next((o for o in guidance_context['proposal']['options'] if o['id']==guidance_context['selected_option_id']),None) if guidance_context else None
                 runtime_config['execution_scope']={'clarify':'dialogue','inspect':'inspection'}.get(chosen['scope'],'standard') if chosen else 'standard'
+                gpu_binding=self.gpu_settings.frozen(cid)
+                if gpu_binding:runtime_config['gpu_binding']=gpu_binding
             if effort is not None:runtime_config['reasoning_effort']=effort
             runtime_config=(FormalConfiguration if study else RuntimeConfiguration).model_validate(runtime_config).model_dump(mode='json')
             turn=c.Turn(id=uid('turn'),project_id=pid,conversation_id=cid,runtime_binding_id=conv_doc['active_runtime_binding_id'],request_key=request['request_key'],status='queued',model=models[request['model']],config_digest=c.canonical_digest(runtime_config),created_at=now(),finished_at=None,native_turn_id=None,error_code=None)

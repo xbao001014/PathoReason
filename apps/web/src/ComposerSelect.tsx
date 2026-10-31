@@ -2,17 +2,17 @@ import {useEffect,useId,useLayoutEffect,useRef,useState,type KeyboardEvent,type 
 import {createPortal} from 'react-dom';
 
 type Option={value:string;label:string;disabled?:boolean};
-type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;disabled?:boolean};
+type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;disabled?:boolean;onOpen?:()=>void};
 
 /** Select-only combobox; portal keeps the rounded menu outside clipped panels, including modal dialogs. */
-export function ComposerSelect({label,value,options,onChange,variant,icon,disabled=false}:Props){
+export function ComposerSelect({label,value,options,onChange,variant,icon,disabled=false,onOpen}:Props){
   const id=useId(),trigger=useRef<HTMLButtonElement>(null),menu=useRef<HTMLDivElement>(null);
   const [portalHost,setPortalHost]=useState<HTMLElement>(document.body);
   const [open,setOpen]=useState(false),[active,setActive]=useState(0);
   const [position,setPosition]=useState<{left:number;top:number;width:number;maxHeight:number}|null>(null);
   const search=useRef({text:'',time:0}),revealActive=useRef(false);
   const selected=options.find(o=>o.value===value);
-  function show(){if(disabled||trigger.current?.matches(':disabled'))return;setPortalHost(trigger.current?.closest('dialog')||document.body);revealActive.current=true;const index=options.findIndex(o=>o.value===value&&!o.disabled);setActive(index>=0?index:Math.max(0,options.findIndex(o=>!o.disabled)));setOpen(true);}
+  function show(){if(disabled||trigger.current?.matches(':disabled'))return;onOpen?.();setPortalHost(trigger.current?.closest('dialog')||document.body);revealActive.current=true;const index=options.findIndex(o=>o.value===value&&!o.disabled);setActive(index>=0?index:Math.max(0,options.findIndex(o=>!o.disabled)));setOpen(true);}
   function choose(index:number){const option=options[index];if(disabled||trigger.current?.matches(':disabled')||!option||option.disabled)return;onChange(option.value);setOpen(false);trigger.current?.focus();}
   function move(direction:number){revealActive.current=true;for(let step=1;step<=options.length;step++){const next=(active+direction*step+options.length)%options.length;if(!options[next].disabled){setActive(next);break;}}}
   function onKeyDown(event:KeyboardEvent<HTMLButtonElement>){

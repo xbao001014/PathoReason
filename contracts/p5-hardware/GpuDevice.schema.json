@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "index": {
+      "title": "Index",
+      "type": "integer"
+    },
+    "uuid": {
+      "title": "Uuid",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "memory_total_mb": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Total Mb"
+    },
+    "memory_used_mb": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Used Mb"
+    },
+    "utilization_percent": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Utilization Percent"
+    },
+    "temperature_c": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Temperature C"
+    }
+  },
+  "required": [
+    "index",
+    "uuid",
+    "name"
+  ],
+  "title": "GpuDevice",
+  "type": "object"
+}

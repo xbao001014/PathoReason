@@ -1,0 +1,38 @@
+{
+  "properties": {
+    "gpu_uuid": {
+      "title": "Gpu Uuid",
+      "type": "string"
+    },
+    "gpu_index": {
+      "title": "Gpu Index",
+      "type": "integer"
+    },
+    "gpu_name": {
+      "title": "Gpu Name",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "compute_path": {
+      "title": "Compute Path",
+      "type": "string"
+    },
+    "compute_sha256": {
+      "title": "Compute Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "gpu_uuid",
+    "gpu_index",
+    "gpu_name",
+    "revision",
+    "compute_path",
+    "compute_sha256"
+  ],
+  "title": "GpuBinding",
+  "type": "object"
+}

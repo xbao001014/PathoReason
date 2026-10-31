@@ -1,0 +1,175 @@
+{
+  "$defs": {
+    "GpuDevice": {
+      "properties": {
+        "index": {
+          "title": "Index",
+          "type": "integer"
+        },
+        "uuid": {
+          "title": "Uuid",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "memory_total_mb": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Memory Total Mb"
+        },
+        "memory_used_mb": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Memory Used Mb"
+        },
+        "utilization_percent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Utilization Percent"
+        },
+        "temperature_c": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temperature C"
+        }
+      },
+      "required": [
+        "index",
+        "uuid",
+        "name"
+      ],
+      "title": "GpuDevice",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "sampled_at": {
+      "title": "Sampled At",
+      "type": "string"
+    },
+    "environment": {
+      "title": "Environment",
+      "type": "string"
+    },
+    "cpu_count": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cpu Count"
+    },
+    "cpu_percent": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cpu Percent"
+    },
+    "memory_total_mb": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Total Mb"
+    },
+    "memory_used_mb": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Memory Used Mb"
+    },
+    "gpus": {
+      "items": {
+        "$ref": "#/$defs/GpuDevice"
+      },
+      "title": "Gpus",
+      "type": "array"
+    },
+    "cpu_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cpu Error"
+    },
+    "gpu_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gpu Error"
+    },
+    "refresh_seconds": {
+      "default": 5,
+      "title": "Refresh Seconds",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "sampled_at",
+    "environment"
+  ],
+  "title": "HardwareSnapshot",
+  "type": "object"
+}

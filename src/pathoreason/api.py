@@ -17,6 +17,8 @@ from .context import ContextView,HandoffBundle
 from .formal_contracts import FormalArtifact
 from .formal import StudyCreate,StudyView,EntryStatus,NativePermission,PermissionReply
 from .permission_settings import PermissionSettingsView,PermissionSettingsUpdate
+from .hardware import HardwareSnapshot
+from .gpu_settings import GpuSettingsView,GpuSettingsUpdate
 from .schema_v2 import ProjectDomainView,ArtifactRecord,ContextSnapshotV2,LegacyHistoryEntry,TransferBundle,RuntimeConfiguration
 from .business import BusinessRequest,BusinessView,BusinessArtifact
 from typing import Literal
@@ -107,7 +109,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.5',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.10',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -154,7 +156,7 @@ async def offer_guidance(body:OfferInput,request:Request):
     async with service().lock:return service().guidance.publish(body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.9-p5-guidance'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.10-p5-hardware'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
@@ -291,6 +293,13 @@ async def context_snapshot(tid:str):return service().domain.context(tid)
 
 @app.get('/api/v2/formal-entry',response_model=EntryStatus)
 async def formal_entry():return service().formal.status()
+@app.get('/api/v2/hardware',response_model=HardwareSnapshot)
+async def hardware_snapshot():return await service().hardware.snapshot()
+@app.get('/api/v2/conversations/{cid}/gpu-settings',response_model=GpuSettingsView)
+async def gpu_settings(cid:str):return service().gpu_settings.view(cid)
+@app.put('/api/v2/conversations/{cid}/gpu-settings',response_model=GpuSettingsView)
+async def update_gpu_settings(cid:str,body:GpuSettingsUpdate):
+    async with service().lock:return await service().gpu_settings.update(cid,body)
 @app.post('/api/v2/formal-studies',response_model=StudyView,status_code=201)
 async def create_study(body:StudyCreate):
     async with service().lock:return service().formal.create(body)

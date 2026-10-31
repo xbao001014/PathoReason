@@ -1,0 +1,70 @@
+{
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "revision": {
+      "default": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "source": {
+      "enum": [
+        "project",
+        "conversation",
+        "unconfigured"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "gpu_uuid": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gpu Uuid"
+    },
+    "gpu_index": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gpu Index"
+    },
+    "gpu_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Gpu Name"
+    },
+    "applies_to": {
+      "const": "future_turns",
+      "default": "future_turns",
+      "title": "Applies To",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "source"
+  ],
+  "title": "GpuSettingsView",
+  "type": "object"
+}

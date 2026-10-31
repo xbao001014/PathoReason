@@ -1,0 +1,26 @@
+.hardware-page{height:100%;overflow:auto;padding:var(--card-padding);color:var(--color-ink)}
+.hardware-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--spacing-16);margin-bottom:var(--card-gap)}
+.hardware-heading h1{font-size:var(--text-heading-sm);margin:0 0 var(--spacing-8)}
+.hardware-heading p{font-size:var(--text-body);color:var(--color-text-secondary);margin:0;line-height:1.6}
+.hardware-heading button{flex-shrink:0}
+.host-metrics,.gpu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:var(--card-gap)}
+.hardware-card{border:1px solid var(--color-hairline);border-radius:var(--radius-cards);padding:var(--card-padding);background:var(--color-paper);min-width:0}
+.hardware-card h2,.hardware-card h3{font-size:var(--text-subheading);margin:0 0 var(--spacing-12);overflow-wrap:anywhere}
+.hardware-card p{font-size:var(--text-body);color:var(--color-text-secondary)}
+.hardware-number{font-size:var(--text-heading);font-weight:var(--weight-primary)}
+.hardware-card progress{display:block;width:100%;height:10px;margin-top:var(--spacing-16);accent-color:var(--status-info)}
+.hardware-section-heading{display:flex;align-items:center;gap:var(--spacing-8);margin:var(--card-gap) 0 var(--spacing-16)}
+.hardware-section-heading h2{margin:0;font-size:var(--text-subheading)}
+.gpu-index{display:inline-block;font-size:var(--text-caption);color:var(--color-text-secondary);margin-bottom:var(--spacing-8)}
+.gpu-metrics{display:grid;gap:var(--spacing-12)}
+.gpu-metrics>div{display:flex;align-items:baseline;justify-content:space-between;gap:var(--spacing-12);flex-wrap:wrap;font-size:var(--text-body)}
+.gpu-metrics span{color:var(--color-text-secondary)}
+.gpu-metrics strong{font-weight:var(--weight-support)}
+.gpu-identity{margin-top:var(--spacing-16);font-size:var(--text-caption);color:var(--color-text-muted)}
+.gpu-identity summary{cursor:pointer}
+.gpu-identity code{display:block;overflow-wrap:anywhere;margin-top:var(--spacing-8)}
+.gpu-selector{display:flex;align-items:center;gap:var(--spacing-8);flex-wrap:wrap;padding:var(--spacing-8) var(--spacing-12);min-width:0;font-size:var(--text-body)}
+.gpu-selector-label{color:var(--color-text-secondary)}
+.gpu-selector .composer-select{max-width:min(420px,100%);min-width:0}
+.gpu-selector p{flex-basis:100%;margin:var(--spacing-4) 0;line-height:1.5}
+@media(max-width:760px){.hardware-heading{flex-wrap:wrap}.hardware-page{padding:var(--card-padding-compact)}.hardware-card{padding:var(--card-padding-compact)}.gpu-selector{padding:var(--spacing-8) 0}.gpu-selector .composer-select{max-width:100%}}

@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 0,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "gpu_uuid": {
+      "pattern": "^GPU-[0-9a-fA-F-]{8,64}$",
+      "title": "Gpu Uuid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "gpu_uuid"
+  ],
+  "title": "GpuSettingsUpdate",
+  "type": "object"
+}
