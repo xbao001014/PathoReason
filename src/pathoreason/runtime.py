@@ -129,6 +129,7 @@ class OpenCode:
 
 def visible_response(messages,parent_id):
     """No reasoning text, raw command arguments, tool output or provider secrets leave this adapter."""
+    from .activity import tool_summary, activity_phase
     selected=[m for m in messages if m.get('info',{}).get('role')=='assistant' and m['info'].get('parentID')==parent_id]
     text=[];tools=[];usage={'input_tokens':0,'output_tokens':0,'context_tokens':None,'source':'runtime','scope':'turn','context_source':'estimate_from_runtime_usage'};complete=False;error=None;compacted=any((m.get('info',{}).get('role')=='assistant' and m.get('info',{}).get('summary') is True) or any(p.get('type')=='compaction' for p in m.get('parts',[])) for m in messages)
     for message in selected:
@@ -142,6 +143,7 @@ def visible_response(messages,parent_id):
         for part in message.get('parts',[]):
             kind=part.get('type')
             if kind=='text':text.append(part.get('text',''))
-            elif kind=='tool':tools.append({'id':part['id'],'name':part.get('tool','tool'),'status':part.get('state',{}).get('status','unknown')})
+            elif kind=='tool':tools.append(tool_summary(part))
             elif kind=='compaction':compacted=True
+    usage['activity_phase']=activity_phase(selected)
     return {'text':'\n\n'.join(text),'tools':tools,'usage':usage,'complete':complete,'error':error,'compacted':compacted,'assistant_seen':bool(selected),'user_seen':any(m.get('info',{}).get('id')==parent_id for m in messages)}

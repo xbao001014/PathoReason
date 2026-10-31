@@ -41,7 +41,10 @@ class TurnInput(BaseModel):
     artifact_ids:list[c.Identifier]=Field(default_factory=list,max_length=20)
 class ToolSummary(BaseModel):
     id:str;name:str;status:str
+    summary:str|None=None
+    duration_ms:int|None=Field(default=None,ge=0)
 class Usage(BaseModel):
+    activity_phase:Literal['waiting','thinking','tool','responding']|None=None
     input_tokens:int|None=None
     output_tokens:int|None=None
     context_tokens:int|None=None
@@ -101,7 +104,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.4',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.5',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -142,7 +145,7 @@ async def business_call(body:BusinessRequest,request:Request):
     return await asyncio.to_thread(service().business.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.4-p5-conversations'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.5-p5-process'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
