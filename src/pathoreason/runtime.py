@@ -20,6 +20,25 @@ class OpenCode:
         record=self.root/"runtime/control/opencode.json"
         health["credential_loaded"]=bool(json.loads(record.read_text()).get("credential_loaded")) if record.exists() else False
         return health
+    async def delete_session(self,session,directory):
+        from .persistence import Conflict
+        path=f'/session/{session}'
+        try:
+            current=await self.call('GET',path,directory)
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code==404:return
+            raise
+        if current.get('id')!=session or Path(current.get('directory','')).resolve()!=Path(directory).resolve():
+            raise Conflict('native_session_scope_mismatch')
+        if await self.call('GET',path+'/children',directory):
+            raise Conflict('native_child_sessions_exist')
+        await self.call('DELETE',path,directory)
+        try:
+            await self.call('GET',path,directory)
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code==404:return
+            raise
+        raise Conflict('native_deletion_unconfirmed')
     async def create(self,directory,title):
         return await self.call("POST","/session",directory,{"title":title,"permission":[{"permission":"*","pattern":"*","action":"deny"},{"permission":"skill","pattern":"results-explanation","action":"allow"},{"permission":"pathoreason_research","pattern":"*","action":"allow"}]})
     async def create_formal(self,directory,title):

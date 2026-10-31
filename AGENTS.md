@@ -115,3 +115,7 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 本 session 及后续同类验证以 OpenCode + 基模的适配为目标：判断/调整步数上限、抽象接口读取 Skill、改善工具与上下文。模型的数据处理错误应作为系统改进证据，不由开发助手代改研究脚本/输出或发布修正成果来替代模型验收。此前外部修正的研究文件保留来源，不能算模型自己完成。
 
 正式 Agent steps 已从 16 提高到 64，旧普通 Agent 为 6；项目独立预算不变。新增原生 pathology-data-api Skill（skills/pathology-data-api），前端数据与任务定义入口可选。接口 2.0 使用该 Skill 的分页 helper，旧 study_io.py data 仍只支持历史 Limit 协议。正式提示词沿用同范围既有授权，权限设置和科研预算独立。发布 0.6.3-p5-data-skill；证据与行为验证局限见 docs/p5/OPENCODE_DATA_SKILL.md。本轮只验证工程和原生加载，未调用模型或更改研究项目文件。
+
+## 2026-10-31 会话生命周期
+
+服务器应用发布 `0.6.4-p5-conversations`，见 [会话归档与删除](docs/p5/CONVERSATIONS.md)。归档可恢复；显式删除清除在线聊天、会话上下文和 OpenCode 原生 session，并保留项目文件/成果、来源和预算。不得把共享项目目录当成会话独占记忆目录清空。清理失败/中断保留删除状态并显式核对；不可通过恢复旧数据库让已删除内容复活。本机 Codex 原生删除未支持，本次不部署 8530。

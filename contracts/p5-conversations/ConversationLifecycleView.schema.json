@@ -1,0 +1,76 @@
+{
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "open",
+        "archived",
+        "deleting",
+        "failed",
+        "deleted"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Code"
+    },
+    "requested_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested At"
+    },
+    "completed_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completed At"
+    },
+    "native_deleted": {
+      "default": false,
+      "title": "Native Deleted",
+      "type": "boolean"
+    },
+    "project_assets_preserved": {
+      "default": true,
+      "title": "Project Assets Preserved",
+      "type": "boolean"
+    },
+    "budget_preserved": {
+      "default": true,
+      "title": "Budget Preserved",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "state"
+  ],
+  "title": "ConversationLifecycleView",
+  "type": "object"
+}

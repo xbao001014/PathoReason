@@ -87,7 +87,7 @@ class Context:
     async def compact(self,cid,key,model):
         s=self.s
         async with s.lock:
-            conv=s.store.conversation(cid)
+            conv=s.store.conversation(cid,writable=True)
             with s.store.connect() as db:old=db.execute('SELECT document FROM context_operations WHERE conversation_id=? AND request_key=?',(cid,key)).fetchone()
             if old:
                 result=json.loads(old[0])

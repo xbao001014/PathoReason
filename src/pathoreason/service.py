@@ -28,6 +28,8 @@ class Service:
         self.domain=Domain(self)
         from .formal import Formal
         self.formal=Formal(self)
+        from .conversation_lifecycle import ConversationLifecycle
+        self.conversations=ConversationLifecycle(self)
     def seed(self):
         if self.store.projects() or self.config.get("seed_legacy") is False:return
         sample=json.loads((ROOT/'contracts/examples/cesc-reading.json').read_text())

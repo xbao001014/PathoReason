@@ -67,6 +67,7 @@ class ConversationPermissions:
             settings=PermissionSettings.model_validate_json(row['document']) if row else PermissionSettings())
 
     async def update(self, cid, body):
+        self.s.store.conversation(cid,writable=True)
         if not self.formal.enabled():
             raise Conflict('formal_server_only')
         conv = self.formal.mode(cid)
@@ -82,6 +83,7 @@ class ConversationPermissions:
         if body.expected_revision != current.revision:
             raise Conflict('permission_settings_revision_conflict')
         with self.s.store.connect(True) as db:
+            self.s.store.check_conversation(db,cid,writable=True)
             revision = db.execute('SELECT coalesce(max(revision),0) FROM conversation_permission_settings '
                                   'WHERE conversation_id=?', (cid,)).fetchone()[0]
             if revision != body.expected_revision:

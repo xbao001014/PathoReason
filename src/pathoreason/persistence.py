@@ -15,6 +15,7 @@ def encoded(value):
 
 class Conflict(Exception):pass
 class Missing(Exception):pass
+class Gone(Exception):pass
 
 class Store:
     def __init__(self,path:Path):
@@ -34,6 +35,7 @@ class Store:
             CREATE TABLE IF NOT EXISTS context_snapshots(turn_id TEXT PRIMARY KEY REFERENCES turns(id),document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS runtime_configs(digest TEXT PRIMARY KEY,document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS skill_invocations(turn_id TEXT PRIMARY KEY REFERENCES turns(id),document TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS conversation_deletions(conversation_id TEXT PRIMARY KEY REFERENCES conversations(id),state TEXT NOT NULL,document TEXT NOT NULL);
             """)
     @contextmanager
     def connect(self,write=False):
@@ -60,10 +62,17 @@ class Store:
         c=Conversation(id=cid,project_id=pid,title=title,status="open",active_runtime_binding_id=uid("bind"),created_at=now())
         with self.connect(True) as db:db.execute("INSERT INTO conversations VALUES(?,?,?,?,?)",(cid,pid,encoded(c),None,str(directory)))
         return c.model_dump(mode="json")
-    def conversation(self,cid):
-        with self.connect() as db:row=db.execute("SELECT * FROM conversations WHERE id=?",(cid,)).fetchone()
-        if not row:raise Missing("conversation_not_found")
+    def check_conversation(self,db,cid,*,writable=False,include_removed=False):
+        row=db.execute('SELECT * FROM conversations WHERE id=?',(cid,)).fetchone()
+        if not row:raise Missing('conversation_not_found')
+        removed=db.execute('SELECT state FROM conversation_deletions WHERE conversation_id=?',(cid,)).fetchone()
+        if removed and not include_removed:
+            if removed[0]=='deleted':raise Gone('conversation_deleted')
+            raise Conflict('conversation_deletion_pending')
+        if writable and json.loads(row['document'])['status']=='archived':raise Conflict('conversation_archived')
         return dict(row)
+    def conversation(self,cid,*,writable=False,include_removed=False):
+        with self.connect() as db:return self.check_conversation(db,cid,writable=writable,include_removed=include_removed)
     def conversations(self,pid):
         self.project(pid)
         with self.connect() as db:return [json.loads(r[0]) for r in db.execute("SELECT document FROM conversations WHERE project_id=? ORDER BY rowid DESC",(pid,))]
@@ -83,8 +92,10 @@ class Store:
     def turn(self,tid):
         with self.connect() as db:row=db.execute("SELECT * FROM turns WHERE id=?",(tid,)).fetchone()
         if not row:raise Missing("turn_not_found")
+        self.conversation(row['conversation_id'])
         return dict(row)
     def existing(self,cid,key,digest):
+        self.conversation(cid,writable=True)
         with self.connect() as db:row=db.execute("SELECT * FROM turns WHERE conversation_id=? AND request_key=?",(cid,key)).fetchone()
         if row and row['input_digest']!=digest:raise Conflict("idempotency_key_conflict")
         return dict(row) if row else None
@@ -95,6 +106,7 @@ class Store:
         return db.execute('SELECT created_at,document FROM turns').fetchall()
     def create_turn(self,turn,text,artifact_ids,skill_digest,digest,native_id,context,invocation,max_turns=12,max_wall_seconds=1200,runtime_config=None,budget_project_id=None):
         with self.connect(True) as db:
+            self.check_conversation(db,turn.conversation_id,writable=True)
             row=db.execute("SELECT * FROM turns WHERE conversation_id=? AND request_key=?",(turn.conversation_id,turn.request_key)).fetchone()
             if row:
                 if row['input_digest']!=digest:raise Conflict("idempotency_key_conflict")
@@ -122,6 +134,7 @@ class Store:
         with self.connect(True) as db:
             row=db.execute("SELECT * FROM turns WHERE id=?",(tid,)).fetchone()
             if not row:raise Missing("turn_not_found")
+            self.check_conversation(db,row['conversation_id'])
             if not any(row[k]!=v for k,v in values.items()):return
             db.execute("UPDATE turns SET "+','.join(k+'=?' for k in values)+" WHERE id=?",(*values.values(),tid))
             self._event(db,row['conversation_id'],{"kind":"turn_updated","turn_id":tid,"status":values.get('status',row['status'])})

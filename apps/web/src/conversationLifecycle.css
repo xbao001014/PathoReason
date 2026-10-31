@@ -1,0 +1,14 @@
+.session-list .session-row{display:flex;align-items:center;min-width:0;gap:var(--spacing-4)}
+.session-list .session-row .session-select{flex:1;min-width:0;flex-wrap:wrap}
+.session-list .session-row .session-select .overflow-title{flex:1;min-width:0}
+.session-list .session-row .session-manage{width:36px;flex:0 0 36px;justify-content:center;padding:8px}
+.session-list .session-row .session-manage:hover{background:var(--color-control-fill)}
+.session-row small{font-size:var(--text-caption);color:var(--color-text-muted)}
+.archive-toggle{padding:var(--spacing-8);font-size:var(--text-body);color:var(--color-text-secondary);text-align:left;border-radius:var(--radius-buttons)}
+.archive-toggle[aria-pressed=true]{background:var(--color-control-fill)}
+.conversation-dialog{width:min(540px,calc(100vw - 32px));color:var(--color-ink)}
+.conversation-dialog .conversation-name{font-weight:var(--weight-support);overflow-wrap:anywhere}
+.conversation-dialog p{font-size:var(--text-body);line-height:1.7}
+.conversation-dialog footer{flex-wrap:wrap;gap:var(--spacing-12)}
+.conversation-dialog .delete-conversation{color:var(--status-danger);border:1px solid var(--status-danger-border);border-radius:var(--radius-buttons);padding:10px 16px}
+.conversation-lifecycle-note{padding:var(--card-padding-compact);margin-bottom:var(--spacing-12);border:1px solid var(--color-hairline);border-radius:var(--radius-cards);font-size:var(--text-body);display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-12);flex-wrap:wrap}

@@ -9,7 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,ConfigDict,Field
 from .settings import ROOT,settings,credential
 from .service import Service,NotReady
-from .persistence import Conflict,Missing,encoded
+from .persistence import Conflict,Missing,Gone,encoded
+from .conversation_lifecycle import ManagedConversation,ConversationLifecycleView,DeleteConversationInput
 from .codex_auth import CodexAuth
 from . import contracts as c
 from .context import ContextView,HandoffBundle
@@ -100,7 +101,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.2',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.4',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -116,6 +117,8 @@ async def security(request,call_next):
 
 @app.exception_handler(Missing)
 async def missing(_,exc):return JSONResponse({'detail':str(exc)},status_code=404)
+@app.exception_handler(Gone)
+async def gone(_,exc):return JSONResponse({'detail':str(exc)},status_code=410)
 @app.exception_handler(Conflict)
 async def conflict(_,exc):return JSONResponse({'detail':str(exc)},status_code=409)
 @app.exception_handler(NotReady)
@@ -139,15 +142,25 @@ async def business_call(body:BusinessRequest,request:Request):
     return await asyncio.to_thread(service().business.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.3-p5-data-skill'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.4-p5-conversations'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
 async def create_project(body:ProjectInput):return service().store.create_project(body.title,body.objective)
-@app.get('/api/v1/research-projects/{pid}/conversations',response_model=list[c.Conversation])
-async def conversations(pid:str):return service().store.conversations(pid)
+@app.get('/api/v1/research-projects/{pid}/conversations',response_model=list[ManagedConversation])
+async def conversations(pid:str,include_archived:bool=False):return service().conversations.list(pid,include_archived)
 @app.post('/api/v1/research-projects/{pid}/conversations',response_model=c.Conversation,status_code=201)
 async def create_conversation(pid:str,body:ConversationInput):return service().new_conversation(pid,body.title)
+@app.get('/api/v1/conversations/{cid}/lifecycle',response_model=ConversationLifecycleView)
+async def conversation_lifecycle(cid:str):return service().conversations.view(cid)
+@app.post('/api/v1/conversations/{cid}/archive',response_model=ConversationLifecycleView)
+async def archive_conversation(cid:str):return await service().conversations.archive(cid)
+@app.post('/api/v1/conversations/{cid}/restore',response_model=ConversationLifecycleView)
+async def restore_conversation(cid:str):return await service().conversations.archive(cid,restore=True)
+@app.delete('/api/v1/conversations/{cid}',response_model=ConversationLifecycleView)
+async def delete_conversation(cid:str,body:DeleteConversationInput):return await service().conversations.delete(cid)
+@app.post('/api/v1/conversations/{cid}/deletion/reconcile',response_model=ConversationLifecycleView)
+async def reconcile_conversation_deletion(cid:str,body:DeleteConversationInput):return await service().conversations.delete(cid)
 @app.get('/api/v1/conversations/{cid}',response_model=ConversationView)
 async def conversation(cid:str):
     row=service().store.conversation(cid)
@@ -172,7 +185,8 @@ async def events(cid:str,request:Request,after:int=0):
         nonlocal cursor
         ticks=0
         while not await request.is_disconnected():
-            batch=service().store.events(cid,cursor)
+            try:batch=service().store.events(cid,cursor)
+            except (Gone,Conflict):return
             for event in batch:
                 cursor=event['seq'];yield f'id: {cursor}\ndata: {encoded(event)}\n\n'
             ticks+=1
