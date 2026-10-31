@@ -15,6 +15,8 @@ PathoReason 是本系统的正式名称。
 
 ## 入口
 
+- [开发与能力验证规则](docs/DEVELOPMENT_PRINCIPLES.md)：从真实失败提升系统能力，分层验收，不以人工代改研究结果替代模型验证。
+
 - [P5 下一窗口交接](docs/p5/NEXT_WINDOW.md)、[正式试验操作说明](docs/p5/OPERATOR.md)、[入口验证](docs/p5/ENTRY_VALIDATION.md)、[Skill 迁移](docs/p5/SKILL_MIGRATION.md)、[发布与恢复](docs/p5/RELEASE_RECOVERY.md)。
 
 - [P4 实施](docs/p4/IMPLEMENTATION.md)、[Schema 变更](docs/p4/SCHEMA_CHANGES.md)、[验收](docs/p4/VALIDATION.md)、[迁移与回退](docs/p4/MIGRATION.md)。
