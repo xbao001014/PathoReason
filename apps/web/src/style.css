@@ -805,6 +805,15 @@ dialog h2{font-size:18px;font-weight:600}
 .project-sidebar {
   padding: var(--card-padding) var(--card-padding-compact);
   min-height: 0;
+  overflow: hidden;
+}
+/* Scroll the project tree while keeping the header and connection row in place. */
+.project-sidebar > :not(.project-list) { flex-shrink: 0; }
+.project-sidebar .project-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
 }
 .main-area {
   min-height: 0;
