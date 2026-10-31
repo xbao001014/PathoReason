@@ -2,11 +2,11 @@
 
 由研究 Agent 在当前项目内创建新版本文件，不覆盖既有队列、方案或成果。推荐 plans/ 保存检索与方法库证据，outputs/ 保存可登记的候选表、benchmark 方案与工程缺口；不把患者明细发到搜索服务。
 
-除易读方案外，保存一个 JSON 供 check_plan.py 检查。格式如下（示意名称不是真实候选）：
+除易读方案外，保存一个 JSON 供 check_plan.py 检查。新方案使用版本 2；历史版本 1 仍按 CV 兼容检查，不覆写历史文件。先读 [验证协议](validation-protocols.md)，下面是 CV 格式示意；留出法替换其中 validation、split_counts、matrix 三段，其余来源与公平性字段保持完整（示意名称不是真实候选）：
 
 ```json
 {
-  "schema_version": "pathoreason.benchmark-plan/1",
+  "schema_version": "pathoreason.benchmark-plan/2",
   "objective": "当前研究问题及比较主张",
   "as_of": "YYYY-MM-DD",
   "recent_from_year": 2023,
@@ -34,10 +34,15 @@
     "sampling_policy": "bag/patch/患者聚合",
     "held_out_policy": "封存测试使用规则"
   },
+  "validation": {
+    "method": "cross_validation", "fixed_split": true, "split_seed": 71,
+    "group_unit": "patient", "stratification": "class label", "split_status": "proposed",
+    "split_manifest_ref": null, "split_manifest_sha256": null
+  },
   "split_counts": {"cohort": 100, "development": 80, "locked_test": 20, "cv_oof": [16, 16, 16, 16, 16]},
   "matrix": {"model_ids": ["method_a"], "folds": 5, "seeds": [17, 23, 42],
     "settings_per_model": 1, "cv_runs": 15,
-    "final_fit_runs": 1, "total_fit_runs": 16},
+    "final_fit_runs": 1, "total_fit_runs": 16, "test_inference_runs": 1},
   "coverage_exceptions": {"classic": "若缺经典参照，写实质理由，否则省略"},
   "training_authorized": false
 }

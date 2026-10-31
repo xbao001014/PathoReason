@@ -129,3 +129,7 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 服务器 `0.6.6-p5-benchmark`，见 [Benchmark 选型链路](docs/p5/BENCHMARK_CHAIN.md)。正式研究基线规划加载 benchmark-design，先研究问题/数据协议，再方法库与近期文献候选，再公平协议、完整矩阵和执行器适配缺口。不得以当前 runner 白名单代替科学选型。OpenCode 原生 Exa websearch 已启用，与 webfetch 共用网络访问设置，显式 deny 保留；禁止把患者明细发送到公开搜索。通用检查不构成科学/训练授权。真实验证由研究 Agent 自行生成新方案，开发者不改其输出。
 
 本次以同一 DeepSeek Flash/high 正式项目完成 3 轮原生验证（22/12/11 次迭代），目标 Agent 自行登记 benchmark-plan-v4；8 模型拟议 144 fits，全部执行准备未验收。新增 PDF 有界提取 helper、论文/代码独立证据等级、各折人数检查；平台锁定 pypdf 6.21.4，未安装训练依赖。项目累计 7/40 回合、3674.083527/7200 秒，旧文件不改，训练标志 false。后续先做官方实现核验与 adapter，再按研究授权准备训练；不能把本次来源/结构验证写成训练或论文完成。
+
+## 2026-10-31 留出法方案支持
+
+服务器 0.6.7-p5-holdout，详见 [留出法支持](docs/p5/HOLDOUT_SUPPORT.md)。benchmark-design 0.2.0 使用 benchmark-plan/2 显式区分 holdout/cross_validation；固定留出法 folds/cv_runs=0，数据划分种子与训练种子分开。旧 /1 CV 保持可读；新 /2 CV 至少两折。冻结状态需要真实名单引用和 SHA，检查通过不等于名单语义/科学/训练授权。目标 Agent 已自行生成 v6 留出方案并通过检查（24 fits、24 次测试推理，划分 proposed）；旧 1689 文件未改。199 项测试通过；累计 9/40 回合、3737.631704/7200 秒，训练仍未授权。

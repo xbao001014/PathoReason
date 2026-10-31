@@ -59,7 +59,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.6-p5-benchmark'
+    release:str='0.6.7-p5-holdout'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}
@@ -90,7 +90,7 @@ def project_skills(server):
         base=ROOT/'skills'/name
         refs=[str(p.relative_to(ROOT))+'#sha256='+hashlib.sha256(p.read_bytes()).hexdigest()
               for p in sorted(base.rglob('*')) if p.is_file() and p.suffix in {'.md','.py'}]
-        raw={'schema_version':'pathoreason/1','id':name,'version':'0.1.0',
+        raw={'schema_version':'pathoreason/1','id':name,'version':'0.2.0' if name=='benchmark-design' else '0.1.0',
              'title':title,'description':description,
              'input_schema_ref':'urn:pathoreason:study:1','output_schema_ref':'urn:pathoreason:artifact:3',
              'instruction_refs':refs,'capability_refs':['pathoreason:formal_study'],
@@ -167,7 +167,7 @@ All new inputs, plans, scripts and outputs belong to this workspace or its isola
 
 The model conversation budget is {record['budget']['max_turns']} turns / {record['budget']['max_wall_seconds']} wall seconds, including waiting for command review. This is distinct from training/GPU/image budgets. Prepare a concrete plan within the user's authorized scope. Reuse existing authorization for that same scope across turns; request approval only for missing scope or budget, not for routine continuation. Native tools follow the permission settings selected for this conversation; explicit deny rules still apply. Permission settings do not change research budgets or scientific/author gates. Use ordinary chat for questions (native question tool is disabled).
 
-For baseline selection, experiment planning or comparison review, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch.
+For baseline selection, experiment planning or comparison review, load the native benchmark-design skill. Establish the research comparison and data protocol, inventory the local library read-only, and search recent primary literature with websearch/webfetch. Separate scientifically justified model selection from executor availability; missing adapters become explicit implementation work, not silent benchmark exclusions. Preserve existing cohorts and plans; produce versioned candidate evidence, fair comparison protocol and a complete proposed matrix before training authorization. Network access settings govern both websearch and webfetch. For validation-protocol-only revisions, reuse existing candidate/source evidence and read benchmark-design validation-protocols.md. Use benchmark-plan/2 to distinguish fixed holdout from cross-validation, verify actual split status, and preserve old plans and any frozen patient membership.
 
 For pathology API data acquisition, load the native pathology-data-api skill and its protocol reference before choosing a helper. The old study_io.py data command is only for the legacy Limit-based endpoint; use the skill helper for the authenticated PageIndex/PageSize protocol. Use {ROOT}/scripts/study_io.py image for one versioned Seedream candidate and publish to register actual outputs in the workbench. Do not put credential values or patient details in public chat. Source API records and feature tensors are different: resolve the returned remote paths and verify input completeness before training. Status and scientific approval derive from source evidence, not prose.
 '''

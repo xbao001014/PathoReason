@@ -1,5 +1,6 @@
 """Check plan structure, local evidence references and matrix arithmetic, not scientific truth."""
 import argparse
+import hashlib
 from datetime import date
 import json
 from pathlib import Path
@@ -16,6 +17,33 @@ def local_file(workspace, value):
     return path
 
 
+def validation_method(plan, workspace, need):
+    """Version 1 remains the original CV contract; version 2 selects its protocol."""
+    validation = plan.get('validation', {})
+    if not isinstance(validation, dict):
+        validation = {}
+    if plan.get('schema_version') == 'pathoreason.benchmark-plan/1':
+        need(validation.get('method', 'cross_validation') == 'cross_validation', 'holdout requires benchmark-plan/2')
+        return 'cross_validation'
+    method = validation.get('method')
+    need(method in ('holdout', 'cross_validation'), 'validation.method must be holdout or cross_validation')
+    need(validation.get('fixed_split') is True, 'validation.fixed_split must be true; training seeds do not resplit data')
+    need(type(validation.get('split_seed')) is int and validation['split_seed'] >= 0, 'validation.split_seed must be one nonnegative integer')
+    for key in ('group_unit', 'stratification'):
+        need(isinstance(validation.get(key), str) and bool(validation[key].strip()), 'validation.' + key)
+    status = validation.get('split_status')
+    need(status in ('proposed', 'frozen'), 'validation.split_status')
+    reference, digest = validation.get('split_manifest_ref'), validation.get('split_manifest_sha256')
+    if status == 'frozen' or reference is not None or digest is not None:
+        try:
+            path = local_file(workspace, reference)
+            need(isinstance(digest, str) and hashlib.sha256(path.read_bytes()).hexdigest() == digest,
+                 'split manifest SHA256 mismatch or missing')
+        except (ValueError, OSError) as exc:
+            need(False, 'split manifest: ' + str(exc))
+    return method
+
+
 def check(plan, workspace):
     errors, warnings = [], []
     def need(condition, message):
@@ -27,7 +55,8 @@ def check(plan, workspace):
         return isinstance(value, str) and urlparse(value).scheme in ('http', 'https') and bool(urlparse(value).netloc)
     if not isinstance(plan, dict):
         return {'structure_valid': False, 'errors': ['plan must be an object'], 'warnings': []}
-    need(plan.get('schema_version') == 'pathoreason.benchmark-plan/1', 'schema_version')
+    need(plan.get('schema_version') in ('pathoreason.benchmark-plan/1', 'pathoreason.benchmark-plan/2'), 'schema_version')
+    method = validation_method(plan, workspace, need)
     need(nonempty(plan.get('objective')), 'objective')
     try:
         cutoff = date.fromisoformat(plan.get('as_of', ''))
@@ -116,20 +145,45 @@ def check(plan, workspace):
     need(valid_seeds and len(seeds) == len(set(seeds)), 'matrix seeds')
     for key in ('folds', 'settings_per_model', 'cv_runs', 'final_fit_runs', 'total_fit_runs'):
         value = matrix.get(key)
-        need(type(value) is int and value >= (1 if key in ('folds', 'settings_per_model') else 0), 'matrix: ' + key)
+        need(type(value) is int and value >= (1 if key == 'settings_per_model' else 0), 'matrix: ' + key)
+    if method == 'holdout':
+        need(matrix.get('folds') == 0 and type(matrix.get('folds')) is int, 'holdout folds must be 0, not one-fold CV')
+        need(matrix.get('cv_runs') == 0, 'holdout cv_runs must be 0')
+    elif method == 'cross_validation':
+        minimum = 1 if plan.get('schema_version') == 'pathoreason.benchmark-plan/1' else 2
+        need(type(matrix.get('folds')) is int and matrix['folds'] >= minimum, 'cross_validation folds below minimum')
     if valid_models and valid_seeds and all(type(matrix.get(k)) is int for k in ('folds', 'settings_per_model', 'cv_runs', 'final_fit_runs', 'total_fit_runs')):
-        need(matrix['cv_runs'] == len(models) * matrix['folds'] * len(seeds) * matrix['settings_per_model'], 'cv_runs arithmetic mismatch')
+        base_runs = len(models) * len(seeds) * matrix['settings_per_model']
+        if method == 'holdout':
+            need(matrix['final_fit_runs'] == base_runs, 'holdout final_fit_runs arithmetic mismatch')
+        else:
+            need(matrix['cv_runs'] == base_runs * matrix['folds'], 'cv_runs arithmetic mismatch')
         need(matrix['total_fit_runs'] == matrix['cv_runs'] + matrix['final_fit_runs'], 'total_fit_runs arithmetic mismatch')
+    if plan.get('schema_version') == 'pathoreason.benchmark-plan/2':
+        inference = matrix.get('test_inference_runs')
+        need(type(inference) is int and inference >= 0 and inference == matrix.get('final_fit_runs'),
+             'test_inference_runs must match final fitted models; inference is not an extra fit')
     counts = plan.get('split_counts', {})
     valid_counts = isinstance(counts, dict) and all(type(counts.get(k)) is int and counts[k] > 0 for k in ('cohort', 'development', 'locked_test'))
     need(valid_counts, 'split_counts: positive cohort/development/locked_test required')
     if valid_counts:
         need(counts['cohort'] == counts['development'] + counts['locked_test'], 'split_counts: cohort arithmetic mismatch')
-        sizes = counts.get('cv_oof')
-        valid_sizes = isinstance(sizes, list) and all(type(n) is int and n > 0 for n in sizes)
-        need(valid_sizes and len(sizes) == matrix.get('folds') and sum(sizes) == counts['development'], 'split_counts: OOF fold sizes must cover development cohort')
+        if method == 'holdout':
+            valid_train_val = all(type(counts.get(k)) is int and counts[k] > 0 for k in ('train', 'validation'))
+            need(valid_train_val, 'holdout train and validation counts must be positive')
+            if valid_train_val:
+                need(counts['train'] + counts['validation'] == counts['development'], 'holdout train + validation must equal development')
+            for key in ('cv_oof', 'cv_inner_train', 'cv_inner_val'):
+                need(key not in counts or counts[key] == [], 'holdout must not contain CV counts: ' + key)
+            for alias, target in (('final_train', 'train'), ('final_val', 'validation'), ('final_test', 'locked_test')):
+                need(alias not in counts or counts[alias] == counts.get(target), 'holdout conflicting count: ' + alias)
+        else:
+            sizes = counts.get('cv_oof')
+            valid_sizes = isinstance(sizes, list) and all(type(n) is int and n > 0 for n in sizes)
+            need(valid_sizes and len(sizes) == matrix.get('folds') and sum(sizes) == counts['development'], 'split_counts: OOF fold sizes must cover development cohort')
     need(plan.get('training_authorized') is False, 'planning cannot authorize training')
-    return {'structure_valid': not errors, 'source_review_complete': bool(selected) and selected_papers_read and not errors,
+    return {'structure_valid': not errors, 'validation_method': method,
+            'source_review_complete': bool(selected) and selected_papers_read and not errors,
             'errors': errors, 'warnings': warnings,
             'scope': 'Structure, local references and arithmetic only; does not verify sources, fairness or execution readiness.'}
 

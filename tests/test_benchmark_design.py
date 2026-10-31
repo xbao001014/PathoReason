@@ -83,7 +83,7 @@ def test_catalog_navigation_and_network_permission_binding():
     from pathoreason.permission_settings import PermissionSettings, formal_rules
     skills = {s['id']: s for s in project_skills(True)}
     SkillDefinition.model_validate(skills['benchmark-design'])
-    assert len(skills['benchmark-design']['instruction_refs']) == 6
+    assert len(skills['benchmark-design']['instruction_refs']) == 7
     nav = json.loads((ROOT / 'config/skill-navigation.json').read_text())
     assert 'benchmark-design' in nav[0]['stages'][1]['skill_ids']
     for mode in ('ask', 'auto', 'custom'):
@@ -154,3 +154,78 @@ def test_pdf_failure_bounds_and_non_pdf_response(tmp_path):
     assert not (tmp_path / 'plans/slow/text.txt').exists()
     with pytest.raises(ValueError):
         module.destination(tmp_path, '../outside')
+
+
+def holdout_plan(tmp_path):
+    value = plan(tmp_path)
+    value['schema_version'] = 'pathoreason.benchmark-plan/2'
+    value['validation'] = dict(method='holdout', fixed_split=True, split_seed=71,
+                               group_unit='patient', stratification='class label', split_status='proposed',
+                               split_manifest_ref=None, split_manifest_sha256=None)
+    value['matrix'].update(folds=0, cv_runs=0, final_fit_runs=4, total_fit_runs=4, test_inference_runs=4)
+    value['split_counts'] = dict(cohort=100, development=80, locked_test=20, train=64, validation=16)
+    return value
+
+
+def test_holdout_keeps_training_seeds_separate_from_one_split(tmp_path):
+    value = holdout_plan(tmp_path)
+    value['matrix'].update(seeds=[11, 23, 37], settings_per_model=2,
+                           final_fit_runs=12, total_fit_runs=12, test_inference_runs=12)
+    before = copy.deepcopy(value)
+    result = helper('check_plan').check(value, tmp_path)
+    assert result['structure_valid'] and result['validation_method'] == 'holdout'
+    assert value == before
+    assert len(result['warnings']) == 2  # Execution is still unvalidated.
+
+
+@pytest.mark.parametrize('mutation,expected', [
+    (lambda p: p['matrix'].update(folds=1), 'one-fold CV'),
+    (lambda p: p['matrix'].update(cv_runs=4, total_fit_runs=8), 'holdout cv_runs'),
+    (lambda p: p['matrix'].update(final_fit_runs=8, total_fit_runs=8), 'holdout final_fit_runs'),
+    (lambda p: p['matrix'].update(test_inference_runs=8), 'test_inference_runs'),
+    (lambda p: p['split_counts'].update(validation=15), 'train + validation'),
+    (lambda p: p['split_counts'].update(cv_oof=[16]*5), 'must not contain CV'),
+    (lambda p: p['split_counts'].update(final_train=70), 'conflicting count'),
+    (lambda p: p['validation'].update(split_seed=[11, 23]), 'split_seed'),
+    (lambda p: p['validation'].update(fixed_split=False), 'fixed_split'),
+    (lambda p: p['validation'].update(method='repeated_holdout'), 'validation.method'),
+    (lambda p: p['validation'].update(split_status='frozen'), 'split manifest'),
+    (lambda p: p.pop('validation'), 'validation.method'),
+    (lambda p: p.update(schema_version='pathoreason.benchmark-plan/1'), 'requires benchmark-plan/2'),
+])
+def test_invalid_holdout_does_not_pass_as_cv(tmp_path, mutation, expected):
+    value = holdout_plan(tmp_path)
+    mutation(value)
+    result = helper('check_plan').check(value, tmp_path)
+    assert not result['structure_valid'] and expected in ' '.join(result['errors'])
+
+
+def test_frozen_split_requires_unchanged_manifest(tmp_path):
+    import hashlib
+    value = holdout_plan(tmp_path)
+    path = tmp_path / 'split.json'
+    path.write_text('{"fixture": true}')
+    value['validation'].update(split_status='frozen', split_manifest_ref='split.json',
+                               split_manifest_sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+    assert helper('check_plan').check(value, tmp_path)['structure_valid']
+    path.write_text('{"fixture": "changed"}')
+    result = helper('check_plan').check(value, tmp_path)
+    assert not result['structure_valid'] and 'SHA256' in ' '.join(result['errors'])
+    value['validation']['split_manifest_ref'] = '../outside'
+    assert not helper('check_plan').check(value, tmp_path)['structure_valid']
+
+
+def test_cv_versions_remain_readable_without_rewriting(tmp_path):
+    original = plan(tmp_path)
+    before = copy.deepcopy(original)
+    assert helper('check_plan').check(original, tmp_path)['structure_valid']
+    assert original == before
+    modern = copy.deepcopy(original)
+    modern['schema_version'] = 'pathoreason.benchmark-plan/2'
+    modern['validation'] = holdout_plan(tmp_path)['validation']
+    modern['validation']['method'] = 'cross_validation'
+    modern['matrix']['test_inference_runs'] = modern['matrix']['final_fit_runs']
+    assert helper('check_plan').check(modern, tmp_path)['structure_valid']
+    modern['matrix'].update(folds=1, cv_runs=4, total_fit_runs=8)
+    modern['split_counts']['cv_oof'] = [80]
+    assert not helper('check_plan').check(modern, tmp_path)['structure_valid']
