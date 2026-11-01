@@ -24,6 +24,7 @@ from .business import BusinessRequest,BusinessView,BusinessArtifact
 from typing import Literal
 from .guidance import GuidanceView,Selection,OfferInput
 from .task_workspaces import TaskCodeRequest
+from .research_workbench import ResearchWorkbenchView, project_snapshot
 
 class ProjectInput(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
@@ -115,7 +116,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.11',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.12',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -174,7 +175,7 @@ async def task_code_view(pid:str):
     return service().task_code.workspaces.list(pid)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.11-p5-process-budget'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.12-p5-workbench'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
@@ -256,6 +257,10 @@ async def workbench(pid:str):
         if definition.workflow:
             stages=[{'id':n.id,'title':n.title,'kind':n.kind,'current':n.current} for n in definition.workflow.nodes]
     return {'project_id':pid,'facts':facts,'stages':stages,'stage_note':'历史实验冻结流程；独立复验与稿件各自保留来源和状态。' if stages else '尚未绑定研究流程。'}
+
+@app.get('/api/v2/research-projects/{pid}/research-workbench',response_model=ResearchWorkbenchView)
+def research_workbench(pid:str):
+    return project_snapshot(service(),pid)
 @app.get('/api/v1/settings/status',response_model=RuntimeStatus)
 async def runtime_status():
     try:health=await service().runtime.health()

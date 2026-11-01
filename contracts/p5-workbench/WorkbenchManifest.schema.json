@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "WorkbenchLink": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "stage_id": {
+          "enum": [
+            "data",
+            "plan",
+            "readiness",
+            "baseline",
+            "innovation",
+            "innovation_runs",
+            "analysis",
+            "delivery"
+          ],
+          "title": "Stage Id",
+          "type": "string"
+        },
+        "family_id": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Family Id",
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        },
+        "supersedes": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Supersedes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "stage_id",
+        "family_id",
+        "revision"
+      ],
+      "title": "WorkbenchLink",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Agent-declared associations. Never sets execution or approval state.",
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.workbench-manifest/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    },
+    "links": {
+      "items": {
+        "$ref": "#/$defs/WorkbenchLink"
+      },
+      "maxItems": 500,
+      "title": "Links",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "task_id",
+    "links"
+  ],
+  "title": "WorkbenchManifest",
+  "type": "object"
+}

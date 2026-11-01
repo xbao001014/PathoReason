@@ -1,0 +1,130 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.innovation-proposal/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "task_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Task Id",
+      "type": "string"
+    },
+    "revision": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Revision",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 240,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "hypothesis": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Hypothesis",
+      "type": "string"
+    },
+    "gap": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Gap",
+      "type": "string"
+    },
+    "mechanism": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Mechanism",
+      "type": "string"
+    },
+    "baseline": {
+      "default": "",
+      "maxLength": 240,
+      "title": "Baseline",
+      "type": "string"
+    },
+    "selection_reason": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Selection Reason",
+      "type": "string"
+    },
+    "decision": {
+      "default": "proposed",
+      "enum": [
+        "proposed",
+        "selected",
+        "deferred",
+        "rejected"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "falsification": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Falsification",
+      "type": "string"
+    },
+    "implementation": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Implementation",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100,
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "evidence_artifact_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100,
+      "title": "Evidence Artifact Ids",
+      "type": "array"
+    },
+    "parent_proposal_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100,
+      "title": "Parent Proposal Ids",
+      "type": "array"
+    },
+    "conditions": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 100,
+      "title": "Conditions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "task_id",
+    "revision",
+    "title",
+    "hypothesis"
+  ],
+  "title": "InnovationProposal",
+  "type": "object"
+}
