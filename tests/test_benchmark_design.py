@@ -83,7 +83,7 @@ def test_catalog_navigation_and_network_permission_binding():
     from pathoreason.permission_settings import PermissionSettings, formal_rules
     skills = {s['id']: s for s in project_skills(True)}
     SkillDefinition.model_validate(skills['benchmark-design'])
-    assert len(skills['benchmark-design']['instruction_refs']) == 7
+    assert any('references/execution-readiness.md#sha256=' in ref for ref in skills['benchmark-design']['instruction_refs'])
     nav = json.loads((ROOT / 'config/skill-navigation.json').read_text())
     assert 'benchmark-design' in nav[0]['stages'][1]['skill_ids']
     for mode in ('ask', 'auto', 'custom'):
