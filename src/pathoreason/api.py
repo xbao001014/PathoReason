@@ -23,6 +23,7 @@ from .schema_v2 import ProjectDomainView,ArtifactRecord,ContextSnapshotV2,Legacy
 from .business import BusinessRequest,BusinessView,BusinessArtifact
 from typing import Literal
 from .guidance import GuidanceView,Selection,OfferInput
+from .task_workspaces import TaskCodeRequest
 
 class ProjectInput(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
@@ -159,6 +160,18 @@ async def offer_guidance(body:OfferInput,request:Request):
     expected='Bearer '+service().guidance.token()
     if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'guidance_bridge_auth_required')
     async with service().lock:return service().guidance.publish(body)
+
+@app.post('/internal/task-code',include_in_schema=False)
+async def task_code_call(body:TaskCodeRequest,request:Request):
+    expected='Bearer '+service().guidance.token()
+    if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'task_code_bridge_auth_required')
+    async with service().lock:
+        return await asyncio.to_thread(service().task_code.call,body)
+
+@app.get('/api/v2/formal-studies/{pid}/tasks')
+async def task_code_view(pid:str):
+    if not service().formal.record(pid):raise HTTPException(404,'formal_study_not_found')
+    return service().task_code.workspaces.list(pid)
 
 @app.get('/health')
 async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.11-p5-process-budget'}

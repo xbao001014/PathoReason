@@ -1,0 +1,32 @@
+{
+  "recommended_template": "mil-classification/1.0.1",
+  "templates": [
+    {
+      "template": "mil-classification/1.0.0",
+      "manifest_sha256": "7d4890f1e90188b7eab1fb1343c4e18cd723567cd607dc37455f7458a6299956",
+      "supported_models": [
+        "MEAN_MIL",
+        "MAX_MIL",
+        "AB_MIL"
+      ],
+      "execution_ready": false,
+      "changes": [
+        "initial imported template"
+      ]
+    },
+    {
+      "template": "mil-classification/1.0.1",
+      "manifest_sha256": "ece5e5219a49764245df16f6841d97118c2e9f3a882807452b1720a75e659ca8",
+      "supported_models": [
+        "MEAN_MIL",
+        "MAX_MIL",
+        "AB_MIL"
+      ],
+      "execution_ready": false,
+      "changes": [
+        "Self-contained allowlisted source package; future public checkout changes cannot invalidate this template version.",
+        "Set dont_write_bytecode before importing the task-local builder."
+      ]
+    }
+  ]
+}

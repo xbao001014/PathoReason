@@ -1,0 +1,28 @@
+"""Agent-facing JSON tool. Authority is checked by the running application."""
+import json
+from pathlib import Path
+import sys
+import urllib.request
+import urllib.error
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+from pathoreason.settings import settings
+from pathoreason.task_workspaces import TaskCodeRequest
+
+
+def main():
+    cfg=settings()
+    try:
+        args=TaskCodeRequest.model_validate(json.load(sys.stdin)).model_dump(mode='json')
+        token=Path(cfg['data_root'])/'runtime/control/guidance-token'
+        if token.is_symlink() or token.stat().st_mode & 0o077:raise ValueError('bridge_token_unavailable')
+        request=urllib.request.Request(f"http://127.0.0.1:{cfg['api_port']}/internal/task-code",
+            data=json.dumps(args).encode(),headers={'Content-Type':'application/json','Authorization':'Bearer '+token.read_text().strip()})
+        with urllib.request.urlopen(request,timeout=120) as response:result=json.load(response)
+        print(json.dumps(result,ensure_ascii=False))
+    except urllib.error.HTTPError as exc:
+        print(json.dumps({'error':json.load(exc).get('detail','task_code_failed')},ensure_ascii=False));return 1
+    except (ValueError,OSError) as exc:
+        print(json.dumps({'error':str(exc)},ensure_ascii=False));return 1
+    return 0
+
+if __name__=='__main__':sys.exit(main())

@@ -1,0 +1,120 @@
+{
+  "schema_version": "pathoreason.task-template/1",
+  "template_id": "mil-classification",
+  "version": "1.0.0",
+  "source_commit": "e226b849049e9e39828e775dbf35ac722d02783a",
+  "source_dirty": false,
+  "vendor": {
+    "source": "auto-research/engines/auto_mil/third_party/MIL_BASELINE",
+    "commit": "55a19217f9c7ad89f1fc390d9dbb64bc44c30890",
+    "license": "vendor/LICENSE",
+    "modified_source_identity": "individual file sha256; parent Git commit is not a clean-tree claim"
+  },
+  "entrypoints": [
+    "runner.py"
+  ],
+  "supported_tasks": [
+    "multiclass_classification"
+  ],
+  "supported_models": [
+    "MEAN_MIL",
+    "MAX_MIL",
+    "AB_MIL"
+  ],
+  "input_contract": "explicit MIL configuration and controlled train/val manifest; no test columns with data",
+  "output_contract": "preflight report; versioned raw epoch metrics/checkpoints only under authorized executor",
+  "dependency_availability": "observed shared runtime only; independent immutable environment pending",
+  "validation_scope": "public MIL builder CPU regression; repository entrypoint integration pending",
+  "files": [
+    {
+      "source_root": "template",
+      "source": "runner.py",
+      "destination": "runner.py",
+      "sha256": "71cc6ec04617137cb88c2297d8798e3093a70ece7f864198168b815be9e8ba26"
+    },
+    {
+      "source_root": "template",
+      "source": "AGENTS.md",
+      "destination": "AGENTS.md",
+      "sha256": "0a8dae52f1557fb3c1fff0dda7eb3d451632f84188febbf3e06a2d3626e65b3f"
+    },
+    {
+      "source_root": "template",
+      "source": "config.example.json",
+      "destination": "config.example.json",
+      "sha256": "b05ffda3a32ca76d9e4f7ac800b551cc833c52dff1cd3008531794c51cc46005"
+    },
+    {
+      "source_root": "template",
+      "source": "requirements.lock",
+      "destination": "requirements.lock",
+      "sha256": "80e76a18a335090a46697450d1812dbabc34c1b3391c0e72024aa16147550612"
+    },
+    {
+      "source_root": "platform",
+      "source": "src/pathoreason/mil_execution.py",
+      "destination": "mil_execution.py",
+      "sha256": "b79d634df22bd9c0e011b8a758661c9f174e4e4c7a33aee0c6baef8fdde1aea0"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "LICENSE",
+      "destination": "vendor/LICENSE",
+      "sha256": "8bb14f2a5c65f2840a69f78cfa15732d62888278d79aa5565c0ad20ba2613e2f"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "modules/MEAN_MIL/mean_mil.py",
+      "destination": "vendor/modules/MEAN_MIL/mean_mil.py",
+      "sha256": "52196d3eb0065146cbb6821aaacc9e6d366e213b06bf39e9298e940469b15ee3"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "modules/MAX_MIL/max_mil.py",
+      "destination": "vendor/modules/MAX_MIL/max_mil.py",
+      "sha256": "62b176b7c43b537db7c4bc37a412cb1666d0171bdd6fa566e824b7167a3e27e4"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "modules/AB_MIL/ab_mil.py",
+      "destination": "vendor/modules/AB_MIL/ab_mil.py",
+      "sha256": "7e06905aa2498a3503595d6e833e3059eee9a7d288ae5a4e636bff6a8fd1106c"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/model_utils.py",
+      "destination": "vendor/utils/model_utils.py",
+      "sha256": "c2575b8a8152558d6a1f668cd8d4f5c561e40c9426f9498078cf83043944f53d"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/process_utils.py",
+      "destination": "vendor/utils/process_utils.py",
+      "sha256": "a45f0012b556f6b6a1ad9eb84d6973aae33c36b0812ec2c81f1eb5288bd8f990"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/wsi_utils.py",
+      "destination": "vendor/utils/wsi_utils.py",
+      "sha256": "f6057be1872a738b9aeabf8b9fb778933c38b99ca80a3b66f66a3e7a60d87b75"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/feature_io.py",
+      "destination": "vendor/utils/feature_io.py",
+      "sha256": "b46ddd2e3d73cbee459a280bec1a3ba0e330c2144bced9bf0abcfc60b6e22d63"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/loop_utils.py",
+      "destination": "vendor/utils/loop_utils.py",
+      "sha256": "15870941203df76dc48f77bf031dfbff6a5619c847d946d5c32a41e083ec6518"
+    },
+    {
+      "source_root": "mil_vendor",
+      "source": "utils/loop_timing.py",
+      "destination": "vendor/utils/loop_timing.py",
+      "sha256": "68db8c223c3c0fb2a08c2103ecee5b7fe7848e3384e7f64567ea016535fdd2a1"
+    }
+  ]
+}

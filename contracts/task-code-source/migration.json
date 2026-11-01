@@ -1,0 +1,19 @@
+{
+  "schema_version": "pathoreason.task-code-migration/1",
+  "component": "task-code",
+  "version": 1,
+  "strategy": "additive_side_tables",
+  "tables": [
+    "task_code_schema",
+    "task_code_tasks",
+    "task_code_actions",
+    "task_code_revisions",
+    "task_code_checks",
+    "task_code_snapshots",
+    "task_code_events"
+  ],
+  "existing_rows_modified": false,
+  "rollback": "disable task-code entrypoints; retain every side table, task repository, snapshot and receipt; never restore an old database",
+  "snapshot_scope": "source_only",
+  "execution_ready": false
+}
