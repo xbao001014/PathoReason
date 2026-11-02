@@ -2,6 +2,7 @@
 export type StatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 const tones: Record<string, StatusTone> = {
   admitted:'success',awaiting_review:'warning',needs_repair:'danger',needs_reconciliation:'warning',budget_exhausted:'danger',
+  active:'info',paused:'danger',blocked:'warning',waiting_input:'warning',waiting:'warning',
   running:'info', interrupt_requested:'info', pending_login:'info',
   completed:'success', passed:'success', connected:'success', authenticated:'success', ready:'success',
   failed:'danger', error:'danger', cancelled:'danger', interrupted:'danger', stopped:'danger', runtime_unavailable:'danger',

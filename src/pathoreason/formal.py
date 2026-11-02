@@ -68,7 +68,7 @@ class EntryStatus(BaseModel):
     seedream_credential_present:bool
     seedream_live_verified:bool=False
     migrated_skills:int
-    release:str='0.6.12-p5-workbench'
+    release:str='0.6.13-p5-goals'
     formal_acceptance:Literal['pending_new_window']='pending_new_window'
 
 TITLES={'academic-research-suite':'研究规划与流程','citation-management':'引文管理','histolab':'病理切片预处理','manuscript-to-latex':'LaTeX 排版与交付','method-results-to-manuscript':'研究成果转稿件','paper-lookup':'文献检索','pathology-figures':'病理图件路由','pathology-mil-paper-figures':'病理 MIL 图件','peer-review':'稿件评审','scientific-schematics':'方法图与原理图','scientific-visualization':'科学结果可视化','scientific-writing':'科学写作','statistical-analysis':'统计分析'}

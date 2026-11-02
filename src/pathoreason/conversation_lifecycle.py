@@ -97,6 +97,7 @@ class ConversationLifecycle:
                 self._check_idle(db, cid)
                 doc = json.loads(conv['document'])
                 doc['status'] = 'open' if restore else 'archived'
+                if not restore:self.s.goals.archive(db,cid)
                 db.execute('UPDATE conversations SET document=? WHERE id=?', (encoded(doc), cid))
             return self.view(cid)
 
@@ -143,6 +144,7 @@ class ConversationLifecycle:
         # native session. No standalone file memory is registered by this version.
         with self.s.store.connect(True) as db:
             self._check_idle(db, cid)
+            self.s.goals.purge(db,cid)
             db.execute('DELETE FROM conversation_guidance WHERE conversation_id=?',(cid,))
             for table in ['context_snapshots', 'p4_context_projections', 'skill_invocations', 'turn_guidance_context', 'turn_process_projection']:
                 db.execute('DELETE FROM ' + table + ' WHERE turn_id IN (SELECT id FROM turns WHERE conversation_id=?)', (cid,))

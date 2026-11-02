@@ -24,6 +24,7 @@ from .business import BusinessRequest,BusinessView,BusinessArtifact
 from typing import Literal
 from .guidance import GuidanceView,Selection,OfferInput
 from .task_workspaces import TaskCodeRequest
+from .goals import GoalCheckpoint,GoalControl,GoalView
 from .research_workbench import ResearchWorkbenchView, project_snapshot
 
 class ProjectInput(BaseModel):
@@ -36,6 +37,7 @@ class ConversationInput(BaseModel):
 from .reasoning import ReasoningEffort,ReasoningOptions
 
 class TurnInput(BaseModel):
+    goal_mode:Literal['single','continuous']='single'
     guidance_selection:Selection|None=None
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
     request_key:c.Identifier
@@ -68,6 +70,8 @@ class Usage(BaseModel):
     cached_input_tokens:int|None=None
     cost:float|None=None
 class TurnView(BaseModel):
+    origin:Literal['user','goal']='user'
+    goal_id:str|None=None
     timing:TurnTiming|None=None
     guidance:GuidanceView|None=None
     turn:c.Turn
@@ -116,7 +120,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.12',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.13',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -174,8 +178,20 @@ async def task_code_view(pid:str):
     if not service().formal.record(pid):raise HTTPException(404,'formal_study_not_found')
     return service().task_code.workspaces.list(pid)
 
+@app.get('/api/v2/conversations/{cid}/goal',response_model=GoalView|None)
+async def goal_view(cid:str):return service().goals.view(cid)
+
+@app.post('/api/v2/conversations/{cid}/goal',response_model=GoalView)
+async def goal_control(cid:str,body:GoalControl):return await service().goals.control(cid,body)
+
+@app.post('/internal/goal-checkpoint',include_in_schema=False)
+async def goal_checkpoint(body:GoalCheckpoint,request:Request):
+    expected='Bearer '+service().guidance.token()
+    if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'goal_bridge_auth_required')
+    async with service().lock:return service().goals.checkpoint(body)
+
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.12-p5-workbench'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.13-p5-goals'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
