@@ -497,7 +497,14 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--color-control-bo
 
 .composer{border:1px solid var(--color-control-border);border-radius:var(--radius-cards);padding:var(--card-padding-input);box-shadow:var(--shadow-card)}
 
-.composer:focus-within{border-color:var(--color-ink-soft)}
+/* Input focus shares the in-progress blue, with a restrained halo. */
+.composer{transition:border-color 180ms ease,box-shadow 180ms ease}
+.composer:focus-within{border-color:var(--status-info);box-shadow:var(--shadow-card),0 0 0 3px color-mix(in srgb,var(--status-info) 12%,transparent);animation:composer-focus-glow 2.8s ease-in-out infinite}
+@keyframes composer-focus-glow{
+  0%,100%{box-shadow:var(--shadow-card),0 0 0 3px color-mix(in srgb,var(--status-info) 10%,transparent)}
+  50%{box-shadow:var(--shadow-card),0 0 0 4px color-mix(in srgb,var(--status-info) 18%,transparent)}
+}
+@media(prefers-reduced-motion:reduce){.composer{transition:none}.composer:focus-within{animation:none}}
 .composer textarea{font-size:var(--text-body);color:var(--color-ink);line-height:1.7;min-height:88px}
 
 .composer textarea::placeholder{color:var(--color-text-muted)}
