@@ -69,11 +69,25 @@ def start(name):
     time.sleep(.4)
     if child.poll() is not None:raise RuntimeError(name+" failed; inspect its service log")
 
-parser=argparse.ArgumentParser();parser.add_argument("action",choices=["start","stop","status","restart-app","restart-runtime"]);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument("action",choices=["start","stop","stop-app","status","restart-app","restart-runtime","refresh-native"]);args=parser.parse_args()
 import fcntl
 with (control/"service.lock").open("a") as lock:
     fcntl.flock(lock,fcntl.LOCK_EX)
     if args.action=="stop":stop("app");stop("opencode")
+    elif args.action=="stop-app":stop("app")
+    elif args.action=="refresh-native":
+        import asyncio
+        from pathoreason.runtime import OpenCode
+        from pathoreason.native_refresh import maintenance_directories,refresh_idle_instances
+        if cfg.get("primary_runtime")=="codex":raise RuntimeError('native_refresh_requires_opencode')
+        if record('app'):raise RuntimeError('native_refresh_requires_app_offline')
+        directories=maintenance_directories(data,cfg['api_port'])
+        receipt=control/('native-refresh-'+str(time.time_ns())+'.jsonl')
+        def save_receipt(value):
+            with receipt.open('a') as file:file.write(json.dumps(value,ensure_ascii=False)+'\n')
+        asyncio.run(refresh_idle_instances(OpenCode(data,cfg['opencode_port']),directories,
+            {name:ROOT/'skills'/name/'SKILL.md' for name in ['benchmark-design','task-code-workspaces']},save_receipt))
+        print(json.dumps({'native_refresh_receipt':str(receipt)}))
     elif args.action=="restart-app":stop("app");start("app")
     elif args.action=="restart-runtime":
         if cfg.get("primary_runtime")=="codex":stop("app");start("app")
