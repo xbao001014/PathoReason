@@ -15,3 +15,5 @@ TypeScript 与 Vite 构建通过。候选和线上浏览器检查覆盖 1440、3
 证据与原版本备份：`/data/bxn/PathoReason/acceptance/composer-settings-20261102/`。候选构建先独立验证，再发布新增的哈希静态资源，最后原子替换 index.html；保留旧资源以支持已打开的页面。无需重启应用或 OpenCode，无数据库/API/研究产物修改。页面刷新后加载新版本。
 
 回退可从 dist-before.tar 恢复旧 index.html；保留已存在的新旧资源直到旧页面退出，不回滚数据库。原有 OPERATOR.md、FXIO.md、TASK_CODE_WORKSPACES_PLAN.md 未纳入此改动。
+
+2026-11-02 高度微调：用户要求输入框增加约一行，textarea 最小高度由 64px 改为 88px（+24px，当前行高 23.8px）。构建及 1440/390/320 三宽度检查通过，工具栏高度保持不变；仍以静态资源方式发布，无服务重启。证据在 acceptance/composer-height-20261102。

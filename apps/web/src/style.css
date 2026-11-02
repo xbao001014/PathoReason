@@ -498,7 +498,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--color-control-bo
 .composer{border:1px solid var(--color-control-border);border-radius:var(--radius-cards);padding:var(--card-padding-input);box-shadow:var(--shadow-card)}
 
 .composer:focus-within{border-color:var(--color-ink-soft)}
-.composer textarea{font-size:var(--text-body);color:var(--color-ink);line-height:1.7;min-height:64px}
+.composer textarea{font-size:var(--text-body);color:var(--color-ink);line-height:1.7;min-height:88px}
 
 .composer textarea::placeholder{color:var(--color-text-muted)}
 .composer-toolbar select{font-size:13px;color:var(--color-text-secondary);max-width:185px}
