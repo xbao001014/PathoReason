@@ -1,7 +1,4 @@
-.goal-panel{border:1px solid var(--color-control-border);border-radius:var(--radius-cards);margin-bottom:var(--spacing-12);background:var(--color-surface-alt);color:var(--color-ink);font-size:var(--text-body);overflow:hidden}
-/* Join the goal bar to its composer without changing detached notice layouts. */
-.goal-panel:has(+ .composer){margin-bottom:0;border-radius:var(--radius-cards) var(--radius-cards) 0 0;border-bottom-color:var(--color-hairline);box-shadow:var(--shadow-card)}
-.goal-panel + .composer{border-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.goal-panel{border:1px solid var(--color-control-border);border-radius:var(--radius-cards);margin-bottom:var(--spacing-12);background:var(--color-surface-alt);color:var(--color-ink);font-size:var(--text-body);overflow:hidden;box-shadow:var(--shadow-card)}
 .goal-heading{display:flex;align-items:center;gap:var(--spacing-8);padding:var(--spacing-8) var(--card-padding-input);min-width:0}
 .goal-state{display:flex;align-items:center;gap:6px;min-width:0;font-size:var(--text-caption);font-weight:var(--weight-support)}
 .goal-state>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
