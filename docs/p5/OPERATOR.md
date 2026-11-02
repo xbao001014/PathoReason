@@ -77,3 +77,8 @@ export AUTORESEARCH_COMPUTE_CONFIG=/data/bxn/PathoReason/projects/PROJECT_ID/com
 本项目独立工具路径在 `.tools/manuscript-path.json`；服务启动时自动加载。手工命令可执行 `export PATH="/home/bxn/projects/PathoReason/.tools/manuscript/.TinyTeX/bin/x86_64-linux:/home/bxn/projects/PathoReason/.tools/manuscript/pandoc-3.13/bin:$PATH"`。latexmk/Pandoc 无研究数据编译已通过；可选 WSI、PDF 渲染与图结构依赖的未安装项见 ENTRY_VALIDATION.md，按实际研究路径补齐。
 
 运行接口参照 [OpenCode 权限](https://opencode.ai/docs/permissions/)、[Skill](https://opencode.ai/docs/skills/) 和 [Server](https://opencode.ai/docs/server/)，本次以已安装版本原生 /doc 为准；图像协议参照 [火山方舟图像 API](https://docs.volcengine.com/docs/ark/image-generation-api?lang=en)。这些文档不构成本项目真实调用已经通过的证据。
+
+
+## FXio 玻片读取（2026-10-31）
+
+服务器已安装 FXio 0.1.2。读取接口记录中核验后的实际切片路径时，使用 `/home/bxn/projects/PathoReason/.venv/bin/python`，Python 入口为 `from wsi import open_wsi`。真实 ZYP/MRXS 的元信息、区域和缩略图读取已验证；其他格式和可选功能需分别核验。调用、依赖恢复与安装证据见 [FXio 环境说明](FXIO.md)。元信息清单写入当前项目 inputs/，图件和报告分别写入 figures/、outputs/，原切片只读。
