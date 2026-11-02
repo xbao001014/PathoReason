@@ -3,10 +3,10 @@ import {createPortal} from 'react-dom';
 import {ComposerSettingValue} from './ComposerSetting';
 
 type Option={value:string;label:string;disabled?:boolean};
-type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;triggerLabel?:string;disabled?:boolean;onOpen?:()=>void};
+type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;triggerLabel?:string;intensity?:string;disabled?:boolean;onOpen?:()=>void};
 
 /** Select-only combobox; portal keeps the rounded menu outside clipped panels, including modal dialogs. */
-export function ComposerSelect({label,value,options,onChange,variant,icon,triggerLabel,disabled=false,onOpen}:Props){
+export function ComposerSelect({label,value,options,onChange,variant,icon,triggerLabel,intensity,disabled=false,onOpen}:Props){
   const id=useId(),trigger=useRef<HTMLButtonElement>(null),menu=useRef<HTMLDivElement>(null);
   const [portalHost,setPortalHost]=useState<HTMLElement>(document.body);
   const [open,setOpen]=useState(false),[active,setActive]=useState(0);
@@ -73,7 +73,7 @@ export function ComposerSelect({label,value,options,onChange,variant,icon,trigge
   },[open,active,position]);
   useEffect(()=>{if(disabled)setOpen(false);},[disabled]);
   return <>
-    <button ref={trigger} type="button" className={'composer-select composer-select-'+variant+(triggerLabel?' composer-setting-trigger':'')} role="combobox" disabled={disabled}
+    <button ref={trigger} type="button" className={'composer-select composer-select-'+variant+(triggerLabel?' composer-setting-trigger':'')} role="combobox" disabled={disabled} data-intensity={intensity}
       aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={open?id:undefined}
       aria-activedescendant={open?`${id}-${active}`:undefined} aria-description={triggerLabel?(selected?.label||value):undefined} title={triggerLabel?undefined:selected?.label||value}
       onClick={()=>open?setOpen(false):show()} onKeyDown={onKeyDown} onBlur={()=>setOpen(false)}>

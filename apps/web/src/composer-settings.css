@@ -70,3 +70,14 @@
   width:var(--composer-submit-width);
  }
 }
+
+/* Thinking intensity stays visible while idle, hovered, focused or locked. */
+.composer-toolbar .composer-controls > .composer-setting-trigger[data-intensity] {
+ background:var(--thinking-fill);
+ color:var(--thinking-ink);
+ border-color:var(--thinking-fill);
+}
+.composer-setting-trigger[data-intensity="none"] {--thinking-fill:var(--color-surface-alt);--thinking-ink:var(--color-text-secondary)}
+.composer-setting-trigger[data-intensity="low"] {--thinking-fill:var(--color-control-fill);--thinking-ink:var(--color-text-secondary)}
+.composer-setting-trigger[data-intensity="high"] {--thinking-fill:var(--color-text-muted);--thinking-ink:var(--color-paper)}
+.composer-setting-trigger[data-intensity="max"] {--thinking-fill:var(--color-ink-soft);--thinking-ink:var(--color-paper)}
