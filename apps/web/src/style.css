@@ -1051,9 +1051,21 @@ dialog h2{font-size:18px;font-weight:600}
 .formal-summary dd,.formal-entry dd {margin:0;overflow-wrap:anywhere;font-weight:var(--weight-support)}
 .formal-summary dt,.formal-entry dt {color:var(--color-text-secondary)}
 .formal-budget-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.native-permissions {padding:var(--card-padding);margin:var(--card-gap);border:1px solid var(--color-control-border);border-radius:var(--radius-cards);background:var(--color-paper);max-height:45dvh;overflow:auto}
-.native-permissions pre {white-space:pre-wrap;overflow-wrap:anywhere;background:var(--color-surface-alt);padding:var(--card-padding-compact);font-size:var(--text-body)}
-.native-permissions p {color:var(--color-text-secondary);font-size:var(--text-body)}
-.native-permissions article+article {margin-top:24px;border-top:1px solid var(--color-hairline);padding-top:24px}
+/* Human approval stays compact while commands and permission scopes remain inspectable. */
+.native-permissions {flex:0 1 auto;align-self:center;width:min(560px,calc(100% - var(--card-gap)*2));min-width:0;padding:var(--card-padding);margin:var(--card-gap) auto;border:1px solid var(--color-hairline);border-radius:var(--radius-cards);background:var(--color-paper);box-shadow:var(--shadow-card);max-height:45dvh;overflow:auto;scrollbar-gutter:stable;overscroll-behavior:contain}
+.native-permissions article {display:flex;flex-direction:column;gap:var(--spacing-16);min-width:0}
+.native-permission-heading {display:flex;align-items:center;justify-content:space-between;gap:var(--spacing-12);flex-wrap:wrap}
+.native-permission-heading h3 {margin:0;font-size:var(--text-subheading);font-weight:var(--weight-primary)}
+.native-permissions pre {margin:0;max-height:160px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--color-surface-alt);border:1px solid var(--color-hairline);border-radius:var(--radius-inputs);padding:var(--card-padding-compact);font-size:var(--text-body);line-height:1.6;overscroll-behavior:contain;tab-size:2}
+.native-permissions pre:focus-visible {outline:2px solid var(--color-control-border);outline-offset:2px}
+.native-permissions p {margin:0;color:var(--color-text-secondary);font-size:var(--text-body);line-height:1.6;overflow-wrap:anywhere}
+.native-permissions summary {cursor:pointer;font-size:var(--text-body);color:var(--color-text-secondary)}
+.native-permissions details[open] pre {margin-top:var(--spacing-12)}
+.native-permission-actions {display:flex;justify-content:flex-end;flex-wrap:wrap;gap:var(--spacing-8);padding-top:var(--spacing-12);border-top:1px solid var(--color-hairline);background:var(--color-paper)}
+.native-permission-actions button {font-size:var(--text-body);min-height:var(--control-height-compact)}
+.native-permission-always {margin-right:auto}
+.native-permissions article+article {margin-top:var(--card-gap);border-top:1px solid var(--color-hairline);padding-top:var(--card-gap)}
+.native-permissions > [role="alert"] {margin-top:var(--spacing-12);color:var(--status-danger)}
+@media(max-width:760px){.native-permissions pre{max-height:120px}.native-permission-actions button{flex:1 1 auto}.native-permission-actions .native-permission-always{flex-basis:100%;margin-right:0}}
 .dialog-body select {padding:12px;border:1px solid var(--color-control-border);border-radius:var(--radius-inputs);background:var(--color-paper);font:inherit;color:var(--color-ink)}
 @media(max-width:760px){.formal-budget-fields{grid-template-columns:minmax(0,1fr)}}
