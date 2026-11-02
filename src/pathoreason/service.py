@@ -30,6 +30,8 @@ class Service:
         self.formal=Formal(self)
         from .conversation_lifecycle import ConversationLifecycle
         self.conversations=ConversationLifecycle(self)
+        from .conversation_titles import ConversationTitles
+        self.titles=ConversationTitles(self)
         from .hardware import HardwareMonitor
         from .gpu_settings import ConversationGpuSettings
         self.hardware=HardwareMonitor(self.config.get('execution_environment','local'))
@@ -175,7 +177,7 @@ class Service:
             runtime_config=(FormalConfiguration if study else RuntimeConfiguration).model_validate(runtime_config).model_dump(mode='json')
             turn=c.Turn(id=uid('turn'),project_id=pid,conversation_id=cid,runtime_binding_id=conv_doc['active_runtime_binding_id'],request_key=request['request_key'],status='queued',model=models[request['model']],config_digest=c.canonical_digest(runtime_config),created_at=now(),finished_at=None,native_turn_id=None,error_code=None)
             invocation=c.SkillInvocation(id=uid('invoke'),project_id=pid,conversation_id=cid,turn_id=turn.id,skill_id=skill['id'],skill_version=skill['version'],skill_digest=skill['digest'],input_artifact_ids=artifact_ids) if skill else None
-            row,created=self.store.create_turn(turn,request['text'],artifact_ids,skill['digest'] if skill else None,digest,uid('msg'),snapshot,invocation,max_turns=limits.get('max_turns',12),max_wall_seconds=limits.get('max_wall_seconds',1200),runtime_config=runtime_config,budget_project_id=pid if study else None,on_create=lambda db:(self.guidance.bind(db,guidance_context,turn),self.goals.bind(db,goal_context,turn,request)))
+            row,created=self.store.create_turn(turn,request['text'],artifact_ids,skill['digest'] if skill else None,digest,uid('msg'),snapshot,invocation,max_turns=limits.get('max_turns',12),max_wall_seconds=limits.get('max_wall_seconds',1200),runtime_config=runtime_config,budget_project_id=pid if study else None,on_create=lambda db:(self.guidance.bind(db,guidance_context,turn),self.goals.bind(db,goal_context,turn,request),self.titles.bind(db,turn)))
             if created:
                 self.business.register(turn.id,mode,business_context)
                 self.schedule(turn.id)
@@ -190,7 +192,9 @@ class Service:
         document.update(status=status,error_code=error,finished_at=now() if status in ('completed','failed','interrupted') else None)
         c.Turn.model_validate(document)
         self.store.update(tid,status=status,document=encoded(document))
+        self.titles.finish(tid,status)
     async def recover(self):
+        self.titles.recover()
         self.context.mark_recovery()
         self.goals.recover_interrupted_context()
         for row in self.store.active():self.schedule(row['id'])
@@ -214,6 +218,8 @@ class Service:
             evidence.append(item)
         return evidence
     def prompt(self,row):
+        return self._prompt(row)+self.titles.prompt(row)
+    def _prompt(self,row):
         if self.formal.record(row['project_id']):
             with self.store.connect() as db:frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()[0])
             skill=frozen.get('skill')
@@ -253,6 +259,7 @@ class Service:
             if row['status'] not in ACTIVE:return
             text=self.business.redact(text,row['conversation_id'])
             if self.formal.record(row['project_id']):text=text.replace(self.guidance.grant(tid),'[redacted]')
+            text=self.titles.consume(tid,text)
             if len(text)>len(row['text']):self.store.update(tid,text=text)
 
     async def run(self,tid):
@@ -297,6 +304,7 @@ class Service:
                     await asyncio.sleep(1);continue
                 self.store.observe_timing(tid,messages)
                 visible=visible_response(messages,row['native_message_id'])
+                visible['text']=self.titles.consume(tid,visible['text'])
                 usage=visible['usage'];usage['compaction_observed']=visible['compacted'];usage['context_limit_tokens']=usage.get('context_limit_tokens') or json.loads(row['document'])['model']['context_limit_tokens']
                 latest=self.store.turn(tid)['text']
                 text=visible['text'] if visible['complete'] and visible['text'] else max((visible['text'],latest),key=len)

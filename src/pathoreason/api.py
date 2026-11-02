@@ -210,6 +210,14 @@ async def create_project(body:ProjectInput):return service().store.create_projec
 async def conversations(pid:str,include_archived:bool=False):return service().conversations.list(pid,include_archived)
 @app.post('/api/v1/research-projects/{pid}/conversations',response_model=c.Conversation,status_code=201)
 async def create_conversation(pid:str,body:ConversationInput):return service().new_conversation(pid,body.title)
+from .conversation_titles import ConversationTitleView,ConversationTitleUpdate
+
+@app.get('/api/v1/conversations/{cid}/title',response_model=ConversationTitleView)
+async def conversation_title(cid:str):return service().titles.view(cid)
+
+@app.put('/api/v1/conversations/{cid}/title',response_model=ConversationTitleView)
+async def rename_conversation(cid:str,body:ConversationTitleUpdate):return await service().titles.rename(cid,body)
+
 @app.get('/api/v1/conversations/{cid}/lifecycle',response_model=ConversationLifecycleView)
 async def conversation_lifecycle(cid:str):return service().conversations.view(cid)
 @app.post('/api/v1/conversations/{cid}/archive',response_model=ConversationLifecycleView)
