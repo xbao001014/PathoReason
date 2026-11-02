@@ -1,0 +1,9 @@
+.composer-footer{align-items:center;flex-wrap:wrap;gap:8px 16px}
+.context-indicator{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0;font-size:var(--text-caption);color:var(--color-text-muted);font-variant-numeric:tabular-nums}
+.context-indicator-label,.context-indicator-count{white-space:nowrap}
+.composer-footer>.text-link{flex-shrink:0;margin-left:auto}
+
+/* Keep the footer help above the composer and inside the indicator's bounds. */
+.context-indicator{position:relative}
+.context-indicator .info-wrap{position:static}
+.context-indicator .info-tooltip{top:auto;bottom:calc(100% + 8px);left:0;right:auto;width:min(280px,100%);box-sizing:border-box;overflow-wrap:anywhere;border-radius:var(--radius-buttons)}
