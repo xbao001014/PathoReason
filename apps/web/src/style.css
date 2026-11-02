@@ -1076,3 +1076,53 @@ dialog h2{font-size:18px;font-weight:600}
 @media(max-width:760px){.native-permissions pre{max-height:120px}.native-permission-actions button{flex:1 1 auto}.native-permission-actions .native-permission-always{flex-basis:100%;margin-right:0}}
 .dialog-body select {padding:12px;border:1px solid var(--color-control-border);border-radius:var(--radius-inputs);background:var(--color-paper);font:inherit;color:var(--color-ink)}
 @media(max-width:760px){.formal-budget-fields{grid-template-columns:minmax(0,1fr)}}
+
+/* Connection settings: fixed header, inset scrolling and consistent cards. */
+dialog[open]:has(> .settings-body) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+dialog:has(> .settings-body) > header {
+  flex: 0 0 auto;
+  min-width: 0;
+  gap: var(--spacing-16);
+  background: var(--color-paper);
+}
+dialog:has(> .settings-body) > header h2 {min-width: 0; overflow-wrap: anywhere}
+dialog:has(> .settings-body) > header .icon-button {flex-shrink: 0}
+dialog > .settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  margin: 0 var(--spacing-8) var(--spacing-12);
+  padding: var(--spacing-20) calc(var(--card-padding) - var(--spacing-8));
+}
+dialog > .settings-body > section {
+  flex: 0 0 auto;
+  min-width: 0;
+  margin: 0;
+  padding: var(--card-padding-compact);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-cards);
+  background: var(--color-surface-alt);
+}
+dialog > .settings-body .settings-heading {
+  flex-wrap: wrap;
+  gap: var(--spacing-12);
+}
+dialog > .settings-body .settings-heading > div {min-width: 0}
+dialog > .settings-body .provider-icon {flex: 0 0 35px}
+dialog > .settings-body .settings-heading h3 {overflow-wrap: anywhere}
+dialog > .settings-body dl {grid-template-columns: minmax(0, 90px) minmax(0, 1fr)}
+dialog > .settings-body .button-row > button {max-width: 100%; white-space: normal}
+@media (max-width: 420px) {
+  dialog > .settings-body {padding-inline: var(--spacing-12)}
+  dialog > .settings-body dl {grid-template-columns: minmax(0, 1fr); gap: var(--spacing-8)}
+  dialog > .settings-body dd + dt {margin-top: var(--spacing-8)}
+  dialog > .settings-body .settings-heading > .tag {margin-inline-start: 0}
+}
