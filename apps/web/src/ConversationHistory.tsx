@@ -1,4 +1,4 @@
-import {forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
+import {forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useRef,useState,type ReactNode,type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
 import type {TurnView} from './generated';
 import {statusLabel,statusTone} from './status';
@@ -18,7 +18,7 @@ export const ConversationHistory=forwardRef<HistoryHandle,{turns:TurnView[];chil
  const trigger=useRef<HTMLButtonElement|null>(null),popup=useRef<HTMLDivElement>(null),restoringFocus=useRef(false);
  const [current,setCurrent]=useState(''),[atLatest,setAtLatest]=useState(true),[height,setHeight]=useState(400);
  const [opened,setOpened]=useState<{start:number;end:number;mobile:boolean;top:number;left:number;width:number}|null>(null);
- const [search,setSearch]=useState('');
+ const [search,setSearch]=useState(''),[navigationCenter,setNavigationCenter]=useState<number>();
  const lastText=turns.at(-1)?.text;
  function updatePosition(){
   const el=scroll.current;if(!el)return;
@@ -53,8 +53,8 @@ export const ConversationHistory=forwardRef<HistoryHandle,{turns:TurnView[];chil
   const el=scroll.current,body=content.current,container=frame.current;if(!el||!body||!container)return;
   let raf=0;
   const changed=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(updatePosition);};
-  const resize=new ResizeObserver(()=>{setHeight(container.clientHeight);if(following.current)latest();else changed();});
-  resize.observe(body);resize.observe(container);el.addEventListener('scroll',changed,{passive:true});
+  const resize=new ResizeObserver(()=>{setHeight(container.clientHeight);const panel=container.parentElement!.getBoundingClientRect();setNavigationCenter(panel.top+panel.height/2-container.getBoundingClientRect().top);if(following.current)latest();else changed();});
+  resize.observe(body);resize.observe(container);resize.observe(container.parentElement!);el.addEventListener('scroll',changed,{passive:true});
   // Stop following immediately on upward input, before a streaming update arrives.
   const wheel=(e:WheelEvent)=>{if(e.deltaY<0)following.current=false;};
   el.addEventListener('wheel',wheel,{passive:true});
@@ -81,7 +81,7 @@ export const ConversationHistory=forwardRef<HistoryHandle,{turns:TurnView[];chil
  const groups=Array.from({length:Math.ceil(turns.length/size)},(_,i)=>({start:i*size,end:Math.min(turns.length,(i+1)*size)}));
  const currentIndex=turns.findIndex(t=>t.turn.id===current);
  const entries=opened?turns.map((turn,index)=>({turn,index})).slice(opened.start,opened.end).filter(({turn})=>!search||((turn.user_text||'')+' '+turn.text).toLocaleLowerCase().includes(search.toLocaleLowerCase())):[];
- return <div className="conversation-timeline" ref={frame}>
+ return <div className="conversation-timeline" ref={frame} style={{'--history-center':navigationCenter===undefined?'50%':navigationCenter+'px'} as CSSProperties}>
   <div className="message-scroll" ref={scroll}><div className="history-content" ref={content}>{children}</div></div>
   {turns.length>0&&<nav className="history-navigation" aria-label="对话历史导航">
    <div className="history-rail">{groups.map(({start,end})=>{

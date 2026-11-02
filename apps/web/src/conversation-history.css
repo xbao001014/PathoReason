@@ -2,9 +2,9 @@
 .conversation-timeline>.message-scroll{height:100%;scroll-behavior:auto;overflow-anchor:none}
 .history-content{display:flow-root;min-height:100%}
 .history-content>.business-card{width:var(--chat-content-width);max-width:var(--page-max-width);margin:0 0 var(--card-gap) max(var(--chat-gutter),calc((100cqw - var(--page-max-width))/2))}
-.history-navigation{position:absolute;left:0;top:12px;bottom:48px;width:26px;z-index:3}
-.history-rail{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
-.history-mark{display:flex;align-items:center;justify-content:center;flex:1;min-height:12px;max-height:24px;width:26px;padding:0;border:0;background:transparent;border-radius:var(--radius-buttons);cursor:pointer}
+.history-navigation{position:absolute;left:max(calc(var(--chat-gutter)/2),calc((100cqw - var(--page-max-width))/4));top:var(--history-center,50%);transform:translate(-50%,-50%);width:26px;z-index:3}
+.history-rail{display:flex;flex-direction:column;align-items:center;justify-content:center;height:auto}
+.history-mark{display:flex;align-items:center;justify-content:center;flex:0 0 12px;height:12px;width:26px;padding:0;border:0;background:transparent;border-radius:var(--radius-buttons);cursor:pointer}
 .history-mark>span{height:2px;width:10px;background:var(--color-control-border);border-radius:2px;transition:width .15s,background .15s}
 .history-mark.is-automatic>span{width:6px}
 .history-mark.is-current>span,.history-mark:hover>span,.history-mark:focus-visible>span{width:18px;background:var(--color-ink)}
@@ -25,7 +25,7 @@
 .history-entry time{font-size:var(--text-caption);color:var(--color-text-muted)}
 .history-located{outline:2px solid var(--color-control-border);outline-offset:6px;border-radius:var(--radius-buttons)}
 @media(max-width:760px){
- .history-navigation{top:8px;left:12px;bottom:auto;width:32px;height:32px}
+ .history-navigation{top:8px;left:12px;bottom:auto;transform:none;width:32px;height:32px}
  .history-rail{display:none}
  .history-menu-button{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--color-hairline);border-radius:var(--radius-buttons);background:var(--color-paper);color:var(--color-ink);box-shadow:var(--shadow-card);padding:0}
  .conversation-timeline:has(.history-navigation)>.message-scroll{padding-top:48px}
