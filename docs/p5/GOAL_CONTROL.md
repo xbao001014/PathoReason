@@ -50,3 +50,6 @@ Agent 使用原生 `pathoreason_dialogue_checkpoint`（或公共 `scripts/goal_c
 发布前后真实 GIST 项目 3,745 个已有文件大小与 mtime 不变，小文件 SHA 不变；35 个原回合、成果、研究配置和计时表摘要不变。未修改该项目 Agent 脚本/结果，也未自动替它启动目标；旧会话 goal 仍为空。无关工作树改动 OPERATOR.md、FXIO.md、TASK_CODE_WORKSPACES_PLAN.md 原字节保留。
 
 关键证据：`behavior-final.json`（安全工具元数据、目标/回合来源与材料）、`choice-cancelled.json`、`browser-live-validation.json`、`before-release/audit.json`、`after-release-audit.json` 和各轮测试日志。原生完整记录留在既有引擎存储，验收导出排除检查点 grant 和工具原始参数。当前目标状态不是已批准训练或科学成功。
+
+
+2026-11-02 进度折叠栏：目标面板与紧邻输入框共用边线，默认折叠，仅显示状态、回合数和右侧上箭头；点击后详情向上展开，箭头反向用于收起。详情区域限高滚动，展开时保留全部原有目标控制；折叠不会暂停或恢复任务，也不丢失编辑草稿。新会话/新目标默认折叠，普通轮询只更新状态和计数。完成状态简写为报告完成，保留完整无障碍状态名称和科学审核说明。构建及 1440/390/320 浏览器检查通过，覆盖贴合边线、固定输入位置、键盘展开、草稿保留、折叠时状态更新及新目标重置；暂停/继续/修订只在显式合成夹具验证，无真实目标写请求。静态发布无需重启。证据与旧版备份：acceptance/goal-fold-bar-20261102。
