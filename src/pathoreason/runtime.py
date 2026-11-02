@@ -176,4 +176,9 @@ def visible_response(messages,parent_id):
             elif kind=='tool':tools.append(tool_summary(part))
             elif kind=='compaction':compacted=True
     usage['activity_phase']=activity_phase(selected)
+    if complete and not error:
+        if selected[-1]['info'].get('finish')=='length':
+            error='runtime_output_limit'
+        elif not any(value.strip() for value in text) and not tools:
+            error='runtime_empty_response'
     return {'text':'\n\n'.join(text),'tools':tools,'usage':usage,'complete':complete,'error':error,'compacted':compacted,'assistant_seen':bool(selected),'user_seen':any(m.get('info',{}).get('id')==parent_id for m in messages)}

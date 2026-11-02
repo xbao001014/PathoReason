@@ -323,7 +323,7 @@ class Service:
                     await self.runtime.abort(sid,directory)
                 elif status['type']=='retry':
                     await self.runtime.abort(sid,directory);self.state(tid,'failed','runtime_retry_blocked');return
-                elif visible['error']:
+                elif visible['error'] and (visible['error'] not in ('runtime_output_limit','runtime_empty_response') or status['type']=='idle'):
                     self.state(tid,'interrupted' if visible['error']=='MessageAbortedError' else 'failed',visible['error']);return
                 elif visible['complete'] and status['type']=='idle':
                     self.publish(tid);self.state(tid,'completed');return

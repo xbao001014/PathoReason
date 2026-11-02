@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .contracts import Identifier, canonical_digest
 from .persistence import ACTIVE, Conflict, Missing, Gone, encoded, now, uid
 from .settings import ROOT
+from .reasoning import ReasoningEffort
 
 CONTEXT_BLOCKERS={'context_window_requires_compaction_or_handoff','context_operation_unresolved',
     'context_budget_exhausted','context_usage_unverified','context_recovery_failed','context_recovery_running'}
@@ -84,6 +85,13 @@ class GoalControl(BaseModel):
     action: Literal['pause', 'resume', 'revise', 'cancel']
     objective: str | None = Field(default=None, min_length=1, max_length=16000)
     max_turns: int | None = Field(default=None, ge=1, le=40)
+    reasoning_effort: ReasoningEffort | None = None
+
+    @model_validator(mode='after')
+    def resume_settings(self):
+        if self.reasoning_effort is not None and self.action!='resume':
+            raise ValueError('goal_effort_requires_resume')
+        return self
 
 
 class GoalView(BaseModel):
@@ -95,6 +103,7 @@ class GoalView(BaseModel):
     objective: str
     state: Literal['active','paused','blocked','waiting_input','waiting','completed','budget_exhausted','cancelled']
     blocker: GoalBlocker | None = None
+    suggested_reasoning_effort: Literal['low'] | None = None
     summary: str = ''
     next_action: str = ''
     reason: str | None = None
@@ -161,6 +170,12 @@ class Goals:
                 if goal is None or move['source_goal']['created_at']>goal['created_at']:
                     goal=move['source_goal']
                     goal.update(state='paused',reason='goal_continued_elsewhere',continued_in=move['conversation_id'])
+        if goal:
+            goal['suggested_reasoning_effort']=None
+            request=goal.get('request_template',{})
+            if goal.get('reason')=='runtime_output_limit' and (request.get('reasoning_effort') or 'high') in ('high','max'):
+                if any(o['model']==request.get('model') and 'low' in o['efforts'] for o in self.s.reasoning_options()):
+                    goal['suggested_reasoning_effort']='low'
         return GoalView.model_validate(goal) if goal else None
 
     def recover_interrupted_context(self):
@@ -428,7 +443,15 @@ class Goals:
             goal = self._latest(db,row['conversation_id'])
             if not goal or goal['id']!=link['goal_id'] or goal['last_turn_id']!=tid or goal['state']!='active':return
             if row['status']!='completed':
-                goal.update(state='blocked',reason='goal_turn_failed',summary='本轮未成功结束，需核对原始执行状态后再恢复。')
+                error=json.loads(row['document']).get('error_code')
+                explanations={
+                    'runtime_output_limit':'模型达到单次输出上限，本轮回复未完成，已停止自动接续。思考内容也占用输出额度；可降低思考强度后重试，已有成果和消耗保留。',
+                    'runtime_empty_response':'模型结束但未返回公开回复或工具结果，已停止自动接续；请核对模型运行状态后重试。',
+                    'turn_time_limit':'项目 Agent 时间预算已用完，自动接续已停止；已有成果和消耗保留。',
+                    'runtime_retry_blocked':'模型服务请求失败，自动重试已停止；请核对连接状态后恢复。',
+                }
+                goal.update(state='blocked',reason=error if error in explanations else 'goal_turn_failed',
+                    summary=explanations.get(error,'本轮未成功结束，需核对原始执行状态后再恢复。'),next_action='',blocker=None)
             elif evidence_error:
                 goal.update(state='blocked',reason=evidence_error)
             else:
@@ -485,6 +508,11 @@ class Goals:
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
                     if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
+                    if body.reasoning_effort is not None:
+                        model=goal['request_template']['model']
+                        if not any(o['model']==model and body.reasoning_effort in o['efforts'] for o in self.s.reasoning_options()):
+                            raise ValueError('reasoning_effort_not_supported')
+                        goal['request_template']['reasoning_effort']=body.reasoning_effort
                     goal.update(state='waiting' if goal.get('wait_for') else 'active',reason='user_resume',stagnant_turns=0)
                     if active and active['status']!='completed':
                         goal['next_action']='先核对上一轮失败或中断的实际执行状态，再修复并推进；不得重复派发状态未知的操作。'
