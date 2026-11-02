@@ -3,6 +3,7 @@ import './composer-settings.css';
 const shield=<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/>;
 
 const drawings={
+ budget:<><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 9h8M8 13h3m2 3h3m-1.5-1.5v3"/></>,
  model:<><rect x="4" y="5" width="16" height="14" rx="4"/><path d="M9 2v3m6-3v3M8 10h.01M16 10h.01M9 14h6"/></>,
  thinking:<><path className="thinking-bulb" d="M9 17v-2a5.5 5.5 0 1 1 6 0v2Z"/><path d="M9 19h6m-5 3h4"/><path className="thinking-rays" d="M12 1v1M3 4l1.5 1.5m15 0L21 4M1 11h2m18 0h2"/></>,
  mode:<path d="M4 7h16M4 17h16M8 4v6m8 4v6"/>,

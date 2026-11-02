@@ -25,6 +25,7 @@ from typing import Literal
 from .guidance import GuidanceView,Selection,OfferInput
 from .task_workspaces import TaskCodeRequest
 from .goals import GoalCheckpoint,GoalControl,GoalView,GoalRecoveryInput
+from .budget_settings import BudgetSettingsUpdate,BudgetSettingsView
 from .research_workbench import ResearchWorkbenchView, project_snapshot
 
 class ProjectInput(BaseModel):
@@ -120,7 +121,7 @@ async def lifespan(app):
         yield
         await app.state.service.close();await app.state.auth.close()
 
-app=FastAPI(title='PathoReason',version='0.6.14',lifespan=lifespan)
+app=FastAPI(title='PathoReason',version='0.6.15',lifespan=lifespan)
 def service():return app.state.service
 
 @app.middleware('http')
@@ -181,6 +182,12 @@ async def task_code_view(pid:str):
 @app.get('/api/v2/conversations/{cid}/goal',response_model=GoalView|None)
 async def goal_view(cid:str):return service().goals.view(cid)
 
+@app.get('/api/v2/conversations/{cid}/budget-settings',response_model=BudgetSettingsView)
+async def budget_settings_view(cid:str):return service().budgets.view(cid)
+
+@app.put('/api/v2/conversations/{cid}/budget-settings',response_model=BudgetSettingsView)
+async def budget_settings_update(cid:str,body:BudgetSettingsUpdate):return await service().budgets.update(cid,body)
+
 @app.post('/api/v2/conversations/{cid}/goal',response_model=GoalView)
 async def goal_control(cid:str,body:GoalControl):return await service().goals.control(cid,body)
 
@@ -194,7 +201,7 @@ async def goal_checkpoint(body:GoalCheckpoint,request:Request):
     async with service().lock:return service().goals.checkpoint(body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.14-p5-context-recovery'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.15-p5-budget-settings'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

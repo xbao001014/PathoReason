@@ -31,6 +31,7 @@ class FormalConfiguration(RuntimeConfiguration):
     agent:Literal['pathoreason-formal']='pathoreason-formal'
     invocation_policy:FormalPolicy
     study_revision:c.Digest
+    study_budget_revision:int=0
     permission_settings:PermissionSettings|None=None
     permission_revision:int|None=None
     execution_scope:Literal['standard','dialogue','inspection']='standard'
@@ -50,6 +51,7 @@ class StudyView(BaseModel):
     phase:str='prepared'
     scientific_approval:Literal[False]=False
     revision:str
+    budget_revision:int=0
 class NativePermission(BaseModel):
     id:str
     permission:str
@@ -116,6 +118,7 @@ class Formal:
         self.s=s
         with s.store.connect() as db:
             db.executescript('''CREATE TABLE IF NOT EXISTS formal_studies(project_id TEXT PRIMARY KEY REFERENCES projects(id),request_key TEXT UNIQUE NOT NULL,input_digest TEXT NOT NULL,document TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS study_budget_revisions(project_id TEXT NOT NULL REFERENCES projects(id),revision INTEGER NOT NULL,document TEXT NOT NULL,PRIMARY KEY(project_id,revision));
             CREATE TABLE IF NOT EXISTS formal_permissions(request_id TEXT PRIMARY KEY,conversation_id TEXT NOT NULL,turn_id TEXT NOT NULL,document TEXT NOT NULL);''')
         self.permissions=ConversationPermissions(self)
     def enabled(self):return self.s.runtime_name=='opencode' and self.s.config.get('execution_environment')=='bxn-server'
@@ -124,15 +127,20 @@ class Formal:
         source=json.loads((ROOT/'config/p5/data-source.json').read_text())
         return EntryStatus(environment=self.s.config.get('execution_environment','local'),available=self.enabled(),data_endpoint=source['endpoint'] if self.enabled() else None,seedream_model=config.get('model'),seedream_credential_present=bool(config.get('api_key')),migrated_skills=len(TITLES))
     def record(self,pid):
-        with self.s.store.connect() as db:row=db.execute('SELECT document FROM formal_studies WHERE project_id=?',(pid,)).fetchone()
-        return json.loads(row[0]) if row else None
+        with self.s.store.connect() as db:
+            row=db.execute('SELECT document FROM formal_studies WHERE project_id=?',(pid,)).fetchone()
+            budget=db.execute('SELECT revision,document FROM study_budget_revisions WHERE project_id=? ORDER BY revision DESC LIMIT 1',(pid,)).fetchone()
+        if not row:return None
+        record=json.loads(row[0])
+        if budget:record.update(budget=json.loads(budget['document'])['budget'],budget_revision=budget['revision'])
+        return record
     def view(self,pid):
         self.s.store.project(pid);record=self.record(pid)
         if not record:return None
         from .timing import totals
         with self.s.store.connect() as db:rows=self.s.store.budget_rows(db,pid)
         used=totals(rows)
-        return StudyView(project_id=pid,workspace=record['workspace'],budget=record['budget'],used_turns=len(rows),used_wall_seconds=used['wall_seconds'],used_budget_seconds=used['budget_seconds'],excluded_tool_seconds=used['tool_seconds'],legacy_wall_seconds=used['legacy_seconds'],revision=record['revision'])
+        return StudyView(project_id=pid,workspace=record['workspace'],budget=record['budget'],used_turns=len(rows),used_wall_seconds=used['wall_seconds'],used_budget_seconds=used['budget_seconds'],excluded_tool_seconds=used['tool_seconds'],legacy_wall_seconds=used['legacy_seconds'],revision=record['revision'],budget_revision=record.get('budget_revision',0))
     def create(self,body):
         if not self.enabled():raise Conflict('formal_server_only')
         payload=body.model_dump(mode='json')
@@ -190,10 +198,13 @@ For pathology API data acquisition, load the native pathology-data-api skill and
     def prompt(self,row):
         record=self.record(row['project_id'])
         policy=self.permissions.view(row['conversation_id'])
-        instructions=self.instructions(row['project_id'],record)
         with self.s.store.connect() as db:
             frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()
-        binding=json.loads(frozen[0]).get('gpu_binding') if frozen else None
+        frozen=json.loads(frozen[0]) if frozen else {}
+        if frozen.get('invocation_policy'):
+            record={**record,'budget':{**record['budget'],**{k:frozen['invocation_policy'][k] for k in ['max_turns','max_wall_seconds']},'max_turn_wall_seconds':frozen.get('max_turn_wall_seconds',86400)}}
+        instructions=self.instructions(row['project_id'],record)+'\nThe budget above is frozen for this turn. Workspace study.json and AGENTS.md retain the initial creation snapshot; later budget settings apply only to subsequent turns.'
+        binding=frozen.get('gpu_binding')
         if binding:
             import shlex
             command=shlex.join([str(ROOT/'.venv/bin/python'),str(ROOT/'scripts/compute_exec.py'),'--turn',row['id'],'--'])

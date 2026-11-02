@@ -94,6 +94,7 @@ class GoalView(BaseModel):
     updated_at: str
     continued_from: str|None=None
     continued_in: str|None=None
+    limit_revision:int=0
 
 
 class Goals:
@@ -475,6 +476,7 @@ class Goals:
                         goal['user_instructions']=[*goal['user_instructions'],{'source':'goal_editor','text':body.objective}][-12:]
                     if body.max_turns is not None:
                         if body.max_turns<goal['turns_used']:raise ValueError('goal_limit_below_usage')
+                        if body.max_turns!=goal['max_turns']:goal['limit_revision']=goal.get('limit_revision',0)+1
                         goal['max_turns']=body.max_turns
                 elif body.action=='cancel':goal.update(state='cancelled',reason='user_cancelled')
                 else:goal.update(state='paused',reason='user_paused')

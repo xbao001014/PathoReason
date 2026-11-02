@@ -40,6 +40,8 @@ class Service:
         self.task_code=TaskCodeService(self)
         from .goals import Goals
         self.goals=Goals(self)
+        from .budget_settings import BudgetSettings
+        self.budgets=BudgetSettings(self)
     def seed(self):
         if self.store.projects() or self.config.get("seed_legacy") is False:return
         sample=json.loads((ROOT/'contracts/examples/cesc-reading.json').read_text())
@@ -158,7 +160,7 @@ class Service:
             runtime_config.update(business_context=business_context or None,model_descriptor=models[request['model']],invocation_policy=Policy(runtime=self.runtime_name,environment=runtime_config['environment'],execution_mode=mode,max_turns=limits.get('max_turns',12),max_wall_seconds=limits.get('max_wall_seconds',1200)))
             if study:
                 permissions=self.formal.permissions.view(cid)
-                runtime_config.update(agent='pathoreason-formal',study_revision=study['revision'],permission_settings=permissions.settings,permission_revision=permissions.revision)
+                runtime_config.update(agent='pathoreason-formal',study_revision=study['revision'],study_budget_revision=study.get('budget_revision',0),permission_settings=permissions.settings,permission_revision=permissions.revision)
                 chosen=next((o for o in guidance_context['proposal']['options'] if o['id']==guidance_context['selected_option_id']),None) if guidance_context else None
                 runtime_config['execution_scope']={'clarify':'dialogue','inspect':'inspection'}.get(chosen['scope'],'standard') if chosen else 'standard'
                 if _goal_auto:
@@ -324,10 +326,10 @@ class Service:
                 from .timing import totals
                 elapsed=totals(records)['budget_seconds']
                 study=self.formal.record(row['project_id'])
-                if elapsed>(study['budget'] if study else self.config.get('p1_test_limits',{})).get('max_wall_seconds',1200):
-                    await self.runtime.abort(sid,directory);self.state(tid,'failed','turn_time_limit');return
                 with self.store.connect() as db:
                     frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()[0])
+                if elapsed>(frozen.get('invocation_policy',study['budget']) if study else self.config.get('p1_test_limits',{})).get('max_wall_seconds',1200):
+                    await self.runtime.abort(sid,directory);self.state(tid,'failed','turn_time_limit');return
                 if frozen.get('time_accounting')=='tool_excluded_v1' and self.store.timing(tid).wall_seconds>frozen['max_turn_wall_seconds']:
                     await self.runtime.abort(sid,directory);self.state(tid,'failed','turn_wall_time_limit');return
                 await asyncio.sleep(.4)

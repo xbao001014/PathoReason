@@ -1,0 +1,14 @@
+.budget-dialog .budget-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--spacing-16);margin-top:var(--spacing-16)}
+.budget-dialog .dialog-body label {margin:0;font-size:var(--text-body);color:var(--color-ink)}
+.budget-dialog input {width:100%;min-width:0}
+.budget-dialog .budget-fields span,.budget-dialog .budget-meta {font-size:var(--text-caption);color:var(--color-text-secondary);line-height:1.5}
+.budget-dialog p,.budget-dialog .budget-history {font-size:var(--text-body);color:var(--color-text-secondary);line-height:1.6}
+.budget-dialog .budget-history {padding-left:20px;overflow-wrap:anywhere}
+.budget-dialog fieldset>p:last-child {margin-top:var(--spacing-8)}
+@media(max-width:480px){.budget-dialog .budget-fields{grid-template-columns:minmax(0,1fr)}}
+
+dialog[open].budget-dialog {display:flex;flex-direction:column;max-height:90dvh;overflow:hidden}
+.budget-dialog>header {flex-shrink:0}
+.budget-dialog .dialog-body {padding:0;gap:0;min-height:0;overflow:hidden}
+.budget-dialog .budget-scroll {padding:var(--card-padding);display:flex;flex-direction:column;gap:var(--spacing-24);min-height:0;overflow:auto}
+.budget-dialog .dialog-body footer {flex-shrink:0;padding:var(--spacing-16) var(--card-padding);border-top:1px solid var(--color-hairline)}
