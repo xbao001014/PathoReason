@@ -28,6 +28,25 @@ Agent 使用原生 `pathoreason_dialogue_checkpoint`（或公共 `scripts/goal_c
 
 ## 验证记录
 
-证据目录：`/data/bxn/PathoReason/acceptance/goal-control-20261102-v1/`。工程、浏览器及真实模型行为分层记录；初期工作树存储路径和夹具错误保留，不覆盖失败记录。最终结果在发布后补入，不能以工程通过替代模型行为验收。
+证据目录：`/data/bxn/PathoReason/acceptance/goal-control-20261102-v1/`。工程、浏览器及真实模型行为分层记录；初期工作树存储路径和夹具错误保留，不覆盖失败记录。最终全量 310 通过、1 跳过；取消/调整目标后旧 Guidance 失效的补充改动，相关定向回归 35 通过。TypeScript/Vite 构建与 1440/390/320 三宽度通过；分别保存显式 UI 夹具交互和线上只读浏览器证据，无浏览器异常。
 
 独立合成行为验证预算为 8 回合 / 600 Agent 秒、每轮墙钟 180 秒，使用 OpenCode + DeepSeek Flash/high。只允许该验收工作区合成文件操作，不读取患者数据、不训练、不联网；旧 GIST 项目及旧验收预算不重置。
+
+
+### 真实 OpenCode + DeepSeek 行为
+
+独立项目 `prj_1f12601e1ee647e7801684a900c65f04`，会话 `conv_c83c90602d454212b68322ed0eefb584`。使用模型 `deepseek-flash`、推理 high，独立 8 回合 / 600 Agent 秒预算；实际 4 回合、38.687272 Agent 秒、40.268272 总历时，消耗和失败记录未重置。
+
+- 第一个目标只提交一次用户请求，明确每轮执行一个合成节点，以验证跨回合机制。Agent 自行生成整数数组、读取计算总和 15、核对并发布结论；共 3 轮，其中 2 轮为系统自动接续，3 次原生 checkpoint 均成功。目标完成且科学审核仍 false，开发者没有写入或修正它的材料。
+- 第二个目标使用短句“再出一份小结，中文还是英文先让我选。”Agent 发布原生 offer 和 needs_input 检查点，停在 waiting_input，没有自动代选或增加轮次。应用重启后仍保留该状态。随后通过公开目标控制 API 取消，预算仍为 4 回合，旧未选按钮失效。
+- 首次提交的验收脚本在打印嵌套 API 回执时发生 KeyError；该请求已成功接收，未重发、未额外计费。原始回执和异常说明保留；此错误不属于 Agent 输出失败。
+
+上述行为证明指定合成场景中的接续、收尾及澄清阻塞，不代表任意模糊研究目标、真实训练调度、真实作业唤醒或科学质量均已验收。暂停/修订/恢复、未知派发与预算等边界由工程回归和 UI 夹具覆盖，不混称全部做过真实模型行为测试。
+
+### 发布及原研究保护
+
+只重启 8520 应用，原生 OpenCode PID 380742 / identity 30015353 不变；空闲时刷新 6 个已加载目录的 dialogue MCP 连接，均 connected。本机 8530 和其他 GPU 任务不变。
+
+发布前后真实 GIST 项目 3,745 个已有文件大小与 mtime 不变，小文件 SHA 不变；35 个原回合、成果、研究配置和计时表摘要不变。未修改该项目 Agent 脚本/结果，也未自动替它启动目标；旧会话 goal 仍为空。无关工作树改动 OPERATOR.md、FXIO.md、TASK_CODE_WORKSPACES_PLAN.md 原字节保留。
+
+关键证据：`behavior-final.json`（安全工具元数据、目标/回合来源与材料）、`choice-cancelled.json`、`browser-live-validation.json`、`before-release/audit.json`、`after-release-audit.json` 和各轮测试日志。原生完整记录留在既有引擎存储，验收导出排除检查点 grant 和工具原始参数。当前目标状态不是已批准训练或科学成功。
