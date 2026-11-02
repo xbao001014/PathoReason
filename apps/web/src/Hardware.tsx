@@ -3,6 +3,8 @@ import {useEffect,useRef,useState} from 'react';
 import type {GpuSettingsView,HardwareSnapshot} from './generated';
 import {formalApi} from './FormalStudy';
 import {Info} from './BusinessPanel';
+import {gpuAvailability,GPU_IDLE_MEMORY_MB} from './gpuAvailability';
+import {statusTone} from './status';
 import './hardware.css';
 
 const gib=(mb:number|null|undefined)=>mb==null?'未报告':(mb/1024).toFixed(1)+' GiB';
@@ -30,14 +32,30 @@ export function GpuSelector({cid,disabled}:{cid:string;disabled:boolean}){
  const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null);
  const [setting,setSetting]=useState<GpuSettingsView|null>(null),[hardware,setHardware]=useState<HardwareSnapshot|null>(null);
  const [open,setOpen]=useState(false),[draft,setDraft]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
+ const [telemetryReadable,setTelemetryReadable]=useState(false),[sampleNow,setSampleNow]=useState(Date.now);
  useEffect(()=>{const current=generation.current,controller=new AbortController();formalApi<GpuSettingsView>('/conversations/'+cid+'/gpu-settings',{signal:controller.signal}).then(v=>{if(!controller.signal.aborted&&current===generation.current)setSetting(v);}).catch(()=>{});return()=>{controller.abort();generation.current++;request.current?.abort();};},[cid]);
+ // Read-only telemetry remains live while the chooser is closed or execution is locked.
+ useEffect(()=>{let stopped=false,timer:ReturnType<typeof setTimeout>|undefined,controller:AbortController|undefined;
+  setHardware(null);setTelemetryReadable(false);
+  async function poll(){
+   if(stopped||document.hidden)return;
+   const current=new AbortController();controller=current;setSampleNow(Date.now());
+   const timeout=setTimeout(()=>current.abort(),8000);
+   try{const next=await formalApi<HardwareSnapshot>('/hardware',{signal:current.signal});if(!stopped&&!current.signal.aborted){setHardware(previous=>!previous||Date.parse(next.sampled_at)>=Date.parse(previous.sampled_at)?next:previous);setTelemetryReadable(true);setSampleNow(Date.now());}}
+   catch{if(!stopped&&!document.hidden){setTelemetryReadable(false);setSampleNow(Date.now());}}
+   finally{clearTimeout(timeout);if(!stopped&&!document.hidden&&controller===current)timer=setTimeout(poll,5000);}
+  }
+  function visibility(){clearTimeout(timer);controller?.abort();setTelemetryReadable(false);if(!document.hidden)void poll();}
+  void poll();document.addEventListener('visibilitychange',visibility);
+  return()=>{stopped=true;clearTimeout(timer);controller?.abort();document.removeEventListener('visibilitychange',visibility);};
+ },[cid]);
  useEffect(()=>{if(open)dialog.current?.showModal();return()=>{dialog.current?.close();};},[open]);
  function close(){if(saving.current)return;generation.current++;request.current?.abort();dialog.current?.close();setOpen(false);trigger.current?.focus();}
  async function refresh(reset=false){
   if(saving.current)return;
   const current=++generation.current;request.current?.abort();const controller=new AbortController();request.current=controller;setLoading(true);setError('');
-  try{const [s,h]=await Promise.all([formalApi<GpuSettingsView>('/conversations/'+cid+'/gpu-settings',{signal:controller.signal}),formalApi<HardwareSnapshot>('/hardware',{signal:controller.signal})]);if(current===generation.current){setSetting(s);setHardware(h);setDraft(previous=>reset?s.gpu_uuid||'':previous);}}
-  catch(e){if(current===generation.current)setError(e instanceof Error?(gpuErrors[e.message]||e.message):'读取失败');}
+  try{const [s,h]=await Promise.all([formalApi<GpuSettingsView>('/conversations/'+cid+'/gpu-settings',{signal:controller.signal}),formalApi<HardwareSnapshot>('/hardware',{signal:controller.signal})]);if(current===generation.current){setSetting(s);setHardware(h);setTelemetryReadable(true);setSampleNow(Date.now());setDraft(previous=>reset?s.gpu_uuid||'':previous);}}
+  catch(e){if(current===generation.current){setTelemetryReadable(false);setError(e instanceof Error?(gpuErrors[e.message]||e.message):'读取失败');}}
   finally{if(current===generation.current)setLoading(false);}
  }
  function show(){setOpen(true);setHardware(null);setDraft('');void refresh(true);}
@@ -50,9 +68,12 @@ export function GpuSelector({cid,disabled}:{cid:string;disabled:boolean}){
  }
  const selected=hardware?.gpus?.find(g=>g.uuid===setting?.gpu_uuid),mismatch=selected&&setting?.gpu_index!=null&&selected.index!==setting.gpu_index;
  const available=hardware&&!hardware.gpu_error&&hardware.gpus?.some(g=>g.uuid===draft);
- const label=setting?.source==='conversation'&&setting.gpu_index!=null?'GPU '+setting.gpu_index:setting?.source==='project'?'项目默认':'未选择';
+ const label=setting?.gpu_index!=null?'GPU '+setting.gpu_index+(setting.source==='project'?'（项目默认）':''):setting?.source==='project'?'项目默认':'未选择';
+ const availability=gpuAvailability(setting,hardware,telemetryReadable,sampleNow),tone=statusTone(availability.state);
+ const statusDescription=label+' · '+availability.label+'（采样估计）';
+ const statusDetail=statusDescription+(selected?'；利用率 '+pct(selected.utilization_percent)+'，已用显存 '+gib(selected.memory_used_mb):'')+'。每 5 秒刷新；利用率为 0 且显存不超过 '+GPU_IDLE_MEMORY_MB+' MiB 视为空闲，忽略少量驱动显存；不代表资源预留。';
  return <>
-  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="显卡设置" aria-description={label} aria-haspopup="dialog" aria-expanded={open} onClick={show}><ComposerSettingIcon name="gpu"/><span>显卡</span><ComposerSettingValue value={label}/></button>
+  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="显卡设置" aria-description={statusDescription} aria-haspopup="dialog" aria-expanded={open} onClick={show}><span className={'gpu-status-icon status-text status-'+tone}><ComposerSettingIcon name="gpu"/></span><span>显卡</span><span className={'gpu-status-label status-text status-'+tone}>{availability.label}</span><ComposerSettingValue value={statusDetail}/></button>
   {open&&<dialog ref={dialog} className="gpu-dialog" aria-labelledby="gpu-dialog-title" onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===dialog.current)close();}}>
    <header><h2 id="gpu-dialog-title">训练显卡</h2><button type="button" className="icon-button" aria-label="关闭显卡设置" disabled={busy} onClick={close}>×</button></header>
    <form className="dialog-body" onSubmit={e=>{e.preventDefault();void save();}}>

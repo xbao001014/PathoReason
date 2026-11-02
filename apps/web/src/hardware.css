@@ -48,3 +48,6 @@
 @media(max-width:760px){.hardware-heading{flex-wrap:wrap}.hardware-page{padding:var(--card-padding-compact)}.hardware-card{padding:var(--card-padding-compact)}.gpu-dialog{width:calc(100vw - 16px)}.gpu-dialog>header,.gpu-dialog .dialog-body{padding:var(--card-padding-compact)}}
 
 .gpu-choices legend{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.gpu-status-icon {display:inline-flex;flex:none}
+.gpu-status-label {font-size:var(--text-caption);font-weight:var(--weight-support)}

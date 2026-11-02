@@ -11,6 +11,11 @@
   --color-text-muted: #626262;
   --color-hairline: #e5e5e5;
   --color-control-border: #a3a3a3;
+  --color-bulb-low: #d6b36a;
+  --color-bulb-high: #fbbf24;
+  --color-bulb-max: #fff3a3;
+  --color-bulb-stroke: #92400e;
+  --color-bulb-rays: #d97706;
   --color-ember: #e7000b;
   --font-geist: 'Geist', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', 'SimHei', sans-serif;
   --text-caption: 12px;

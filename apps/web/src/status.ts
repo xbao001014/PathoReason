@@ -1,6 +1,7 @@
 /** design.md: status meaning is shared; unknown states remain neutral. */
 export type StatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 const tones: Record<string, StatusTone> = {
+  gpu_idle:'success',gpu_busy:'danger',
   admitted:'success',awaiting_review:'warning',needs_repair:'danger',needs_reconciliation:'warning',budget_exhausted:'danger',
   active:'info',paused:'danger',blocked:'warning',waiting_input:'warning',waiting:'warning',
   running:'info', interrupt_requested:'info', pending_login:'info',
