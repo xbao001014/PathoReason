@@ -3905,6 +3905,13 @@
       },
       "GoalRecoveryInput": {
         "properties": {
+          "goal_id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Goal Id"
+          },
           "expected_revision": {
             "type": "integer",
             "minimum": 1.0,
@@ -3923,6 +3930,7 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
+          "goal_id",
           "expected_revision",
           "action"
         ],

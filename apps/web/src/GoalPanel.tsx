@@ -19,7 +19,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate}:{ci
  useEffect(()=>{let live=true;setContext(null);if(!needsContext)return;async function refresh(){try{const res=await fetch('/api/v1/conversations/'+cid+'/context');if(res.ok&&live)setContext(await res.json());}catch{}}refresh();const timer=setInterval(refresh,2500);return()=>{live=false;clearInterval(timer);};},[cid,needsContext]);
  async function recover(action:'compact'|'reconcile'|'new_conversation'){
   if(!goal||busy)return;setBusy(true);
-  try{const result=await formalApi<GoalView>('/conversations/'+cid+'/goal/context-recovery',{method:'POST',body:JSON.stringify({expected_revision:goal.revision,action})});setGoal(result);onChange();if(result.conversation_id!==cid)onNavigate(result.conversation_id);}
+  try{const result=await formalApi<GoalView>('/conversations/'+cid+'/goal/context-recovery',{method:'POST',body:JSON.stringify({goal_id:goal.id,expected_revision:goal.revision,action})});setGoal(result);onChange();if(result.conversation_id!==cid)onNavigate(result.conversation_id);}
   catch(e){onError(e);try{setGoal(await formalApi<GoalView|null>('/conversations/'+cid+'/goal'));}catch{}}
   finally{setBusy(false);}
  }

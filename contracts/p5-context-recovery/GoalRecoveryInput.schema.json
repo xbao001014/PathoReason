@@ -1,6 +1,13 @@
 {
   "additionalProperties": false,
   "properties": {
+    "goal_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Goal Id",
+      "type": "string"
+    },
     "expected_revision": {
       "minimum": 1,
       "title": "Expected Revision",
@@ -17,6 +24,7 @@
     }
   },
   "required": [
+    "goal_id",
     "expected_revision",
     "action"
   ],

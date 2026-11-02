@@ -20,6 +20,7 @@ CONTEXT_BLOCKERS={'context_window_requires_compaction_or_handoff','context_opera
 
 class GoalRecoveryInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
+    goal_id:Identifier
     expected_revision:int=Field(ge=1)
     action:Literal['compact','reconcile','new_conversation']
 
@@ -114,10 +115,21 @@ class Goals:
                   id INTEGER PRIMARY KEY AUTOINCREMENT, goal_id TEXT NOT NULL REFERENCES research_goals(id),
                   document TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS goal_context_recoveries(
-                  source_conversation TEXT NOT NULL, revision INTEGER NOT NULL,
+                  source_conversation TEXT NOT NULL, goal_id TEXT NOT NULL, revision INTEGER NOT NULL,
                   action TEXT NOT NULL, document TEXT NOT NULL,
-                  PRIMARY KEY(source_conversation,revision));
+                  PRIMARY KEY(source_conversation,goal_id,revision));
             ''')
+        # Preserve first-release receipts while repairing the cross-goal key.
+        with service.store.connect(True) as db:
+            if 'goal_id' not in {r['name'] for r in db.execute('PRAGMA table_info(goal_context_recoveries)')}:
+                db.execute('ALTER TABLE goal_context_recoveries RENAME TO goal_context_recoveries_legacy')
+                db.execute('CREATE TABLE goal_context_recoveries(source_conversation TEXT NOT NULL,goal_id TEXT NOT NULL,revision INTEGER NOT NULL,action TEXT NOT NULL,document TEXT NOT NULL,PRIMARY KEY(source_conversation,goal_id,revision))')
+                for row in db.execute('SELECT * FROM goal_context_recoveries_legacy').fetchall():
+                    receipt=json.loads(row['document']);gid=receipt.get('source_goal',{}).get('id')
+                    if not gid:
+                        matches=db.execute("SELECT DISTINCT goal_id FROM goal_events WHERE json_extract(document,'$.snapshot.conversation_id')=? AND json_extract(document,'$.revision')=? AND json_extract(document,'$.event')=?",(row['source_conversation'],row['revision']+1,'context_'+row['action']+'_requested')).fetchall()
+                        if len(matches)==1:gid=matches[0][0]
+                    if gid:db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?,?)',(row['source_conversation'],gid,row['revision'],row['action'],row['document']))
 
     def _latest(self, db, cid):
         row = db.execute('SELECT document FROM research_goals WHERE conversation_id=? ORDER BY rowid DESC LIMIT 1', (cid,)).fetchone()
@@ -127,10 +139,11 @@ class Goals:
         self.s.store.conversation(cid)
         with self.s.store.connect() as db:
             goal = self._latest(db, cid)
-            if goal is None:
-                moved=db.execute("SELECT document FROM goal_context_recoveries WHERE source_conversation=? AND action='new_conversation' ORDER BY revision DESC LIMIT 1",(cid,)).fetchone()
-                if moved:
-                    move=json.loads(moved[0]);goal=move['source_goal']
+            moved=db.execute("SELECT document FROM goal_context_recoveries WHERE source_conversation=? AND action='new_conversation' ORDER BY rowid DESC LIMIT 1",(cid,)).fetchone()
+            if moved:
+                move=json.loads(moved[0])
+                if goal is None or move['source_goal']['created_at']>goal['created_at']:
+                    goal=move['source_goal']
                     goal.update(state='paused',reason='goal_continued_elsewhere',continued_in=move['conversation_id'])
         return GoalView.model_validate(goal) if goal else None
 
@@ -147,12 +160,12 @@ class Goals:
         async with self.s.lock:
             conv=self.s.store.conversation(cid,writable=True)
             with self.s.store.connect() as db:
-                prior=db.execute('SELECT action,document FROM goal_context_recoveries WHERE source_conversation=? AND revision=?',(cid,body.expected_revision)).fetchone()
+                prior=db.execute('SELECT action,document FROM goal_context_recoveries WHERE source_conversation=? AND goal_id=? AND revision=?',(cid,body.goal_id,body.expected_revision)).fetchone()
                 if prior:
                     if prior['action']!=body.action:raise Conflict('goal_changed')
                     saved=json.loads(prior['document']);return self.view(saved['conversation_id'])
                 goal=self._latest(db,cid)
-            if not goal or goal['revision']!=body.expected_revision:raise Conflict('goal_changed')
+            if not goal or goal['id']!=body.goal_id or goal['revision']!=body.expected_revision:raise Conflict('goal_changed')
             if goal.get('reason') not in CONTEXT_BLOCKERS or goal['state']!='blocked':raise Conflict('goal_context_recovery_not_available')
             if self.s.store.active():raise Conflict('runtime_busy')
             await self.s.context.ensure_other_operations_idle()
@@ -178,7 +191,7 @@ class Goals:
                     goal.update(conversation_id=dest.id,continued_from=cid,state='active',reason='context_new_conversation',context_transfer=transfer)
                     db.execute('UPDATE research_goals SET conversation_id=? WHERE id=?',(dest.id,goal['id']))
                     self._save(db,goal,'context_new_conversation')
-                    db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?)',(cid,body.expected_revision,body.action,encoded(receipt)))
+                    db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?,?)',(cid,goal['id'],body.expected_revision,body.action,encoded(receipt)))
                 self.start()
                 return self.view(dest.id)
             model=goal['request_template']['model']
@@ -186,7 +199,7 @@ class Goals:
             with self.s.store.connect(True) as db:
                 goal.update(state='paused',reason='context_recovery_running')
                 self._save(db,goal,'context_'+body.action+'_requested')
-                db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?)',(cid,body.expected_revision,body.action,encoded({'conversation_id':cid})))
+                db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?,?)',(cid,goal['id'],body.expected_revision,body.action,encoded({'conversation_id':cid})))
             revision=goal['revision']
         reason=None
         try:
@@ -491,6 +504,8 @@ class Goals:
         # Erase conversational goal contents together with deleted chat, retain turns/budget.
         db.execute('DELETE FROM context_projections WHERE conversation_id=?',(cid,))
         db.execute("DELETE FROM goal_context_recoveries WHERE source_conversation=? OR json_extract(document,'$.conversation_id')=?",(cid,cid))
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='goal_context_recoveries_legacy'").fetchone():
+            db.execute("DELETE FROM goal_context_recoveries_legacy WHERE source_conversation=? OR json_extract(document,'$.conversation_id')=?",(cid,cid))
         db.execute('DELETE FROM goal_events WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
         db.execute('DELETE FROM goal_turns WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
         db.execute('DELETE FROM research_goals WHERE conversation_id=?',(cid,))
