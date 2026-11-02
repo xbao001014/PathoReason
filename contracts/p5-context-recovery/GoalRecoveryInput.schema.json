@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "action": {
+      "enum": [
+        "compact",
+        "reconcile",
+        "new_conversation"
+      ],
+      "title": "Action",
+      "type": "string"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "action"
+  ],
+  "title": "GoalRecoveryInput",
+  "type": "object"
+}

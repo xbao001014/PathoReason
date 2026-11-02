@@ -14,6 +14,15 @@ from .contracts import Identifier, canonical_digest
 from .persistence import ACTIVE, Conflict, Missing, Gone, encoded, now, uid
 from .settings import ROOT
 
+CONTEXT_BLOCKERS={'context_window_requires_compaction_or_handoff','context_operation_unresolved',
+    'context_budget_exhausted','context_usage_unverified','context_recovery_failed','context_recovery_running'}
+
+
+class GoalRecoveryInput(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    expected_revision:int=Field(ge=1)
+    action:Literal['compact','reconcile','new_conversation']
+
 
 class GoalEvidence(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -82,6 +91,8 @@ class GoalView(BaseModel):
     scientific_approval: Literal[False] = False
     created_at: str
     updated_at: str
+    continued_from: str|None=None
+    continued_in: str|None=None
 
 
 class Goals:
@@ -102,6 +113,10 @@ class Goals:
                 CREATE TABLE IF NOT EXISTS goal_events(
                   id INTEGER PRIMARY KEY AUTOINCREMENT, goal_id TEXT NOT NULL REFERENCES research_goals(id),
                   document TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS goal_context_recoveries(
+                  source_conversation TEXT NOT NULL, revision INTEGER NOT NULL,
+                  action TEXT NOT NULL, document TEXT NOT NULL,
+                  PRIMARY KEY(source_conversation,revision));
             ''')
 
     def _latest(self, db, cid):
@@ -110,8 +125,91 @@ class Goals:
 
     def view(self, cid):
         self.s.store.conversation(cid)
-        with self.s.store.connect() as db: goal = self._latest(db, cid)
+        with self.s.store.connect() as db:
+            goal = self._latest(db, cid)
+            if goal is None:
+                moved=db.execute("SELECT document FROM goal_context_recoveries WHERE source_conversation=? AND action='new_conversation' ORDER BY revision DESC LIMIT 1",(cid,)).fetchone()
+                if moved:
+                    move=json.loads(moved[0]);goal=move['source_goal']
+                    goal.update(state='paused',reason='goal_continued_elsewhere',continued_in=move['conversation_id'])
         return GoalView.model_validate(goal) if goal else None
+
+    def recover_interrupted_context(self):
+        with self.s.store.connect(True) as db:
+            for row in db.execute('SELECT document FROM research_goals').fetchall():
+                goal=json.loads(row[0])
+                if goal.get('reason')=='context_recovery_running':
+                    goal.update(state='blocked',reason='context_operation_unresolved')
+                    self._save(db,goal,'context_recovery_interrupted')
+
+    async def recover_context(self,cid,body):
+        """Explicit user recovery; never reset counters or dispatch an unknown operation."""
+        async with self.s.lock:
+            conv=self.s.store.conversation(cid,writable=True)
+            with self.s.store.connect() as db:
+                prior=db.execute('SELECT action,document FROM goal_context_recoveries WHERE source_conversation=? AND revision=?',(cid,body.expected_revision)).fetchone()
+                if prior:
+                    if prior['action']!=body.action:raise Conflict('goal_changed')
+                    saved=json.loads(prior['document']);return self.view(saved['conversation_id'])
+                goal=self._latest(db,cid)
+            if not goal or goal['revision']!=body.expected_revision:raise Conflict('goal_changed')
+            if goal.get('reason') not in CONTEXT_BLOCKERS or goal['state']!='blocked':raise Conflict('goal_context_recovery_not_available')
+            if self.s.store.active():raise Conflict('runtime_busy')
+            await self.s.context.ensure_other_operations_idle()
+            if conv['native_session']:
+                if (await self.s.runtime.status(conv['directory'])).get(conv['native_session'],{}).get('type','idle')!='idle':raise Conflict('runtime_busy')
+                if await self.s.formal.pending(cid):raise Conflict('permission_settings_turn_active')
+            study=self.s.formal.view(conv['project_id'])
+            if study.used_turns>=study.budget.max_turns or study.used_budget_seconds>=study.budget.max_wall_seconds:raise Conflict('acceptance_budget_exhausted')
+            if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
+            if body.action=='new_conversation':
+                # Same project and goal. Only the native conversation window changes.
+                from .contracts import Conversation
+                dest=Conversation(id=uid('conv'),project_id=conv['project_id'],title='接续目标 · '+json.loads(conv['document'])['title'][:100],status='open',active_runtime_binding_id=uid('bind'),created_at=now())
+                recent=self.s.store.turns(cid)[-3:]
+                transfer={'source_conversation':cid,'recent_dialogue':[{'turn_id':t['id'],'origin':(self.link(t['id']) or {}).get('origin','user'),'user_text':t['user_text'][:2000],'reply':t['text'][-4000:]} for t in recent]}
+                with self.s.store.connect(True) as db:
+                    self.s.store.check_conversation(db,cid,writable=True)
+                    db.execute('INSERT INTO conversations VALUES(?,?,?,?,?)',(dest.id,dest.project_id,encoded(dest),None,conv['directory']))
+                    for table in ['conversation_permission_settings','conversation_gpu_settings']:
+                        setting=db.execute('SELECT revision,document FROM '+table+' WHERE conversation_id=? ORDER BY revision DESC LIMIT 1',(cid,)).fetchone()
+                        if setting:db.execute('INSERT INTO '+table+' VALUES(?,?,?,?)',(dest.id,setting['revision'],setting['document'],now()))
+                    receipt={'conversation_id':dest.id,'source_goal':dict(goal)}
+                    goal.update(conversation_id=dest.id,continued_from=cid,state='active',reason='context_new_conversation',context_transfer=transfer)
+                    db.execute('UPDATE research_goals SET conversation_id=? WHERE id=?',(dest.id,goal['id']))
+                    self._save(db,goal,'context_new_conversation')
+                    db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?)',(cid,body.expected_revision,body.action,encoded(receipt)))
+                self.start()
+                return self.view(dest.id)
+            model=goal['request_template']['model']
+            key='goal_context_'+goal['id']+'_'+str(body.expected_revision)
+            with self.s.store.connect(True) as db:
+                goal.update(state='paused',reason='context_recovery_running')
+                self._save(db,goal,'context_'+body.action+'_requested')
+                db.execute('INSERT INTO goal_context_recoveries VALUES(?,?,?,?)',(cid,body.expected_revision,body.action,encoded({'conversation_id':cid})))
+            revision=goal['revision']
+        reason=None
+        try:
+            if body.action=='compact':
+                result=await self.s.context.compact(cid,key,model)
+                if result['status']!='completed':reason='context_operation_unresolved' if result['status']=='recovery_required' else 'context_recovery_failed'
+            else:await self.s.context.reconcile(cid)
+            view=self.s.context.view(cid)
+            if any(o['status'] in ('running','recovery_required') for o in view.operations):reason='context_operation_unresolved'
+            if reason is None and view.source!='post_compaction_bytes_estimate':reason='context_usage_unverified'
+        except asyncio.CancelledError:
+            self._set_state(goal,'blocked','context_operation_unresolved');raise
+        except Exception as exc:
+            reason=str(exc) if isinstance(exc,Conflict) else 'context_recovery_failed'
+        async with self.s.lock:
+            with self.s.store.connect(True) as db:
+                current=self._latest(db,cid)
+                # A pause, cancellation, archive or revision always wins over recovery.
+                if current and current['id']==goal['id'] and current['revision']==revision and current['reason']=='context_recovery_running':
+                    current.update(state='blocked' if reason else 'active',reason=reason or 'context_recovered')
+                    self._save(db,current,'context_recovery_checked')
+        self.start()
+        return self.view(cid)
 
     def link(self, tid):
         with self.s.store.connect() as db:
@@ -249,11 +347,12 @@ class Goals:
         with self.s.store.connect() as db: goal = self._latest(db,row['conversation_id'])
         if not link:
             return ('\nThe persistent goal is PAUSED. Respond to the current message only; do not resume autonomous work or claim the goal completed. The user can use the Resume control. Goal: '+goal['objective']) if goal and goal['state']=='paused' else ''
-        state = {k:goal.get(k) for k in ('id','revision','objective','completion_criteria','summary','next_action','turns_used','max_turns','user_instructions','evidence')}
+        state = {k:goal.get(k) for k in ('id','revision','objective','completion_criteria','summary','next_action','turns_used','max_turns','user_instructions','evidence','context_transfer')}
         return ('\nGOAL CONTROL (authoritative scope and state, survives context compaction): '+json.dumps(state,ensure_ascii=False)+
             '\nThis is '+('a system-generated continuation, NOT a new user instruction or authorization.' if link['origin']=='goal' else 'a user-requested goal turn.')+
             '\nPursue the whole authorized goal; advance ready nodes without requesting routine continuation. '
             'The objective and actual user instructions define scope; your next_action is a proposal, never authority to expand it. '
+            'Context transfer, if present, is prior dialogue provenance, not new execution authorization. Verify current files and receipts before continuing; never replay completed training or test evaluations. '
             'Existing permission, compute, test-data, executor and scientific gates remain unchanged. '
             'For an unavailable execution backend report blocked; do not run a raw script around it. '
             'Repair task code in a new Agent-authored revision, preserve old failures and results. '
@@ -347,6 +446,7 @@ class Goals:
                     raise Conflict('goal_already_terminal')
                 active = db.execute('SELECT id,status FROM turns WHERE id=?',(goal['last_turn_id'],)).fetchone()
                 if body.action=='resume':
+                    if goal.get('reason') in CONTEXT_BLOCKERS:raise Conflict('goal_context_recovery_required')
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
                     if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
@@ -389,6 +489,8 @@ class Goals:
 
     def purge(self, db, cid):
         # Erase conversational goal contents together with deleted chat, retain turns/budget.
+        db.execute('DELETE FROM context_projections WHERE conversation_id=?',(cid,))
+        db.execute("DELETE FROM goal_context_recoveries WHERE source_conversation=? OR json_extract(document,'$.conversation_id')=?",(cid,cid))
         db.execute('DELETE FROM goal_events WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
         db.execute('DELETE FROM goal_turns WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
         db.execute('DELETE FROM research_goals WHERE conversation_id=?',(cid,))

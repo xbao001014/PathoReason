@@ -78,6 +78,8 @@ class OpenCode:
         return providers[0]
     async def compaction_marker(self,session,directory):
         return sorted(m['info']['id'] for m in await self.messages(session,directory) if m['info'].get('summary') is True and m['info'].get('time',{}).get('completed') and not m['info'].get('error'))
+    async def compacted_context(self,session,directory,summary_ids):
+        return compacted_context_estimate(await self.messages(session,directory),summary_ids)
     async def compact(self,session,directory,model):
         import asyncio
         before=await self.messages(session,directory)
@@ -125,6 +127,34 @@ class OpenCode:
                         blocks[key]=blocks.get(key,'')+data['delta']
                     yield {m:'\n\n'.join(text for (message,_),text in blocks.items() if message==m) for m,_ in blocks}
 
+
+
+def compacted_context_estimate(messages, summary_ids):
+    """Byte estimate, not token telemetry. Matches OpenCode 1.18.33 retained history.
+
+    filterCompacted keeps the summary's compaction user message, optional
+    tail_start_id suffix and subsequent messages. Count all retained JSON;
+    never use summary input tokens, which measure the OLD context.
+    """
+    candidates=[(i,m) for i,m in enumerate(messages) if m.get('info',{}).get('id') in summary_ids
+        and m['info'].get('summary') is True and m['info'].get('finish')
+        and m['info'].get('time',{}).get('completed') and not m['info'].get('error')]
+    if not candidates:raise ValueError('compaction_summary_not_verified')
+    index,summary=candidates[-1]
+    parent=next((i for i,m in enumerate(messages[:index]) if m.get('info',{}).get('id')==summary['info'].get('parentID') and m['info'].get('role')=='user'),None)
+    if parent is None:raise ValueError('compaction_parent_not_verified')
+    part=next((p for p in messages[parent].get('parts',[]) if p.get('type')=='compaction'),None)
+    if part is None:raise ValueError('compaction_parent_not_verified')
+    start=parent
+    if part.get('tail_start_id'):
+        tail=next((i for i,m in enumerate(messages[:parent+1]) if m.get('info',{}).get('id')==part['tail_start_id']),None)
+        if tail is None:raise ValueError('compaction_tail_not_verified')
+        start=tail
+    payload=json.dumps(messages[start:],ensure_ascii=False,separators=(',',':')).encode()
+    import hashlib
+    return {'context_tokens':len(payload)+16384,'context_source':'post_compaction_bytes_estimate',
+            'summary_id':summary['info']['id'],'retained_messages':len(messages)-start,
+            'retained_bytes':len(payload),'sha256':hashlib.sha256(payload).hexdigest()}
 
 
 def visible_response(messages,parent_id):

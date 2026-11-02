@@ -26,3 +26,5 @@
 .automatic-turn{font-size:var(--text-caption);color:var(--color-text-secondary);margin-bottom:var(--spacing-16)}
 @media(max-width:760px){.goal-body{max-height:25vh}.goal-actions button{padding:6px 10px}}
 @media(prefers-reduced-motion:reduce){.goal-toggle svg{transition:none}}
+
+.goal-recovery{margin-block:var(--spacing-12);overflow-wrap:anywhere}.goal-recovery p{font-size:var(--text-caption);color:var(--color-text-secondary)}

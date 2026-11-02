@@ -44,13 +44,23 @@ class ContextView(BaseModel):
     cost_source:str='not_reported'
     operations:list[dict]=Field(default_factory=list)
     handoff:dict|None=None
+    compaction_remaining:int|None=None
+    compaction_scope:str='legacy_environment'
+    project_turns_remaining:int|None=None
+    project_agent_seconds_remaining:float|None=None
 
 class Context:
     def __init__(self,service):
         self.s=service
         with service.store.connect(True) as db:
             db.executescript('''CREATE TABLE IF NOT EXISTS context_operations(id TEXT PRIMARY KEY,conversation_id TEXT,request_key TEXT,model TEXT,status TEXT,document TEXT,UNIQUE(conversation_id,request_key));
-            CREATE TABLE IF NOT EXISTS handoffs(conversation_id TEXT PRIMARY KEY,document TEXT);''')
+            CREATE TABLE IF NOT EXISTS handoffs(conversation_id TEXT PRIMARY KEY,document TEXT);
+            CREATE TABLE IF NOT EXISTS context_projections(conversation_id TEXT PRIMARY KEY,document TEXT);''')
+    def compaction_budget(self, db, cid):
+        conv=self.s.store.check_conversation(db,cid)
+        formal=db.execute('SELECT 1 FROM formal_studies WHERE project_id=?',(conv['project_id'],)).fetchone()
+        used=db.execute('SELECT count(*) FROM context_operations o JOIN conversations c ON c.id=o.conversation_id WHERE c.project_id=?',(conv['project_id'],)).fetchone()[0] if formal else db.execute('SELECT count(*) FROM context_operations').fetchone()[0]
+        return max(0,self.s.config.get('context_limits',{}).get('max_operations',2)-used),'project' if formal else 'legacy_environment'
     def mark_recovery(self):
         with self.s.store.connect(True) as db:
             for row in db.execute("SELECT id,document FROM context_operations WHERE status='running'").fetchall():
@@ -61,17 +71,38 @@ class Context:
         with self.s.store.connect() as db:
             ops=[json.loads(r[0]) for r in db.execute('SELECT document FROM context_operations WHERE conversation_id=? ORDER BY rowid',(cid,))]
             h=db.execute('SELECT document FROM handoffs WHERE conversation_id=?',(cid,)).fetchone()
+            remaining,scope=self.compaction_budget(db,cid)
+            projection=db.execute('SELECT document FROM context_projections WHERE conversation_id=?',(cid,)).fetchone()
+            if projection:
+                projection=json.loads(projection[0])
+                if projection['native_session']==conv['native_session'] and projection['after_turn_id']==(turns[-1]['id'] if turns else None):last.update(projection['usage'])
             if self.s.runtime_name=='codex' and conv['native_session']:
                 usage=db.execute('SELECT document FROM codex_usage WHERE session_id=? ORDER BY rowid DESC LIMIT 1',(conv['native_session'],)).fetchone()
                 if usage:
                     u=json.loads(usage[0]);last.update(context_tokens=u['last']['totalTokens'],context_source='codex_last_request',context_limit_tokens=u.get('modelContextWindow'),cumulative_input_tokens=u['total']['inputTokens'],cumulative_output_tokens=u['total']['outputTokens'])
-        return ContextView(model=model.get('model'),runtime=self.s.runtime_name,environment=self.s.config.get('execution_environment','bxn-server'),native_bound=bool(conv['native_session']),context_tokens=last.get('context_tokens'),context_limit_tokens=last.get('context_limit_tokens') or model.get('context_limit_tokens'),source=last.get('context_source') or 'unknown',cumulative_input_tokens=last.get('cumulative_input_tokens'),cumulative_output_tokens=last.get('cumulative_output_tokens'),operations=ops,handoff=json.loads(h[0]) if h else None)
+        study=self.s.formal.view(conv['project_id']) if scope=='project' else None
+        return ContextView(model=model.get('model'),runtime=self.s.runtime_name,environment=self.s.config.get('execution_environment','bxn-server'),native_bound=bool(conv['native_session']),context_tokens=last.get('context_tokens'),context_limit_tokens=last.get('context_limit_tokens') or model.get('context_limit_tokens'),source=last.get('context_source') or 'unknown',cumulative_input_tokens=last.get('cumulative_input_tokens'),cumulative_output_tokens=last.get('cumulative_output_tokens'),operations=ops,handoff=json.loads(h[0]) if h else None,compaction_remaining=remaining,compaction_scope=scope,project_turns_remaining=max(0,study.budget.max_turns-study.used_turns) if study else None,project_agent_seconds_remaining=max(0,study.budget.max_wall_seconds-study.used_budget_seconds) if study else None)
     async def ensure_other_operations_idle(self):
         with self.s.store.connect() as db:rows=db.execute("SELECT DISTINCT c.native_session,c.directory FROM context_operations o JOIN conversations c ON c.id=o.conversation_id WHERE o.status IN ('running','recovery_required')").fetchall()
         for row in rows:
             try:status=await self.s.runtime.status(row['directory'])
             except Exception:raise Conflict('context_operation_unresolved') from None
             if status.get(row['native_session'],{}).get('type','idle')!='idle':raise Conflict('runtime_busy')
+    async def refresh_projection(self, conv, op):
+        if not hasattr(self.s.runtime,'compacted_context'):return
+        try:
+            if (await self.s.runtime.status(conv['directory'])).get(conv['native_session'],{}).get('type','idle')!='idle':raise ValueError('native_still_busy')
+            markers=await self.s.runtime.compaction_marker(conv['native_session'],conv['directory'])
+            fresh=set(markers)-set(op.get('baseline',[]))
+            usage=await self.s.runtime.compacted_context(conv['native_session'],conv['directory'],fresh)
+            turns=self.s.store.turns(conv['id'])
+            if 'after_turn_id' not in op or op['after_turn_id']!=(turns[-1]['id'] if turns else None):raise ValueError('projection_turn_changed')
+            projection={'native_session':conv['native_session'],'after_turn_id':op['after_turn_id'],'operation_id':op['id'],'usage':usage}
+            with self.s.store.connect(True) as db:db.execute('INSERT OR REPLACE INTO context_projections VALUES(?,?)',(conv['id'],encoded(projection)))
+            op['context_projection_status']='verified_estimate'
+            op.pop('projection_error',None)
+        except Exception as exc:
+            op['context_projection_status']='unverified';op['projection_error']=type(exc).__name__
     def guard(self,cid,model,request_bytes):
         v=self.view(cid)
         if any(op['status'] in ('running','recovery_required') for op in v.operations):raise Conflict('context_operation_unresolved')
@@ -101,8 +132,9 @@ class Context:
             if any(o['status'] in ('running','recovery_required') for o in self.view(cid).operations):raise Conflict('context_operation_unresolved')
             limits=s.config.get('context_limits',{'max_operations':2,'timeout_seconds':70})
             with s.store.connect(True) as db:
-                if db.execute('SELECT count(*) FROM context_operations').fetchone()[0]>=limits['max_operations']:raise Conflict('context_budget_exhausted')
-                op={'id':uid('compact'),'conversation_id':cid,'request_key':key,'model':model,'kind':'native_compaction','status':'running','started_at':now(),'finished_at':None,'history_preserved':True,'research_mutations':False,'tokens_and_cost':'native_only_when_reported'}
+                if self.compaction_budget(db,cid)[0]<=0:raise Conflict('context_budget_exhausted')
+                turns=s.store.turns(cid)
+                op={'id':uid('compact'),'conversation_id':cid,'request_key':key,'model':model,'kind':'native_compaction','status':'running','started_at':now(),'finished_at':None,'history_preserved':True,'research_mutations':False,'tokens_and_cost':'native_only_when_reported','after_turn_id':turns[-1]['id'] if turns else None}
                 db.execute('INSERT INTO context_operations VALUES(?,?,?,?,?,?)',(op['id'],cid,key,model,'running',encoded(op)))
             start=time.monotonic()
             try:
@@ -112,6 +144,7 @@ class Context:
                 result=await asyncio.wait_for(s.runtime.compact(conv['native_session'],conv['directory'],model),limits['timeout_seconds'])
                 if not result.get('observed'):raise ValueError('compaction_not_observed')
                 op.update(status='completed',native_evidence=result)
+                await self.refresh_projection(conv,op)
             except (TimeoutError,asyncio.CancelledError):op.update(status='recovery_required',error='compaction_outcome_unknown')
             except ValueError:op.update(status='failed',error='compaction_failed')
             except Exception:op.update(status='recovery_required',error='compaction_outcome_unknown')
@@ -124,13 +157,14 @@ class Context:
         async with s.lock:
             if s.store.active():raise Conflict('runtime_busy')
             conv=s.store.conversation(cid)
-            with s.store.connect() as db:rows=db.execute("SELECT id,document FROM context_operations WHERE conversation_id=? AND status IN ('running','recovery_required')",(cid,)).fetchall()
+            with s.store.connect() as db:rows=db.execute("SELECT id,document FROM context_operations WHERE conversation_id=? AND status IN ('running','recovery_required','completed')",(cid,)).fetchall()
             for row in rows:
                 op=json.loads(row['document'])
                 if 'baseline' not in op or not hasattr(s.runtime,'compaction_marker'):continue
                 observed=await s.runtime.compaction_marker(conv['native_session'],conv['directory'])
                 if set(observed)-set(op['baseline']):
                     op.update(status='completed',reconciled_at=now(),native_evidence={'observed':True,'source':'persisted_native_compaction'},error=None)
+                    await self.refresh_projection(conv,op)
                     with s.store.connect(True) as db:db.execute('UPDATE context_operations SET status=?,document=? WHERE id=?',('completed',encoded(op),op['id']))
             return self.view(cid)
     def export(self,cid):
