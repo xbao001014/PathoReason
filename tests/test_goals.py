@@ -117,6 +117,27 @@ def test_cancel_is_terminal_and_new_goal_retains_project_usage(fixture):
     asyncio.run(case())
 
 
+@pytest.mark.parametrize('action',['cancel','revise'])
+def test_goal_changes_invalidate_old_unselected_choices(fixture,action):
+    async def case():
+        s,r,v,cid,tid,body=await start(fixture)
+        receipt=s.guidance.publish(OfferInput(turn_id=tid,grant=s.guidance.grant(tid),kind='clarification',
+            question='选择方向',options=[{'id':'a','label':'方向 A','scope':'plan'},{'id':'b','label':'方向 B','scope':'plan'}]))
+        await finish(s,r,tid)
+        assert s.guidance.view(tid).status=='available'
+        await s.goals.control(cid,GoalControl(expected_revision=s.goals.view(cid).revision,action=action,
+                                             objective='已调整的新目标' if action=='revise' else None))
+        assert s.guidance.view(tid).status=='stale'
+        if action=='revise':
+            await s.goals.control(cid,GoalControl(expected_revision=s.goals.view(cid).revision,action='resume'))
+            assert s.guidance.view(tid).status=='stale'  # resume cannot resurrect old choices
+        with pytest.raises(Conflict,match='guidance_not_available'):
+            s.guidance.prepare(cid,{'text':'方向 A','guidance_selection':{'guidance_id':receipt['guidance_id'],'option_id':'a'}})
+        assert len(s.store.turns(cid))==1
+        await s.close()
+    asyncio.run(case())
+
+
 def test_missing_checkpoint_has_only_one_repair_continuation(fixture):
     async def case():
         s,r,v,cid,tid,body=await start(fixture)

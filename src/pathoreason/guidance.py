@@ -98,6 +98,14 @@ class Guidance:
 
     def status(self, db, record, pid, ignore_turn=None):
         if record['selected_turn_id']:return 'selected'
+        if hasattr(self.s,'goals'):
+            linked=db.execute('SELECT g.id,g.document,t.goal_revision FROM research_goals g JOIN goal_turns t ON t.goal_id=g.id WHERE t.turn_id=?',
+                              (record['source_turn_id'],)).fetchone()
+            if linked:
+                goal=json.loads(linked['document'])
+                revised=db.execute("SELECT 1 FROM goal_events WHERE goal_id=? AND json_extract(document,'$.event')='user_revise' AND json_extract(document,'$.revision')>? LIMIT 1",
+                                   (linked['id'],linked['goal_revision'])).fetchone()
+                if goal['state']=='cancelled' or revised:return 'stale'
         latest = db.execute('SELECT id,status FROM turns WHERE conversation_id=? AND id<>? ORDER BY rowid DESC LIMIT 1',
                             (record['conversation_id'],ignore_turn or '')).fetchone()
         if not latest or latest['id'] != record['source_turn_id']:return 'stale'
