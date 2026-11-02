@@ -247,6 +247,11 @@ class TaskWorkspaces:
         write_new(temp,(encoded(record)+'\n').encode())
         os.replace(temp,path)
 
+    def execution_readiness(self):
+        return {'capability':'training_execution','available':False,'owner':'platform',
+                'reason':'execution_backend_not_ready:immutable_environment_and_authorized_controller_required',
+                'required':['immutable_environment','controlled_inputs','authorized_matrix_executor','hard_budget_and_test_isolation']}
+
     def catalog(self):
         path=self.templates/'catalog.json'
         if not path.exists():return {'recommended_template':None,'templates':[]}
@@ -286,7 +291,7 @@ class TaskWorkspaces:
                     elif op=='freeze':result=self.freeze(record,request,actor)
                     elif op=='launch':
                         self.verify_snapshot(record,request.get('snapshot_id'))
-                        raise Conflict('execution_backend_not_ready:immutable_environment_and_authorized_controller_required')
+                        raise Conflict(self.execution_readiness()['reason'])
                     else:raise ValueError('unknown_task_operation')
                 with self.store.connect(True) as db:
                     db.execute('UPDATE task_code_actions SET status=?,document=? WHERE project_id=? AND request_key=?',

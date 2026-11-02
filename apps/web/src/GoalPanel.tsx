@@ -15,7 +15,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
  useEffect(()=>{let live=true;setGoal(null);setEditing(false);async function refresh(){try{const v=await formalApi<GoalView|null>('/conversations/'+cid+'/goal');if(live)setGoal(v);}catch{/* Conversation removal is handled by the parent. */}}refresh();const timer=setInterval(refresh,2000);return()=>{live=false;clearInterval(timer);};},[cid,budgetRefresh]);
  useEffect(()=>{setExpanded(false);setEditing(false);},[cid,goal?.id]);
  const needsContext=contextReasons.has(goal?.reason||'');
- useEffect(()=>{if(needsContext)setExpanded(true);},[goal?.reason,needsContext]);
+ useEffect(()=>{if(needsContext||(goal?.state==='blocked'&&goal.blocker))setExpanded(true);},[goal?.reason,goal?.state,goal?.blocker?.kind,needsContext]);
  useEffect(()=>{let live=true;setContext(null);if(!needsContext)return;async function refresh(){try{const res=await fetch('/api/v1/conversations/'+cid+'/context');if(res.ok&&live)setContext(await res.json());}catch{}}refresh();const timer=setInterval(refresh,2500);return()=>{live=false;clearInterval(timer);};},[cid,needsContext,budgetRefresh]);
  async function recover(action:'compact'|'reconcile'|'new_conversation'){
   if(!goal||busy)return;setBusy(true);
@@ -30,7 +30,8 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
   finally{setBusy(false);}
  }
  if(!goal)return null;
- const progressing=['active','waiting'].includes(goal.state),canResume=['paused','blocked'].includes(goal.state)&&!needsContext&&!goal.continued_in;
+ const platformBlocked=goal.blocker?.capability==='training_execution';
+ const progressing=['active','waiting'].includes(goal.state),canResume=['paused','blocked'].includes(goal.state)&&!needsContext&&!goal.continued_in&&!platformBlocked;
  const projectExhausted=context?.project_turns_remaining===0||context?.project_agent_seconds_remaining===0;
  const pendingContext=goal.reason==='context_recovery_running'||context?.operations?.some(o=>o.status==='running');
  const reconcile=context?.operations?.some(o=>o.status==='recovery_required')||context?.source==='post_compaction_bytes_estimate'||goal.reason==='context_usage_unverified'||goal.reason==='context_operation_unresolved';
@@ -39,6 +40,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
  return <section className="goal-panel" aria-label="当前目标" data-expanded={expanded}>
   <div className="goal-body" id={bodyId} hidden={!expanded}>
    <p className="goal-summary">{reasons[goal.reason||'']||goal.summary||goal.objective}</p>
+   {goal.state==='blocked'&&goal.blocker&&<p role="status">{{platform:'平台能力待接通',permission:'工具权限不足',input:'需要补充输入',resource:'资源条件不足'}[goal.blocker.kind]}：{goal.blocker.required_action}</p>}
    {!readOnly&&needsContext&&<div className="goal-recovery" aria-label="上下文恢复"><div className="goal-actions"><button disabled={busy||running||projectExhausted||Boolean(pendingContext)||!context||(!reconcile&&(context.compaction_remaining??0)<=0)} onClick={()=>recover(reconcile?'reconcile':'compact')}>{busy||pendingContext?'正在核验…':reconcile?'核对压缩并继续':'压缩并继续'}</button><button disabled={busy||running||projectExhausted||Boolean(pendingContext)} onClick={()=>recover('new_conversation')}>同项目换窗并继续</button></div><p>{projectExhausted?'项目额度已用完，需先补充项目预算；压缩或换窗均不会增加额度。':'压缩会调用模型；两种方式均保留目标和原额度，核验后接续。'}</p></div>}
    <div className="goal-actions">{!readOnly&&(projectExhausted||goal.state==='budget_exhausted')&&<button onClick={onBudget}>额度设置</button>}{!readOnly&&progressing&&<button disabled={busy} title="暂停 Agent 推进；已提交的外部作业需单独停止" onClick={()=>control('pause')}>暂停</button>}{!readOnly&&canResume&&<button disabled={busy||running} onClick={()=>control('resume')}>继续推进</button>}{!readOnly&&!goal.continued_in&&!['completed','cancelled'].includes(goal.state)&&<button disabled={busy} aria-expanded={editing} onClick={()=>{setObjective(goal.objective);setEditing(!editing);}}>调整目标</button>}</div>
 

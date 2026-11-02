@@ -1,5 +1,5 @@
 """Explicit model-authored decisions; selecting one creates a normal bounded turn."""
-import hashlib, hmac, json, os, secrets
+import hashlib, hmac, json, os, secrets, re
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -11,7 +11,7 @@ class Choice(BaseModel):
     id: Identifier
     label: str = Field(min_length=1, max_length=50)
     description: str = Field(default='', max_length=160)
-    scope: Literal['clarify', 'plan', 'inspect']
+    scope: Literal['clarify', 'plan', 'inspect', 'continue']
 
     def text(self):
         return self.label + ('：' + self.description if self.description else '')
@@ -91,6 +91,16 @@ class Guidance:
             if old:
                 if old['payload'] != encoded(payload):raise Conflict('guidance_already_offered')
                 return {'guidance_id':old['id'], 'status':'saved', 'next':'The UI will show these choices when this turn completes. End briefly now; do not do more exploratory work.'}
+            linked=db.execute('SELECT checkpoint,goal_id FROM goal_turns WHERE turn_id=?',(body.turn_id,)).fetchone()
+            goal=self.s.goals._latest(db,row['conversation_id'])
+            current=bool(linked and goal and linked['goal_id']==goal['id'] and goal['last_turn_id']==body.turn_id and goal['state']=='active')
+            saved_checkpoint=json.loads(linked['checkpoint']) if linked and linked['checkpoint'] else None
+            if any(o.scope=='continue' for o in payload.options) and (not current or (saved_checkpoint and saved_checkpoint['outcome']=='completed')):
+                raise Conflict('guidance_continue_requires_current_goal')
+            if current and payload.kind=='next_step':
+                checkpoint=json.loads(linked['checkpoint']) if linked['checkpoint'] else None
+                if not checkpoint or checkpoint['outcome']!='completed':
+                    raise Conflict('guidance_routine_confirmation: continue authorized goal work with a checkpoint; ask a clarification only for a consequential unresolved decision. Offer a new next step only after recording completion of the current goal.')
             gid = uid('guide')
             db.execute('INSERT INTO conversation_guidance VALUES(?,?,?,?,?,NULL,NULL)',
                        (gid,row['conversation_id'],body.turn_id,encoded(payload),self.basis(db,row['project_id'])))
@@ -139,6 +149,25 @@ class Guidance:
             choice = next((o for o in offer.options if selected and o.id==selected.option_id),None)
             if selected and not choice:raise ValueError('guidance_choice_invalid')
             if choice and request['text'] != choice.text():raise ValueError('guidance_text_mismatch')
+            # Exact visible choice text/label is equivalent to clicking. Do not infer
+            # a selection from a vague acceptance of several alternatives.
+            if not selected:
+                matches=[o for o in offer.options if request['text'] in (o.text(),o.label)]
+                if len(matches)==1:choice=matches[0]
+            acknowledgement=re.sub(r'[\s，,。.!！?？]', '',request['text']).casefold() in {'好','好的','可以','就这样','好就这样','按这个来','按你说的来','继续','yes','ok'}
+            if not selected and not choice and acknowledgement and len(offer.options)==1:
+                choice=offer.options[0]
+            unresolved_acceptance=bool(not choice and acknowledgement)
+            continuation_scope=None
+            if (choice and choice.scope=='continue') or unresolved_acceptance:
+                goal=self.s.goals._latest(db,cid)
+                linked=db.execute('SELECT goal_id FROM goal_turns WHERE turn_id=?',(record['source_turn_id'],)).fetchone()
+                valid=bool(goal and linked and linked['goal_id']==goal['id'] and goal['last_turn_id']==record['source_turn_id'] and goal['state'] in ('active','waiting_input'))
+                if not valid and choice and choice.scope=='continue':raise Conflict('guidance_continue_requires_current_goal')
+                if valid:
+                    source=json.loads(self.s.store.turn(record['source_turn_id'])['document'])
+                    frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(source['config_digest'],)).fetchone()[0])
+                    continuation_scope=frozen.get('goal_execution_scope') or frozen.get('execution_scope','standard')
             # Verify both immutable registered bytes and their workspace sources.
             try:
                 for aid in offer.artifact_ids:
@@ -152,7 +181,8 @@ class Guidance:
                 return None  # Stale guidance must not block a new free-form correction.
             return {'guidance_id':record['id'],'source_turn_id':record['source_turn_id'],
                     'basis':record['basis'],'proposal':offer.model_dump(mode='json'),
-                    'selected_option_id':choice.id if choice else None}
+                    'selected_option_id':choice.id if choice else None,
+                    'continuation_scope':continuation_scope,'unresolved_acceptance':unresolved_acceptance}
 
     def bind(self, db, context, turn):
         if context is None:return
@@ -171,9 +201,13 @@ class Guidance:
         context=json.loads(record[0]) if record else None
         choice=next((o for o in context['proposal']['options'] if o['id']==context['selected_option_id']),None) if context else None
         scope=choice['scope'] if choice else None
-        restriction=('This is a direction-selection turn only: record the choice in chat and optionally offer the next concrete planning step; do not inspect files, load skills or change a plan.' if scope=='clarify' else 'This is a read-only inspection turn: no commands, file edits, network fetches or compute are enabled. Inspect available context/files and report unknowns honestly.' if scope=='inspect' else '')
+        if context and context.get('unresolved_acceptance'):scope='clarify'
+        restriction=('The user explicitly selected a direction-only option: record it without inspecting or editing files. Do not add another routine confirmation. For decisions that should advance an existing goal, use continue-scoped choices in the original offer.' if scope=='clarify' else 'This is a read-only inspection turn: no commands, file edits, network fetches or compute are enabled. Inspect available context/files and report unknowns honestly.' if scope=='inspect' else 'The user has resolved the pending decision. Apply it and advance the existing goal now, within its inherited execution scope and current tool permissions. Do not ask whether to draft, check, save or freeze routine preparation. This choice grants no new training, data or resource authority.' if scope=='continue' else '')
         return ('\nCurrent selected scope: '+str(scope)+'. '+restriction+'\nCurrent dialogue capability (never print its grant): '+json.dumps({'turn_id':tid,'grant':self.grant(tid)})+
-            '\nUse pathoreason_dialogue_offer for a necessary short clarification or one useful next step. '
+            '\nUse pathoreason_dialogue_offer only for a consequential unresolved decision, or a genuinely new task after delivery. '
+            'Within an active goal, use kind=clarification with scope=continue for choices that resolve a trade-off and let the original task proceed. '
+            'scope=continue inherits the source goal scope; it does not grant execution authority. Use clarify only when the user requested recording a direction without further work. '
+            'Do not offer next_step buttons for drafting, adaptation, synthetic checks, registering or freezing work already included in the goal. Continue those steps yourself. '
             'Choices are conversational planning/inspection/clarification only, not execution authorization. '
             'When enough context exists to ask, call this tool BEFORE file exploration or loading domain skills, then finish briefly. '
             'For a clear authorized draft revision, do the revision first; do not ask again. '

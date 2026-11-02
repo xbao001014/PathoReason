@@ -165,11 +165,18 @@ class Service:
                 runtime_config.update(agent='pathoreason-formal',study_revision=study['revision'],study_budget_revision=study.get('budget_revision',0),permission_settings=permissions.settings,permission_revision=permissions.revision)
                 chosen=next((o for o in guidance_context['proposal']['options'] if o['id']==guidance_context['selected_option_id']),None) if guidance_context else None
                 runtime_config['execution_scope']={'clarify':'dialogue','inspect':'inspection'}.get(chosen['scope'],'standard') if chosen else 'standard'
+                if chosen and chosen['scope']=='continue':
+                    runtime_config['execution_scope']=guidance_context['continuation_scope']
+                if guidance_context and guidance_context.get('unresolved_acceptance'):
+                    runtime_config['execution_scope']='dialogue'
+                if guidance_context and guidance_context.get('continuation_scope'):
+                    runtime_config['goal_execution_scope']=guidance_context['continuation_scope']
                 if _goal_auto:
                     parent=json.loads(self.store.turn(_goal_auto['last_turn_id'])['document'])
                     with self.store.connect() as db:
                         prior=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(parent['config_digest'],)).fetchone()[0])
                     runtime_config['execution_scope']=prior.get('execution_scope','standard')
+                    runtime_config['goal_execution_scope']=prior.get('goal_execution_scope')
                 runtime_config.update(time_accounting='tool_excluded_v1',max_turn_wall_seconds=study['budget'].get('max_turn_wall_seconds',86400))
                 gpu_binding=self.gpu_settings.frozen(cid)
                 if gpu_binding:runtime_config['gpu_binding']=gpu_binding

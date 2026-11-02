@@ -38,6 +38,18 @@ class GoalWait(BaseModel):
     run_id: Identifier
 
 
+class GoalBlocker(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    kind: Literal['platform', 'permission', 'input', 'resource']
+    capability: Literal['training_execution'] | None = None
+    required_action: str = Field(min_length=1, max_length=600)
+
+    @model_validator(mode='after')
+    def category(self):
+        if self.capability and self.kind!='platform':raise ValueError('capability_requires_platform_blocker')
+        return self
+
+
 class GoalCheckpoint(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     turn_id: Identifier
@@ -50,9 +62,11 @@ class GoalCheckpoint(BaseModel):
     evidence: GoalEvidence = Field(default_factory=GoalEvidence)
     answer_only: bool = False
     wait_for: GoalWait | None = None
+    blocker: GoalBlocker | None = None
 
     @model_validator(mode='after')
     def shape(self):
+        if self.blocker and self.outcome!='blocked':raise ValueError('blocker_requires_blocked_outcome')
         if self.outcome == 'continue' and not self.next_action:
             raise ValueError('next_action_required')
         if (self.outcome == 'waiting') != (self.wait_for is not None):
@@ -80,6 +94,7 @@ class GoalView(BaseModel):
     revision: int
     objective: str
     state: Literal['active','paused','blocked','waiting_input','waiting','completed','budget_exhausted','cancelled']
+    blocker: GoalBlocker | None = None
     summary: str = ''
     next_action: str = ''
     reason: str | None = None
@@ -370,7 +385,8 @@ class Goals:
             'Existing permission, compute, test-data, executor and scientific gates remain unchanged. '
             'For an unavailable execution backend report blocked; do not run a raw script around it. '
             'Repair task code in a new Agent-authored revision, preserve old failures and results. '
-            'For a necessary user choice offer the existing dialogue choices and report needs_input. '
+            'After an agreed baseline, pursue adaptation, dependency preparation, internal synthetic checks, checkpoint/receipt verification and source freezing as ready nodes of the same goal, within existing permissions and budget. These are not separate user approvals. '
+            'For a necessary user choice offer clarification options with scope=continue to resolve the choice and advance this same goal, then report needs_input. Use scope=clarify only for an explicitly direction-only request. '
             'Do not offer next-step buttons for already authorized ready work. '
             'Before ending, record ONE checkpoint with the native pathoreason_dialogue_checkpoint tool (CLI fallback: '+str(ROOT/'scripts/goal_control.py')+')'+
             ' using JSON stdin: turn_id/grant from the current dialogue capability, expected_revision='+str(goal['revision'])+
@@ -382,6 +398,8 @@ class Goals:
             'It is allowed only in the first user turn of a new goal; a status question never completes existing work. '
             'Use paused/cancelled only for an actual user request to pause/cancel, not for a missing capability or failure. '
             'Report inability honestly instead of calling an unfinished goal complete. '
+            'For blocked outcomes include blocker={kind:platform|permission|input|resource,required_action:one concrete remedy}; for the unavailable training backend also set capability=training_execution. '
+            'Distinguish a platform capability gap from missing user permission; finish independent authorized preparation first and do not ask for launch approval while the platform cannot launch. '
             'Repeated absent/unchanged evidence triggers a bounded stop. No budget is reset. '
             'waiting needs wait_for={kind:synthetic_run,run_id:...} from a real registered platform run; '
             'no general real-training backend is connected yet. Never invent a run or poll training with the model. '
@@ -415,7 +433,7 @@ class Goals:
                 goal.update(state='blocked',reason=evidence_error)
             else:
                 guide = db.execute('SELECT payload FROM conversation_guidance WHERE source_turn_id=?',(tid,)).fetchone()
-                if guide:
+                if guide and not (json.loads(guide[0])['kind']=='next_step' and checkpoint and checkpoint['outcome']=='completed'):
                     goal.update(state='waiting_input',reason='goal_user_choice',summary=json.loads(guide[0])['question'])
                 elif not checkpoint:
                     goal['stagnant_turns'] += 1
@@ -428,6 +446,7 @@ class Goals:
                     goal['stagnant_turns'] = 0 if fresh else goal['stagnant_turns']+1
                     if fresh:goal['processed_evidence']=sorted(set(goal['processed_evidence'])|hashes)
                     outcome = checkpoint['outcome']
+                    goal['blocker']=checkpoint.get('blocker')
                     goal['state'] = {'continue':'active','needs_input':'waiting_input'}.get(outcome,outcome)
                     goal['reason'] = None if outcome in ('continue','completed') else 'agent_'+outcome
                     if outcome=='completed':goal['completion_scope']='answer_only' if checkpoint['answer_only'] else 'evidence_bytes_verified'
@@ -460,6 +479,8 @@ class Goals:
                     raise Conflict('goal_already_terminal')
                 active = db.execute('SELECT id,status FROM turns WHERE id=?',(goal['last_turn_id'],)).fetchone()
                 if body.action=='resume':
+                    if (goal.get('blocker') or {}).get('capability')=='training_execution' and not self.s.task_code.execution_readiness()['available']:
+                        raise Conflict('goal_training_backend_not_ready')
                     if goal.get('reason') in CONTEXT_BLOCKERS:raise Conflict('goal_context_recovery_required')
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
@@ -470,7 +491,7 @@ class Goals:
                 elif body.action=='revise':
                     if not body.objective and body.max_turns is None:raise ValueError('goal_revision_required')
                     if goal['state']=='completed':raise Conflict('goal_cannot_revise_completed')
-                    goal.update(state='paused',reason='user_revised',completion_scope='not_complete')
+                    goal.update(state='paused',reason='user_revised',completion_scope='not_complete',blocker=None)
                     if body.objective:
                         goal.update(objective=body.objective,completion_criteria=[])
                         goal['user_instructions']=[*goal['user_instructions'],{'source':'goal_editor','text':body.objective}][-12:]

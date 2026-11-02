@@ -16,6 +16,10 @@ class TaskCodeService:
             'platform':ROOT,
             'mil_vendor':Path(service.config.get('legacy_root','/home/bxn/projects/auto-research'))/'engines/auto_mil/third_party/MIL_BASELINE'})
 
+    def execution_readiness(self):
+        # This is the actual public launch gate, not an Agent-authored readiness claim.
+        return self.workspaces.execution_readiness()
+
     def call(self,body):
         row=self.s.store.turn(body.turn_id)
         self.s.store.conversation(row['conversation_id'],writable=True)
@@ -44,7 +48,10 @@ class TaskCodeService:
         return self.workspaces.act(row['project_id'],body.model_dump(mode='json'),actor)
 
     def prompt(self):
-        return ('\nCurrent published task template catalog: '+json.dumps(self.workspaces.catalog(),ensure_ascii=False)+'\nIndependent task code repositories are available through '+str(ROOT/'scripts/task_code.py')+
+        return ('\nAuthoritative training execution readiness: '+json.dumps(self.execution_readiness())+
+                '\nUnavailable execution is a platform blocker. First finish independent authorized preparation; then report blocked with blocker={kind:platform,capability:training_execution,required_action:...}. '
+                'Do not ask the user to toggle compute.json, supply Git hashes, approve each source freeze or repeat a launch confirmation while the backend remains unavailable. '
+                '\nCurrent published task template catalog: '+json.dumps(self.workspaces.catalog(),ensure_ascii=False)+'\nIndependent task code repositories are available through '+str(ROOT/'scripts/task_code.py')+
                 '. For task creation, repair, source freezing or template updates, read '+str(ROOT/'skills/task-code-workspaces/SKILL.md')+
                 '. Use the current dialogue capability turn_id/grant; never print the grant. '
                 'Source freezing is not executable environment readiness or training authorization. '
