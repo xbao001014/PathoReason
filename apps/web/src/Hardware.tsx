@@ -1,3 +1,4 @@
+import {ComposerSettingIcon,ComposerSettingValue} from './ComposerSetting';
 import {useEffect,useRef,useState} from 'react';
 import type {GpuSettingsView,HardwareSnapshot} from './generated';
 import {formalApi} from './FormalStudy';
@@ -51,7 +52,7 @@ export function GpuSelector({cid,disabled}:{cid:string;disabled:boolean}){
  const available=hardware&&!hardware.gpu_error&&hardware.gpus?.some(g=>g.uuid===draft);
  const label=setting?.source==='conversation'&&setting.gpu_index!=null?'GPU '+setting.gpu_index:setting?.source==='project'?'项目默认':'未选择';
  return <>
-  <button ref={trigger} type="button" className="permission-trigger" aria-label="显卡设置" aria-haspopup="dialog" onClick={show}>显卡 · {label}</button>
+  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="显卡设置" aria-description={label} aria-haspopup="dialog" aria-expanded={open} onClick={show}><ComposerSettingIcon name="gpu"/><span>显卡</span><ComposerSettingValue value={label}/></button>
   {open&&<dialog ref={dialog} className="gpu-dialog" aria-labelledby="gpu-dialog-title" onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===dialog.current)close();}}>
    <header><h2 id="gpu-dialog-title">训练显卡</h2><button type="button" className="icon-button" aria-label="关闭显卡设置" disabled={busy} onClick={close}>×</button></header>
    <form className="dialog-body" onSubmit={e=>{e.preventDefault();void save();}}>

@@ -1,3 +1,4 @@
+import {ComposerSettingIcon,ComposerSettingValue} from './ComposerSetting';
 import {useEffect,useRef,useState} from 'react';
 import {ComposerSelect} from './ComposerSelect';
 import {formalApi} from './FormalStudy';
@@ -18,7 +19,7 @@ export function PermissionSettings({cid,active}:{cid:string;active:boolean}){
  async function show(){setOpen(true);setError('');setDraft(null);try{const v=await formalApi<PermissionSettingsView>('/conversations/'+cid+'/permission-settings');setValue(v);setDraft(v.settings);}catch(e){setError(e instanceof Error?e.message:String(e));}}
  async function save(){if(!value||!draft)return;setBusy(true);setError('');try{const v=await formalApi<PermissionSettingsView>('/conversations/'+cid+'/permission-settings',{method:'PUT',body:JSON.stringify({expected_revision:value.revision,settings:draft})});setValue(v);setDraft(v.settings);dialog.current?.close();setOpen(false);trigger.current?.focus();}catch(e){const message=e instanceof Error?e.message:String(e);setError(errors[message]||message);}finally{setBusy(false);}}
  return <>
-  <button ref={trigger} type="button" className="permission-trigger" aria-label="权限设置" aria-haspopup="dialog" onClick={show}>权限 · {value?modes[value.settings.mode||'ask']:'加载中'}</button>
+  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="权限设置" aria-description={value?modes[value.settings.mode||'ask']:'加载中'} aria-haspopup="dialog" aria-expanded={open} onClick={show}><ComposerSettingIcon name="permission"/><span>权限</span><ComposerSettingValue value={value?modes[value.settings.mode||'ask']:'加载中'}/></button>
   {open&&<dialog ref={dialog} className="permission-dialog" onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===dialog.current)close();}}>
    <header><h2>权限设置</h2><button type="button" className="icon-button" aria-label="关闭权限设置" disabled={busy} onClick={close}>×</button></header>
    <form className="dialog-body" onSubmit={e=>{e.preventDefault();save();}}>

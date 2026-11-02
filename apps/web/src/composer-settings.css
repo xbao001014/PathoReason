@@ -1,0 +1,72 @@
+/* Composer-only presentation; form selects and their menus retain their layout. */
+.composer .composer-toolbar .composer-controls {gap:var(--spacing-4)}
+.composer-toolbar .composer-controls > .composer-setting-trigger {
+ position:relative;
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ gap:7px;
+ height:var(--control-height-compact);
+ min-height:var(--control-height-compact);
+ min-width:0;
+ max-width:none;
+ padding:0 10px;
+ border:1px solid transparent;
+ border-radius:var(--radius-buttons);
+ background:transparent;
+ color:var(--color-text-secondary);
+ font-size:var(--text-body);
+ line-height:1.5;
+ white-space:nowrap;
+}
+.composer-toolbar .composer-setting-trigger > svg {width:18px;height:18px;flex:none}
+.composer-toolbar .composer-setting-trigger:hover:not(:disabled),
+.composer-toolbar .composer-setting-trigger:focus-visible {
+ background:var(--color-canvas);
+ border-color:var(--color-hairline);
+}
+.composer-toolbar .composer-setting-trigger:focus-visible {
+ outline:2px solid var(--color-control-border);
+ outline-offset:2px;
+}
+.composer-toolbar .composer-setting-trigger:disabled {color:var(--color-text-muted);cursor:not-allowed}
+.composer-setting-value {
+ display:none;
+ position:absolute;
+ bottom:calc(100% + var(--spacing-8));
+ left:0;
+ z-index:10;
+ width:max-content;
+ max-width:min(280px,calc(100vw - 160px));
+ padding:var(--spacing-8) var(--spacing-12);
+ border:1px solid var(--color-hairline);
+ border-radius:var(--radius-buttons);
+ background:var(--color-paper);
+ color:var(--color-text-secondary);
+ font-size:var(--text-caption);
+ font-weight:400;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ pointer-events:none;
+}
+.composer-setting-trigger:hover > .composer-setting-value,
+.composer-setting-trigger:focus-visible > .composer-setting-value {display:block}
+.composer-setting-trigger[aria-expanded="true"] > .composer-setting-value {display:none}
+@media(max-width:760px){
+ .composer-toolbar .composer-controls > .composer-setting-trigger {padding-inline:var(--spacing-8)}
+ .composer .composer-toolbar {position:relative;display:block;--composer-submit-width:76px}
+ .composer .composer-toolbar:has(.send-button[aria-label="发送消息"]) {--composer-submit-width:36px}
+ .composer .composer-toolbar .composer-controls {width:100%}
+ /* Reserve the trailing slot in the wrapping row for either Send or Stop. */
+ .composer .composer-toolbar .composer-controls::after {
+  content:"";
+  flex:0 0 var(--composer-submit-width);
+  height:var(--control-height-compact);
+ }
+ .composer .composer-toolbar > .send-button {
+  position:absolute;
+  inset-inline-end:0;
+  bottom:0;
+  width:var(--composer-submit-width);
+ }
+}

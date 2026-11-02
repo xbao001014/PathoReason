@@ -1,11 +1,12 @@
 import {useEffect,useId,useLayoutEffect,useRef,useState,type KeyboardEvent,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
+import {ComposerSettingValue} from './ComposerSetting';
 
 type Option={value:string;label:string;disabled?:boolean};
-type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;disabled?:boolean;onOpen?:()=>void};
+type Props={label:string;value:string;options:Option[];onChange:(value:string)=>void;variant:'model'|'mode'|'form';icon?:ReactNode;triggerLabel?:string;disabled?:boolean;onOpen?:()=>void};
 
 /** Select-only combobox; portal keeps the rounded menu outside clipped panels, including modal dialogs. */
-export function ComposerSelect({label,value,options,onChange,variant,icon,disabled=false,onOpen}:Props){
+export function ComposerSelect({label,value,options,onChange,variant,icon,triggerLabel,disabled=false,onOpen}:Props){
   const id=useId(),trigger=useRef<HTMLButtonElement>(null),menu=useRef<HTMLDivElement>(null);
   const [portalHost,setPortalHost]=useState<HTMLElement>(document.body);
   const [open,setOpen]=useState(false),[active,setActive]=useState(0);
@@ -72,11 +73,11 @@ export function ComposerSelect({label,value,options,onChange,variant,icon,disabl
   },[open,active,position]);
   useEffect(()=>{if(disabled)setOpen(false);},[disabled]);
   return <>
-    <button ref={trigger} type="button" className={'composer-select composer-select-'+variant} role="combobox" disabled={disabled}
+    <button ref={trigger} type="button" className={'composer-select composer-select-'+variant+(triggerLabel?' composer-setting-trigger':'')} role="combobox" disabled={disabled}
       aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={open?id:undefined}
-      aria-activedescendant={open?`${id}-${active}`:undefined} title={selected?.label||value}
+      aria-activedescendant={open?`${id}-${active}`:undefined} aria-description={triggerLabel?(selected?.label||value):undefined} title={triggerLabel?undefined:selected?.label||value}
       onClick={()=>open?setOpen(false):show()} onKeyDown={onKeyDown} onBlur={()=>setOpen(false)}>
-      {icon}<span className="select-value">{selected?.label||value}</span><svg className="select-chevron" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7 10 5 5 5-5"/></svg>
+      {icon}<span className="select-value">{triggerLabel||selected?.label||value}</span>{triggerLabel?<ComposerSettingValue value={selected?.label||value}/>:<svg className="select-chevron" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="m7 10 5 5 5-5"/></svg>}
     </button>
     {open&&createPortal(<div ref={menu} id={id} role="listbox" aria-label={label} className="composer-select-menu"
       style={{...position,visibility:position?'visible':'hidden'}} onMouseDown={e=>e.preventDefault()}>
