@@ -201,7 +201,7 @@ async def goal_checkpoint(body:GoalCheckpoint,request:Request):
     async with service().lock:return service().goals.checkpoint(body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.15-p5-budget-settings'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.16-p5-conversation-titles'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
