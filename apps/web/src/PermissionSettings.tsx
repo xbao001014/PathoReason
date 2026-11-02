@@ -6,6 +6,7 @@ import type {PermissionSettings as Policy,PermissionSettingsView} from './genera
 import './permissions.css';
 
 const modes={ask:'逐次确认',auto:'自动批准',custom:'自定义'};
+const permissionIcons={ask:'permissionAsk',auto:'permissionAuto',custom:'permissionCustom'} as const;
 const tools={bash:'命令执行',edit:'文件修改',webfetch:'网络访问',external_directory:'外部目录'};
 const errors:Record<string,string>={permission_settings_turn_active:'当前回合仍在执行，请结束后修改权限。',permission_settings_revision_conflict:'权限已在其他窗口更新，请关闭并重新打开设置。',permission_settings_native_mismatch:'原生权限尚未确认，未发送新请求。'};
 
@@ -19,7 +20,7 @@ export function PermissionSettings({cid,active}:{cid:string;active:boolean}){
  async function show(){setOpen(true);setError('');setDraft(null);try{const v=await formalApi<PermissionSettingsView>('/conversations/'+cid+'/permission-settings');setValue(v);setDraft(v.settings);}catch(e){setError(e instanceof Error?e.message:String(e));}}
  async function save(){if(!value||!draft)return;setBusy(true);setError('');try{const v=await formalApi<PermissionSettingsView>('/conversations/'+cid+'/permission-settings',{method:'PUT',body:JSON.stringify({expected_revision:value.revision,settings:draft})});setValue(v);setDraft(v.settings);dialog.current?.close();setOpen(false);trigger.current?.focus();}catch(e){const message=e instanceof Error?e.message:String(e);setError(errors[message]||message);}finally{setBusy(false);}}
  return <>
-  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="权限设置" aria-description={value?modes[value.settings.mode||'ask']:'加载中'} aria-haspopup="dialog" aria-expanded={open} onClick={show}><ComposerSettingIcon name="permission"/><span>权限</span><ComposerSettingValue value={value?modes[value.settings.mode||'ask']:'加载中'}/></button>
+  <button ref={trigger} type="button" className="permission-trigger composer-setting-trigger" aria-label="权限设置" aria-description={value?modes[value.settings.mode||'ask']:'加载中'} aria-haspopup="dialog" aria-expanded={open} onClick={show}><ComposerSettingIcon name={value?permissionIcons[value.settings.mode||'ask']:'permission'}/><span>权限</span><ComposerSettingValue value={value?modes[value.settings.mode||'ask']:'加载中'}/></button>
   {open&&<dialog ref={dialog} className="permission-dialog" onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===dialog.current)close();}}>
    <header><h2>权限设置</h2><button type="button" className="icon-button" aria-label="关闭权限设置" disabled={busy} onClick={close}>×</button></header>
    <form className="dialog-body" onSubmit={e=>{e.preventDefault();save();}}>
