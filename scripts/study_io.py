@@ -1,9 +1,10 @@
 """Explicit study I/O; does not start training or approve scientific outcomes."""
-import argparse,json,sys,urllib.request
+import argparse,json,sys,urllib.request,urllib.error
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from pathoreason.settings import settings
 from pathoreason.study_io import fetch_data,generate_image
+from pathoreason.bridge_feedback import http_failure
 p=argparse.ArgumentParser();p.add_argument('operation',choices=['data','image','publish']);p.add_argument('--project',required=True);p.add_argument('--disease');p.add_argument('--limit',type=int,default=1000);p.add_argument('--output');p.add_argument('--request');p.add_argument('--file');p.add_argument('--title');args=p.parse_args();cfg=settings()
 if args.operation=='data':
  if not args.disease or not args.output:p.error('data requires --disease and --output')
@@ -16,5 +17,8 @@ else:
  token=Path(cfg['data_root'])/'runtime/control/business-token'
  if token.is_symlink() or token.stat().st_mode & 0o077:raise ValueError('bridge_token_permissions')
  req=urllib.request.Request(f"http://127.0.0.1:{cfg['api_port']}/internal/formal/artifacts",data=json.dumps({'project_id':args.project,'relative_path':args.file,'title':args.title}).encode(),headers={'Content-Type':'application/json','Authorization':'Bearer '+token.read_text().strip()})
- with urllib.request.urlopen(req,timeout=30) as r:result=json.load(r)
+ try:
+  with urllib.request.urlopen(req,timeout=30) as r:result=json.load(r)
+ except urllib.error.HTTPError as exc:
+  print(json.dumps(http_failure(exc),ensure_ascii=False));sys.exit(1)
  print(json.dumps({'artifact_id':result['id'],'citation':'artifact:'+result['id'],'sha256':result['sha256']}))

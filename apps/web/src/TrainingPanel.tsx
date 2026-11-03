@@ -47,7 +47,7 @@ export function TrainingPanel({cid,readOnly,openRequest}:{cid:string;readOnly:bo
      </fieldset>
      <p>后台训练独立运行。停止生成或对话额度用完不会停止已授权训练；达到训练上限则停止并保留已有结果。</p>
      {!current.approval_ready&&<p>Agent 正在完成方案准备，本轮结束后可确认启动。</p>}
-     {draft.status==='draft'&&<p>点击开始将授权上述矩阵、资源与预算，以及范围内的修复重试。科学审核与结论仍独立核验。</p>}
+     {draft.status==='draft'&&<p>点击开始将授权上述矩阵、资源与预算，以及范围内的修复重试。持续模式接续结果核验，沿用项目额度和已用目标回合；科学审核仍独立进行。</p>}
      {current.status==='needs_reconciliation'&&<p>旧控制进程已退出，执行结果未知。请核对日志与产物；重新尝试会保留旧预留消耗并创建新尝试。</p>}
      {current.error&&<p role="alert" className="status-text status-danger">{current.error}</p>}
      {current.attempts.length>0&&<details><summary>执行记录（{current.attempts.length} 次尝试）</summary><ul>{current.attempts.map(a=><li key={String(a.id)}>{String(a.unit_id)} · {labels[String(a.status)]||String(a.status)} · {Number(a.charged_seconds??a.observed_seconds??0).toFixed(1)} 秒{a.error?' · '+String(a.error):''}</li>)}</ul></details>}

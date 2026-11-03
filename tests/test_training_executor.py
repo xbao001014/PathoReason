@@ -342,3 +342,56 @@ def test_training_tool_rechecks_active_grant_and_inspection_scope(fixture):
         with pytest.raises(Conflict,match='authority'):s.training.call(body)
         await s.close()
     asyncio.run(case())
+
+
+def test_compact_receipts_and_project_plan_file_preserve_plan_and_idempotency(fixture,environment):
+    from test_goals import accepted
+    s,r,v,cid,request,task,p,body,_=setup_plan(fixture,environment,units=1)
+    async def case():
+        r.hold=True
+        first=await s.submit(cid,{**request,'request_key':'plan_file','skill_id':None,'artifact_ids':[]});tid=first['turn']['id'];await accepted(s,tid)
+        path=Path(v.workspace)/'prepared-plan.json';path.write_text(body.plan.model_dump_json())
+        tool=TrainingToolInput(turn_id=tid,grant=s.guidance.grant(tid),operation='prepare',idempotency_key='from_file',plan_path=str(path))
+        result=s.training.call(tool);assert result['status']=='draft' and 'plan' not in result and result['unit_count']==1
+        assert s.training.call(tool)==result
+        inspect=tool.model_copy(update={'operation':'inspect','experiment_id':result['id'],'plan_path':None,'include_plan':True})
+        full=s.training.call(inspect);assert full['plan']==body.plan.model_dump()
+        path.write_text(body.plan.model_copy(update={'title':'Changed plan'}).model_dump_json())
+        with pytest.raises(Conflict,match='request_conflict'):s.training.call(tool)
+        outside=s.data/'other.json';outside.write_text(body.plan.model_dump_json())
+        with pytest.raises(ValueError,match='outside_project'):s.training.call(tool.model_copy(update={'plan_path':str(outside),'idempotency_key':'outside'}))
+        link=Path(v.workspace)/'plan-link.json';link.symlink_to(path)
+        with pytest.raises(ValueError,match='links'):s.training.call(tool.model_copy(update={'plan_path':str(link),'idempotency_key':'symlink'}))
+        long=p.model_copy(deep=True);long.plan.inputs=[]
+        for i in range(1000):
+            from pathoreason.training_contracts import TrainingInput
+            long.plan.inputs.append(TrainingInput(id='input_'+str(i),path='/example/'+str(i),sha256='a'*64,role='development',subject_id='subject_'+str(i)))
+        receipt=s.training.receipt(long);assert receipt['input_count']==1000 and len(json.dumps(receipt))<5000
+        r.hold=False;await settled(s,tid);await s.close()
+    asyncio.run(case())
+
+
+def test_completed_preparation_kept_and_launch_phase_carries_used_goal_turns(fixture,environment):
+    from test_goals import accepted,finish
+    from pathoreason.goals import GoalCheckpoint
+    s,r,v,cid,request,task,p,body,_=setup_plan(fixture,environment,units=1)
+    async def case():
+        s.goals.start=lambda:None;r.hold=True
+        first=await s.submit(cid,{**request,'request_key':'complete_prep','skill_id':None,'artifact_ids':[],'goal_mode':'continuous'})
+        tid=first['turn']['id'];await accepted(s,tid)
+        linked=s.training.prepare(v.project_id,cid,body.model_copy(update={'experiment_id':p.id,'expected_revision':p.revision}),{'kind':'agent','turn_id':tid})
+        note=Path(v.workspace)/'outputs/prepared.json';note.write_text('{"scope":"prepared_only"}')
+        s.goals.checkpoint(GoalCheckpoint(turn_id=tid,grant=s.guidance.grant(tid),expected_revision=s.goals.view(cid).revision,outcome='completed',summary='Preparation complete',evidence={'files':['outputs/prepared.json']}))
+        await finish(s,r,tid);old=s.goals.view(cid);assert old.state=='completed'
+        with s.store.connect() as db:original=db.execute('SELECT document FROM research_goals WHERE id=?',(old.id,)).fetchone()[0]
+        launched=approve(s,cid,linked);new=s.goals.view(cid)
+        assert new.id!=old.id and new.state=='waiting' and new.turns_used==old.turns_used and new.max_turns==old.max_turns
+        assert new.wait_for.run_id==launched.run_id
+        with s.store.connect() as db:assert db.execute('SELECT document FROM research_goals WHERE id=?',(old.id,)).fetchone()[0]==original
+        assert approve(s,cid,linked).run_id==launched.run_id and s.goals.view(cid).id==new.id
+        done=await asyncio.to_thread(wait,s,p.id,v.project_id);assert done.status=='completed'
+        await s.goals.tick();await s.goals.tick();auto=s.store.turns(cid)[-1];await accepted(s,auto['id'])
+        assert s.view(auto)['origin']=='goal' and s.view(auto)['goal_id']==new.id
+        assert s.goals.view(cid).turns_used==old.turns_used+1
+        await s.close()
+    asyncio.run(case())

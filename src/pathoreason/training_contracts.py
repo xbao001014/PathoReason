@@ -78,6 +78,8 @@ class TrainingToolInput(Strict):
     python:str|None=None
     extra_paths:list[str]=Field(default_factory=list,max_length=10)
     plan:TrainingPlan|None=None
+    plan_path:str|None=Field(default=None,max_length=4096)
+    include_plan:bool=False
     reason:str|None=Field(default=None,max_length=2000)
 
 class TrainingDecision(Strict):

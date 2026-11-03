@@ -5,7 +5,8 @@ from .contracts import canonical_digest
 from .persistence import ACTIVE,Conflict,Missing
 from .settings import ROOT
 from .training_account import TrainingAccount
-from .training_contracts import TrainingView,TrainingBudget
+from .training_contracts import TrainingView,TrainingBudget,TrainingPlan
+from pydantic import ValidationError
 from .training_files import canonical,digest,file_digest,freeze_environment,manifest,relative,atomic,verify_tree,verify_requirements
 from .training_sandbox import availability
 
@@ -47,20 +48,45 @@ class Training:
             scope=option['scope'] if option else None
             if scope=='clarify' or (scope=='inspect' and body.operation not in ('list','inspect')):raise Conflict('training_outside_turn_scope')
         return row
+    def receipt(self,view,full=False):
+        value=view.model_dump()
+        if full:return value
+        plan=value.pop('plan');attempts=value.pop('attempts');events=value.pop('events')
+        value.update(plan_summary={k:plan[k] for k in ('title','task_id','snapshot_id','environment_id','protocol','evaluation','gpu_uuid','memory_gib','proposed_budget')},
+            input_count=len(plan['inputs']),fit_units=sum(u['phase']=='fit' for u in plan['units']),evaluation_units=sum(u['phase']=='evaluate' for u in plan['units']),
+            unit_count=len(plan['units']),attempt_count=len(attempts),recent_attempts=[{**{k:v for k,v in a.items() if k!='files'},'output_count':len(a.get('files',{}))} for a in attempts[-3:]],recent_events=events[:3],
+            detail_hint='inspect with include_plan=true returns the full registered plan; prepare accepts a project-local plan_path without embedding the plan or saving a grant in that file.')
+        return value
+    def load_plan(self,pid,body):
+        if not body.plan_path:return body
+        if body.operation!='prepare' or body.plan is not None:raise ValueError('training_use_plan_or_plan_path')
+        path=canonical(body.plan_path)
+        if not path.is_relative_to(self.s.data/'projects'/pid):raise ValueError('training_plan_file_outside_project')
+        if path.stat().st_size>32*1024*1024:raise ValueError('training_plan_file_too_large')
+        before=file_digest(path)
+        try:plan=TrainingPlan.model_validate(json.loads(path.read_bytes()))
+        except (ValidationError,ValueError) as exc:
+            fields=','.join('.'.join(map(str,x['loc'])) for x in exc.errors(include_input=False,include_context=False)[:8]) if isinstance(exc,ValidationError) else 'json'
+            raise ValueError('training_plan_file_invalid:'+fields) from None
+        if file_digest(path)!=before:raise Conflict('training_plan_file_changed')
+        return body.model_copy(update={'plan':plan,'plan_path':None})
     def call(self,body):
         row=self._authority(body);pid=row['project_id'];actor={'kind':'agent','turn_id':row['id'],'conversation_id':row['conversation_id']}
+        body=self.load_plan(pid,body)
         if body.operation=='list':
             with self.account.db() as db:envs=[{'id':x[0],'runtime':json.loads(x[1])['binding']['runtime']} for x in db.execute('SELECT id,document FROM training_environments WHERE project_id=?',(pid,))]
-            return {'experiments':[v.model_dump() for v in self.list(pid)],'environments':envs,'runtime_catalog':self.python_catalog(),'readiness':self.readiness()}
-        if body.operation=='inspect':return self.view(body.experiment_id,pid).model_dump()
+            return {'experiments':[self.receipt(v,body.include_plan) for v in self.list(pid)],'environments':envs,'runtime_catalog':self.python_catalog(),'readiness':self.readiness()}
+        if body.operation=='inspect':return self.receipt(self.view(body.experiment_id,pid),body.include_plan)
         if not body.idempotency_key:raise ValueError('training_idempotency_key_required')
-        key='agent:'+body.idempotency_key;signature=digest(body.model_dump(exclude={'grant','turn_id'}))
+        key='agent:'+body.idempotency_key;signature=digest(body.model_dump(exclude={'grant','turn_id','plan_path','include_plan'}))
         with self.account.db() as db:
             old=db.execute('SELECT digest,result FROM training_requests WHERE project_id=? AND key=?',(pid,key)).fetchone()
             if old:
                 if old[0]!=signature:raise Conflict('training_request_conflict')
                 if old[1] is None:raise Conflict('training_operation_pending_inspect_before_retry')
-                return json.loads(old[1])
+                previous=json.loads(old[1])
+                if not body.include_plan and 'plan' in previous and 'attempts' in previous:previous=self.receipt(TrainingView.model_validate(previous))
+                return previous
             db.execute('INSERT INTO training_requests VALUES(?,?,?,NULL)',(pid,key,signature))
         try:
             if body.operation=='environment':
@@ -71,17 +97,17 @@ class Training:
                     # Same immutable bytes can be registered independently by projects.
                     db.execute('INSERT OR IGNORE INTO training_environments VALUES(?,?,?)',(result['id'],pid,json.dumps(result)))
                 result={'environment_id':result['id'],'runtime':result['binding']['runtime'],'scope':'frozen_python_environment'}
-            elif body.operation=='prepare':result=self.prepare(pid,row['conversation_id'],body,actor).model_dump()
+            elif body.operation=='prepare':result=self.receipt(self.prepare(pid,row['conversation_id'],body,actor),body.include_plan)
             else:
                 v=self.view(body.experiment_id,pid)
                 if body.expected_revision!=v.revision:raise Conflict('training_revision_conflict')
                 if body.operation=='stop':
-                    self._stop(pid,v.id,body.expected_revision,'stopping',actor);result=self.view(v.id,pid).model_dump()
+                    self._stop(pid,v.id,body.expected_revision,'stopping',actor);result=self.receipt(self.view(v.id,pid),body.include_plan)
                 else:
                     if not v.authorized:raise Conflict('training_user_budget_and_launch_decision_required')
-                    if v.status in ('queued','running','waiting_resource','stopping'):result=v.model_dump()
+                    if v.status in ('queued','running','waiting_resource','stopping'):result=self.receipt(v,body.include_plan)
                     elif v.status in ('stopped','cancelled','budget_exhausted','needs_reconciliation'):raise Conflict('training_user_resume_required')
-                    else:result=self.launch(v.id,pid,actor,body.expected_revision).model_dump()
+                    else:result=self.receipt(self.launch(v.id,pid,actor,body.expected_revision),body.include_plan)
         except Exception as exc:
             with self.account.db() as db:db.execute('UPDATE training_requests SET result=? WHERE project_id=? AND key=?',(json.dumps({'status':'failed','error':str(exc)}),pid,key))
             raise
@@ -220,7 +246,7 @@ class Training:
             self._actor_running(db,actor)
             current=self.account.get(db,eid,pid)
             if current['revision']!=revision or current['status']!=d['status']:raise Conflict('training_revision_conflict')
-            current.update(status='queued',run_id=run_id,revision=revision+1,controller=None,queued_at=time.time());self.account.save(db,current);self.s.goals.bind_training(db,current,run_id);self.account.event(db,eid,'run_queued',actor=actor,run_id=run_id,plan_digest=d['plan_digest'],controller=request['controller_files'])
+            current.update(status='queued',run_id=run_id,revision=revision+1,controller=None,queued_at=time.time());self.account.save(db,current);self.s.goals.bind_training(db,current,run_id,actor);self.account.event(db,eid,'run_queued',actor=actor,run_id=run_id,plan_digest=d['plan_digest'],controller=request['controller_files'])
         command=[sys.executable,'-I','-B','-c','import sys;sys.path.insert(0,'+repr(str(run/'controller'))+');from pathoreason.training_worker import main;main('+repr(str(run))+')']
         try:
             with open(run/'supervisor.log','xb') as log:subprocess.Popen(command,env={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8','PYTHONDONTWRITEBYTECODE':'1'},stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,close_fds=True,start_new_session=True)

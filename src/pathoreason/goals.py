@@ -492,7 +492,7 @@ class Goals:
             if summary:current['summary']=summary
             self._save(db,current,reason)
 
-    def bind_training(self,db,experiment,run_id):
+    def bind_training(self,db,experiment,run_id,actor=None):
         """A user launch decision connects the prepared goal without another model turn."""
         gid=experiment.get('goal_id')
         if not gid:return
@@ -501,8 +501,25 @@ class Goals:
         goal=json.loads(row[0]);latest=self._latest(db,goal['conversation_id'])
         turn=db.execute('SELECT status FROM turns WHERE id=?',(goal.get('last_turn_id'),)).fetchone()
         if turn and turn[0] in ACTIVE:return  # Agent will checkpoint its own active turn.
-        if not latest or latest['id']!=gid or goal['state'] in ('completed','cancelled'):return
-        if goal['last_turn_id']!=experiment.get('prepared_turn_id') and (goal.get('wait_for') or {}).get('kind')!='training_run':return
+        if not latest or latest['id']!=gid or goal['state']=='cancelled':return
+        if goal['last_turn_id']!=experiment.get('prepared_turn_id') and (goal.get('wait_for') or {}).get('kind')!='training_run':
+            basis=db.execute("SELECT json_extract(document,'$.snapshot.objective') FROM goal_events WHERE goal_id=? AND json_extract(document,'$.snapshot.last_turn_id')=? ORDER BY id DESC LIMIT 1",(gid,experiment.get('prepared_turn_id'))).fetchone()
+            if not basis or basis[0]!=goal['objective']:return
+        if goal['state']=='completed':
+            # A concrete user launch begins the execution phase. Preserve the
+            # completed preparation goal and carry its spent turn allowance.
+            if not actor or actor.get('kind')!='user':return
+            previous=goal
+            goal=GoalView(id=uid('goal'),conversation_id=previous['conversation_id'],project_id=previous['project_id'],revision=1,
+                objective='完成已确认实验「'+experiment['plan']['title']+'」的执行回执核验、范围内失败修复和结果汇总；不扩大矩阵、预算或科学结论。',
+                state='waiting',wait_for=GoalWait(kind='training_run',run_id=run_id),last_turn_id=previous['last_turn_id'],turns_used=previous['turns_used'],max_turns=previous['max_turns'],created_at=now(),updated_at=now()).model_dump(mode='json')
+            goal.update(stagnant_turns=0,processed_evidence=[],request_template=previous['request_template'],
+                user_instructions=[{'source':'training_panel','text':'用户确认此实验范围及独立训练预算，授权后台执行与范围内修复；保留已用额度与失败。','experiment_id':experiment['id'],'scope_digest':experiment['scope_digest']}],
+                preparation_goal_id=previous['id'],carried_goal_turns=previous['turns_used'],wait_started_at=now())
+            db.execute('INSERT INTO research_goals VALUES(?,?,?,?)',(goal['id'],goal['conversation_id'],goal['project_id'],encoded(goal)))
+            experiment['goal_id']=goal['id']
+            self.s.training.account.save(db,experiment)
+            self._save(db,goal,'training_phase_started')
         if goal['state']=='blocked' and goal.get('reason') not in ('training_budget_exhausted','training_stopped','training_needs_reconciliation'):return
         goal.update(wait_for={'kind':'training_run','run_id':run_id},wait_started_at=now(),next_action='核对后台训练回执、失败与累计预算，再整理结果或在已授权范围内修复。')
         if goal['state'] not in ('paused','budget_exhausted'):

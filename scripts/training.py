@@ -7,6 +7,8 @@ import urllib.error
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from pathoreason.settings import settings
 from pathoreason.training_contracts import TrainingToolInput
+from pydantic import ValidationError
+from pathoreason.bridge_feedback import http_failure,validation_failure
 
 
 def main():
@@ -20,7 +22,9 @@ def main():
         with urllib.request.urlopen(request,timeout=3600) as response:result=json.load(response)
         print(json.dumps(result,ensure_ascii=False))
     except urllib.error.HTTPError as exc:
-        print(json.dumps({'error':json.load(exc).get('detail','training_failed')},ensure_ascii=False));return 1
+        print(json.dumps(http_failure(exc,'training_failed'),ensure_ascii=False));return 1
+    except ValidationError as exc:
+        print(json.dumps(validation_failure(exc),ensure_ascii=False));return 1
     except (ValueError,OSError) as exc:
         print(json.dumps({'error':str(exc)},ensure_ascii=False));return 1
     return 0
