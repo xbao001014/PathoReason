@@ -31,3 +31,11 @@
 另保留隔离 worktree 缺少本地配置、测试运行器 hold 夹具状态、浏览器同步双击和预览端口占用的失败记录。未通过重置消耗、修改研究脚本/报告或删除历史来验收。
 
 真实 DeepSeek 行为及科学审核未新增验收；本次仅公共机制工程、原生加载与界面核验。当前目标仍等待用户决定何时恢复。
+
+## 发布结果
+
+最终全量 **490 通过、3 跳过**（196.28 秒）；范围与上下文专项 24 通过，计数有重叠，不相加。TypeScript/Vite 构建通过，保留大 bundle 提示。三宽度夹具验证成功，线上三宽度只读验证也通过，无实际控制请求、无控制台异常。
+
+实现提交 `4e5496a` 已发布。8 个原生目录刷新后 Skill 正文核验与 dialogue MCP 连接通过；实际 stdio tools/list 握手读到新版范围说明和 checkpoint 纠错说明。原生进程 PID/identity 未变。此证据属于原生加载与协议核验，不代表 DeepSeek 已采用新版机制。
+
+发布前后 turns、runtime_configs、research_goals、goal_events、training_experiments、training_attempts、bindings 摘要一致；3768 个研究文件不变，7 项训练仍 completed。当前目标 revision 20、7/8 回合、blocked 保持，恢复来源准确指向同一目标先前 standard 回合；没有自动恢复、增加额度或启动训练。最终证据含 release.json、live-goal.json、mcp-tools.json、native-refresh.txt、browser-live.json、interventions.json。
