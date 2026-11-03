@@ -58,6 +58,7 @@
   --card-gap: 24px;
   --page-max-width: 1280px;
   --chat-gutter: 28px;
+  --chat-width-scale: .8;
   --project-space-width: 320px;
   --sidebar-transition: 280ms;
   --shell-inset: 12px;

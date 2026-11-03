@@ -1004,7 +1004,8 @@ dialog h2{font-size:18px;font-weight:600}
 /* One width and one set of edges for transcript, research cards and composer. */
 .chat-layout {
   container-type: inline-size;
-  --chat-content-width: min(var(--page-max-width), calc(100cqw - 2 * var(--chat-gutter)));
+  --chat-content-width: calc(min(var(--page-max-width), calc(100cqw - 2 * var(--chat-gutter))) * var(--chat-width-scale));
+  --chat-content-offset: calc((100cqw - var(--chat-content-width)) / 2);
 }
 .chat-title,
 .composer-area {
@@ -1013,14 +1014,20 @@ dialog h2{font-size:18px;font-weight:600}
   margin-inline: auto;
   padding-inline: 0;
 }
+/* Place the heading halfway between the transcript and panel gutters. */
+.chat-title { width: calc((100cqw - 2 * var(--chat-gutter) + var(--chat-content-width)) / 2); }
 .message-scroll { padding-inline: 0; }
 .messages,
 .message-scroll>.business-card {
   width: var(--chat-content-width);
   max-width: var(--page-max-width);
   /* Use the panel width so a classic scrollbar cannot shift the transcript. */
-  margin-left: max(var(--chat-gutter), calc((100cqw - var(--page-max-width)) / 2));
+  margin-left: var(--chat-content-offset);
   margin-right: 0;
+}
+/* Preserve readable controls when the conversation panel is narrow. */
+@container (max-width: 600px) {
+  .chat-layout { --chat-width-scale: 1; }
 }
 .agent-message { display: block; }
 .user-message>div { max-width: 100%; overflow-wrap: anywhere; }

@@ -1,8 +1,8 @@
 .conversation-timeline{position:relative;flex:1;min-height:0;min-width:0}
 .conversation-timeline>.message-scroll{height:100%;scroll-behavior:auto;overflow-anchor:none}
 .history-content{display:flow-root;min-height:100%}
-.history-content>.business-card{width:var(--chat-content-width);max-width:var(--page-max-width);margin:0 0 var(--card-gap) max(var(--chat-gutter),calc((100cqw - var(--page-max-width))/2))}
-.history-navigation{position:absolute;left:max(calc(var(--chat-gutter)/2),calc((100cqw - var(--page-max-width))/4));top:var(--history-center,50%);transform:translate(-50%,-50%);width:26px;z-index:3}
+.history-content>.business-card{width:var(--chat-content-width);max-width:var(--page-max-width);margin:0 0 var(--card-gap) var(--chat-content-offset)}
+.history-navigation{position:absolute;left:calc(var(--chat-content-offset)/2);top:var(--history-center,50%);transform:translate(-50%,-50%);width:26px;z-index:3}
 .history-rail{display:flex;flex-direction:column;align-items:center;justify-content:center;height:auto}
 .history-mark{display:flex;align-items:center;justify-content:center;flex:0 0 12px;height:12px;width:26px;padding:0;border:0;background:transparent;border-radius:var(--radius-buttons);cursor:pointer}
 .history-mark>span{height:2px;width:10px;background:var(--color-control-border);border-radius:2px;transition:width .15s,background .15s}
