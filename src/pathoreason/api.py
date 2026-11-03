@@ -47,6 +47,7 @@ class TurnInput(BaseModel):
     text:str=Field(min_length=1,max_length=16000)
     model:str=Field(default='deepseek-v4-pro',max_length=100)
     reasoning_effort:ReasoningEffort|None=None
+    output_limit_tokens:int|None=Field(default=None,ge=1,le=65536,strict=True)
     skill_id:str|None=None
     execution_mode:Literal['discuss','synthetic','research']='discuss'
     artifact_ids:list[c.Identifier]=Field(default_factory=list,max_length=20)
@@ -68,6 +69,9 @@ class ToolSummary(BaseModel):
     summary:str|None=None
     duration_ms:int|None=Field(default=None,ge=0)
 class Usage(BaseModel):
+    last_reasoning_tokens:int|None=None
+    last_output_tokens:int|None=None
+    finish_reason:str|None=None
     activity_phase:Literal['waiting','thinking','tool','responding']|None=None
     input_tokens:int|None=None
     output_tokens:int|None=None
@@ -233,7 +237,7 @@ async def training_tool(body:TrainingToolInput,request:Request):
     return await asyncio.to_thread(service().training.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.24-p5-skill-lifecycle'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.25-p5-output-settings'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
@@ -265,7 +269,7 @@ async def conversation(cid:str):
     row=service().store.conversation(cid)
     return {'context':service().context.view(cid),'conversation':json.loads(row['document']),'turns':[service().view(r) for r in service().store.turns(cid)]}
 @app.post('/api/v1/conversations/{cid}/turns',response_model=TurnView,status_code=202)
-async def submit(cid:str,body:TurnInput):return await service().submit(cid,body.model_dump(exclude=({'reasoning_effort'} if body.reasoning_effort is None else set())|({'guidance_selection'} if body.guidance_selection is None else set())))
+async def submit(cid:str,body:TurnInput):return await service().submit(cid,body.model_dump(exclude=({'reasoning_effort'} if body.reasoning_effort is None else set())|({'guidance_selection'} if body.guidance_selection is None else set())|({'output_limit_tokens'} if body.output_limit_tokens is None else set())))
 @app.post('/api/v1/turns/{tid}/interrupt',response_model=TurnView)
 async def interrupt(tid:str):return await service().interrupt(tid)
 @app.post('/api/v1/turns/{tid}/reconcile',response_model=TurnView)
@@ -435,3 +439,12 @@ if static.exists():
 async def index():
     if not (static/'index.html').exists():raise HTTPException(503,'frontend_not_built')
     return FileResponse(static/'index.html')
+
+from .output_settings import OutputOptions,TurnOutputView,configured_options as output_options,turn_output
+@app.get('/api/v2/models/output',response_model=list[OutputOptions])
+def model_output_options():
+    return output_options() if service().runtime_name=='opencode' else []
+
+@app.get('/api/v2/turns/{tid}/output',response_model=TurnOutputView)
+async def output_diagnostics(tid:str):
+    return await turn_output(service(),tid)

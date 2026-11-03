@@ -48,3 +48,7 @@ from pathoreason.permission_settings import PermissionSettingsView, PermissionSe
 from pathoreason.training_contracts import TrainingBudget, TrainingPlan, TrainingToolInput, TrainingDecision, TrainingView
 for model in [TrainingBudget,TrainingPlan,TrainingToolInput,TrainingDecision,TrainingView]:
     (root/"contracts/p5-process-objects"/f"{model.__name__}.schema.json").write_text(json.dumps(model.model_json_schema(),indent=2)+"\n")
+
+from pathoreason.output_settings import OutputOptions,TurnOutputView
+for model in [OutputOptions,TurnOutputView]:
+    (root/"contracts/p5-process-objects"/f"{model.__name__}.schema.json").write_text(json.dumps(model.model_json_schema(),indent=2)+"\n")

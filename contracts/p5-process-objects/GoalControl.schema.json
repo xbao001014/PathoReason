@@ -61,6 +61,20 @@
       ],
       "default": null,
       "title": "Reasoning Effort"
+    },
+    "output_limit_tokens": {
+      "anyOf": [
+        {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Limit Tokens"
     }
   },
   "required": [

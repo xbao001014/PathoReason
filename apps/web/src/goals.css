@@ -37,3 +37,10 @@
 .goal-panel[data-expanded="true"] .goal-heading-chevron{transform:rotate(180deg)}
 @media(prefers-reduced-motion:reduce){.goal-heading-chevron{transition:none}}
 @media(max-width:760px){.goal-body{max-height:min(25dvh,240px)}}
+
+.output-recovery{padding:var(--card-padding-compact);border:1px solid var(--color-hairline);border-radius:var(--radius-cards);margin-block:var(--spacing-16);font-size:var(--text-body)}
+.output-recovery p{line-height:1.6;overflow-wrap:anywhere}
+.output-recovery-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--spacing-16)}
+.output-recovery-fields label{display:flex;flex-direction:column;gap:var(--spacing-8);min-width:0}
+.output-usage{font-variant-numeric:tabular-nums;color:var(--color-text-secondary)}
+@media(max-width:480px){.output-recovery-fields{grid-template-columns:1fr}}

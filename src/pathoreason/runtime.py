@@ -19,6 +19,7 @@ class OpenCode:
         health=await self.call("GET","/global/health")
         record=self.root/"runtime/control/opencode.json"
         health["credential_loaded"]=bool(json.loads(record.read_text()).get("credential_loaded")) if record.exists() else False
+        health["output_token_max"]=json.loads(record.read_text()).get("output_token_max",32000) if record.exists() else 32000
         return health
     async def delete_session(self,session,directory):
         from .persistence import Conflict
@@ -54,13 +55,27 @@ class OpenCode:
             current=await self.call('GET',f'/session/{session}',directory)
         if current.get('permission', [])[-len(rules):] != rules:
             raise ValueError('permission_settings_native_mismatch')
-    async def prompt_formal(self,session,directory,message_id,model,prompt,reasoning_effort=None):
+    async def prompt_formal(self,session,directory,message_id,model,prompt,reasoning_effort=None,output_limit_tokens=None):
+        if output_limit_tokens is not None:
+            model=await self.output_profile(model,output_limit_tokens,directory)
         await self.call('POST',f'/session/{session}/prompt_async',directory,{**await self.reasoning_variant(model,reasoning_effort,directory),'messageID':message_id,'model':{'providerID':self.provider(model),'modelID':model},'agent':'pathoreason-formal','parts':[{'type':'text','text':prompt}]})
-    async def prompt(self,session,directory,message_id,model,prompt,reasoning_effort=None):
+    async def prompt(self,session,directory,message_id,model,prompt,reasoning_effort=None,output_limit_tokens=None):
+        if output_limit_tokens is not None:
+            model=await self.output_profile(model,output_limit_tokens,directory)
         current=await self.call("GET",f"/session/{session}",directory)
         if not any(p.get('permission')=='pathoreason_research' and p.get('action')=='allow' for p in current.get('permission',[])):
             await self.call("PATCH",f"/session/{session}",directory,{"permission":[{"permission":"pathoreason_research","pattern":"*","action":"allow"}]})
         await self.call("POST",f"/session/{session}/prompt_async",directory,{**await self.reasoning_variant(model,reasoning_effort,directory),"messageID":message_id,"model":{"providerID":self.provider(model),"modelID":model},"agent":"pathoreason","parts":[{"type":"text","text":prompt}]})
+    async def output_profile(self,model,limit,directory):
+        from .output_settings import validate_output
+        profile=validate_output(model,limit)
+        if limit>(await self.health()).get('output_token_max',32000):raise ValueError('output_profile_reload_required')
+        providers=await self.call('GET','/provider',directory)
+        provider=next((p for p in providers['all'] if p['id']==self.provider(model)),{})
+        current=provider.get('models',{}).get(profile,{})
+        if current.get('limit',{}).get('output')!=limit or (profile!=model and current.get('api',{}).get('id')!=model):
+            raise ValueError('output_profile_reload_required')
+        return profile
     async def reasoning_variant(self,model,effort,directory):
         if effort is None:return {}
         from .reasoning import EFFORTS
@@ -165,6 +180,7 @@ def visible_response(messages,parent_id):
     for message in selected:
         info=message['info'];tokens=info.get('tokens',{})
         usage['input_tokens']+=tokens.get('input',0);usage['output_tokens']+=tokens.get('output',0)
+        usage.update(last_reasoning_tokens=tokens.get('reasoning'),last_output_tokens=tokens.get('output'),finish_reason=info.get('finish'))
         if tokens:
             cache=tokens.get('cache',{});usage['context_tokens']=tokens.get('input',0)+tokens.get('output',0)+tokens.get('reasoning',0)+cache.get('read',0)+cache.get('write',0)
         if info.get('context_usage'):usage.update(info['context_usage'])

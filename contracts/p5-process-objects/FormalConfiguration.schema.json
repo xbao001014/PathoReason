@@ -889,6 +889,20 @@
       "default": null,
       "title": "Reasoning Effort"
     },
+    "output_limit_tokens": {
+      "anyOf": [
+        {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Limit Tokens"
+    },
     "study_revision": {
       "pattern": "^[0-9a-f]{64}$",
       "title": "Study Revision",

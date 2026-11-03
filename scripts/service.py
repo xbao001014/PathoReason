@@ -3,6 +3,7 @@ import argparse, json, os, signal, socket, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from pathoreason.settings import ROOT, settings, credential
+from pathoreason.service_ports import wait_until_bindable
 
 cfg=settings(); data=Path(cfg["data_root"]); control=data/"runtime/control";control.mkdir(parents=True,exist_ok=True)
 
@@ -36,9 +37,7 @@ def stop(name):
 def start(name):
     if record(name):return
     port=cfg["opencode_port"] if name=="opencode" else cfg["api_port"]
-    with socket.socket() as sock:
-        sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-        sock.bind(("127.0.0.1",port))
+    wait_until_bindable(port,timeout=5.0)
     env=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PYTHONPATH=str(ROOT/"src"))
     env["PATH"]=str(Path(cfg["codex_binary"]).parent)+":"+env.get("PATH","")
     tool_path_file=ROOT/".tools/manuscript-path.json"
@@ -56,6 +55,7 @@ def start(name):
         env["OPENCODE_DISABLE_PROJECT_CONFIG"]="true"
         env["OPENCODE_DISABLE_EXTERNAL_SKILLS"]="true"
         env["OPENCODE_DISABLE_AUTOUPDATE"]="true"
+        env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]="65536"  # Ceiling only; base profiles still request 8192.
         env["OPENCODE_ENABLE_EXA"]="1"  # Native search for non-Zen providers; permission still applies.
         env["DEEPSEEK_API_KEY"]=credential()
         command=[cfg["opencode_binary"],"serve","--pure","--hostname","127.0.0.1","--port",str(port)]
@@ -65,7 +65,7 @@ def start(name):
         cwd=ROOT
     with (control/f"{name}.log").open("ab") as log:
         child=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"credential_loaded":bool(env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None})+"\n")
+    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"credential_loaded":bool(env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None,"output_token_max":int(env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]) if name=="opencode" else None})+"\n")
     time.sleep(.4)
     if child.poll() is not None:raise RuntimeError(name+" failed; inspect its service log")
 

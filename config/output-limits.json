@@ -1,0 +1,8 @@
+{
+  "source": "https://api-docs.deepseek.com/api/create-chat-completion/",
+  "verified_on": "2026-11-03",
+  "models": {
+    "deepseek-v4-pro": {"provider": "deepseek-direct", "capability_max_tokens": 393216, "choices": [8192,32768,65536]},
+    "deepseek-flash": {"provider": "deepseek-direct", "capability_max_tokens": 393216, "choices": [8192,32768,65536]}
+  }
+}

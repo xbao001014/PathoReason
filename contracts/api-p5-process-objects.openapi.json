@@ -2340,6 +2340,67 @@
           }
         }
       }
+    },
+    "/api/v2/models/output": {
+      "get": {
+        "summary": "Model Output Options",
+        "operationId": "model_output_options_api_v2_models_output_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OutputOptions"
+                  },
+                  "type": "array",
+                  "title": "Response Model Output Options Api V2 Models Output Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/turns/{tid}/output": {
+      "get": {
+        "summary": "Output Diagnostics",
+        "operationId": "output_diagnostics_api_v2_turns__tid__output_get",
+        "parameters": [
+          {
+            "name": "tid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TurnOutputView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4442,6 +4503,19 @@
               }
             ],
             "title": "Reasoning Effort"
+          },
+          "output_limit_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 65536.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Limit Tokens"
           }
         },
         "additionalProperties": false,
@@ -5666,6 +5740,37 @@
           "patterns"
         ],
         "title": "NativePermission"
+      },
+      "OutputOptions": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "default": {
+            "type": "integer",
+            "title": "Default"
+          },
+          "choices": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Choices"
+          },
+          "capability_max_tokens": {
+            "type": "integer",
+            "title": "Capability Max Tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "default",
+          "choices",
+          "capability_max_tokens"
+        ],
+        "title": "OutputOptions"
       },
       "PermissionReply": {
         "properties": {
@@ -7987,6 +8092,19 @@
             ],
             "title": "Reasoning Effort"
           },
+          "output_limit_tokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 65536.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Limit Tokens"
+          },
           "skill_id": {
             "anyOf": [
               {
@@ -8027,6 +8145,84 @@
           "text"
         ],
         "title": "TurnInput"
+      },
+      "TurnOutputView": {
+        "properties": {
+          "turn_id": {
+            "type": "string",
+            "title": "Turn Id"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "output_limit_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Limit Tokens"
+          },
+          "reasoning_effort": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning Effort"
+          },
+          "reasoning_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoning Tokens"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "unavailable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "turn_id",
+          "model"
+        ],
+        "title": "TurnOutputView"
       },
       "TurnTiming": {
         "properties": {
@@ -8194,6 +8390,39 @@
       },
       "Usage": {
         "properties": {
+          "last_reasoning_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Reasoning Tokens"
+          },
+          "last_output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Output Tokens"
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
           "activity_phase": {
             "anyOf": [
               {

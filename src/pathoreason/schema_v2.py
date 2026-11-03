@@ -97,6 +97,7 @@ class RuntimeConfiguration(Model):
     codex:dict[str,Any]|None=None
     native_config_digest:c.Digest|None=None
     reasoning_effort:ReasoningEffort|None=None
+    output_limit_tokens:int|None=Field(default=None,ge=1,le=65536,strict=True)
     @model_validator(mode='after')
     def identities(self):
         if self.model!=self.model_descriptor.model or self.runtime!=self.model_descriptor.runtime:raise ValueError('runtime_model_mismatch')

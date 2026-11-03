@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "action": {
+      "enum": [
+        "pause",
+        "resume",
+        "revise",
+        "cancel"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "objective": {
+      "anyOf": [
+        {
+          "maxLength": 16000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Objective"
+    },
+    "max_turns": {
+      "anyOf": [
+        {
+          "maximum": 40,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Turns"
+    },
+    "reasoning_effort": {
+      "anyOf": [
+        {
+          "enum": [
+            "none",
+            "low",
+            "high",
+            "max"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reasoning Effort"
+    },
+    "output_limit_tokens": {
+      "anyOf": [
+        {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Limit Tokens"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "action"
+  ],
+  "title": "GoalControl",
+  "type": "object"
+}

@@ -86,9 +86,11 @@ class GoalControl(BaseModel):
     objective: str | None = Field(default=None, min_length=1, max_length=16000)
     max_turns: int | None = Field(default=None, ge=1, le=40)
     reasoning_effort: ReasoningEffort | None = None
+    output_limit_tokens: int | None = Field(default=None,ge=1,le=65536,strict=True)
 
     @model_validator(mode='after')
     def resume_settings(self):
+        if self.output_limit_tokens is not None and self.action!='resume':raise ValueError('goal_output_requires_resume')
         if self.reasoning_effort is not None and self.action!='resume':
             raise ValueError('goal_effort_requires_resume')
         return self
@@ -311,7 +313,7 @@ class Goals:
         current.update(state='active', reason=None, last_turn_id=turn.id, turns_used=current['turns_used']+1)
         if not automatic:
             current['user_instructions'] = [*current.get('user_instructions',[]), {'turn_id':turn.id,'text':request['text']}][-12:]
-            current['request_template'] = {k:request.get(k) for k in ('model','reasoning_effort','skill_id','execution_mode')}
+            current['request_template'] = {k:request.get(k) for k in ('model','reasoning_effort','output_limit_tokens','skill_id','execution_mode')}
             current['stagnant_turns'] = 0
         self._save(db, current, 'auto_turn_created' if automatic else 'user_turn_created')
         db.execute('INSERT INTO goal_turns(turn_id,goal_id,origin,goal_revision,parent_turn_id) VALUES(?,?,?,?,?)',
@@ -406,6 +408,8 @@ class Goals:
             'After an agreed baseline, pursue adaptation, dependency preparation, internal synthetic checks, checkpoint/receipt verification and source freezing as ready nodes of the same goal, within existing permissions and budget. These are not separate user approvals. '
             'For a necessary user choice offer clarification options with scope=continue to resolve the choice and advance this same goal, then report needs_input. Use scope=clarify only for an explicitly direction-only request. '
             'Do not offer next-step buttons for already authorized ready work. '
+            'Work in bounded deliverable segments: inspect the needed receipts, save a small artifact or verified partial result, then checkpoint continue with the next ready action. Do not attempt every analysis and the full report in a single response. Keep tool queries and public summaries concise; do not paste whole histories. A partial checkpoint is not completion or scientific approval. '
+            'After output truncation, first inspect already committed files, tool receipts and the last checkpoint; never blindly replay writes, training or evaluations. '
             'Before ending, record ONE checkpoint with the native pathoreason_dialogue_checkpoint tool (CLI fallback: '+str(ROOT/'scripts/goal_control.py')+')'+
             ' using JSON stdin: turn_id/grant from the current dialogue capability, expected_revision='+str(goal['revision'])+
             ', outcome (continue/completed/needs_input/blocked/paused/waiting/cancelled), summary, next_action, '
@@ -448,7 +452,7 @@ class Goals:
             if row['status']!='completed':
                 error=json.loads(row['document']).get('error_code')
                 explanations={
-                    'runtime_output_limit':'模型达到单次输出上限，本轮回复未完成，已停止自动接续。思考内容也占用输出额度；可降低或关闭思考后重试，已有成果和消耗保留。',
+                    'runtime_output_limit':'模型达到单次输出上限，本轮回复未完成，已停止自动接续。思考内容也占用输出额度；可调整单次输出上限或思考强度后恢复，已有成果和消耗保留。',
                     'runtime_empty_response':'模型结束但未返回公开回复或工具结果，已停止自动接续；请核对模型运行状态后重试。',
                     'turn_time_limit':'项目 Agent 时间预算已用完，自动接续已停止；已有成果和消耗保留。',
                     'runtime_retry_blocked':'模型服务请求失败，自动重试已停止；请核对连接状态后恢复。',
@@ -559,6 +563,11 @@ class Goals:
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
                     if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
+                    if body.output_limit_tokens is not None:
+                        from .output_settings import validate_output
+                        if self.s.runtime_name!='opencode':raise ValueError('output_limit_not_supported')
+                        validate_output(goal['request_template']['model'],body.output_limit_tokens)
+                        goal['request_template']['output_limit_tokens']=body.output_limit_tokens
                     if body.reasoning_effort is not None:
                         model=goal['request_template']['model']
                         if not any(o['model']==model and body.reasoning_effort in o['efforts'] for o in self.s.reasoning_options()):
