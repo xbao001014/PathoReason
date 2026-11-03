@@ -1,0 +1,89 @@
+{
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.training-telemetry/1",
+      "default": "pathoreason.training-telemetry/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "experiment_id": {
+      "title": "Experiment Id",
+      "type": "string"
+    },
+    "attempt_id": {
+      "title": "Attempt Id",
+      "type": "string"
+    },
+    "observed_at": {
+      "title": "Observed At",
+      "type": "string"
+    },
+    "last_epoch": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Last Epoch"
+    },
+    "points": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Points",
+      "type": "array"
+    },
+    "sources": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Sources",
+      "type": "array"
+    },
+    "notices": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notices",
+      "type": "array"
+    },
+    "log": {
+      "default": "",
+      "title": "Log",
+      "type": "string"
+    },
+    "log_bytes": {
+      "default": 0,
+      "title": "Log Bytes",
+      "type": "integer"
+    },
+    "log_truncated": {
+      "default": false,
+      "title": "Log Truncated",
+      "type": "boolean"
+    },
+    "scientific_approval": {
+      "const": false,
+      "default": false,
+      "title": "Scientific Approval",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "project_id",
+    "experiment_id",
+    "attempt_id",
+    "observed_at"
+  ],
+  "title": "TrainingTelemetryView",
+  "type": "object"
+}

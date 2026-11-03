@@ -28,6 +28,7 @@ from .goals import GoalCheckpoint,GoalControl,GoalView,GoalRecoveryInput
 from .budget_settings import BudgetSettingsUpdate,BudgetSettingsView
 from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision
 from .research_workbench import ResearchWorkbenchView, project_snapshot
+from .training_progress import TrainingProgressView,TrainingTelemetryView,project_progress,telemetry
 
 class ProjectInput(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
@@ -223,7 +224,7 @@ async def training_tool(body:TrainingToolInput,request:Request):
     return await asyncio.to_thread(service().training.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.22-p5-training-receipts'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.23-p5-training-progress'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
@@ -317,6 +318,16 @@ async def workbench(pid:str):
 @app.get('/api/v2/research-projects/{pid}/research-workbench',response_model=ResearchWorkbenchView)
 def research_workbench(pid:str):
     return project_snapshot(service(),pid)
+@app.get('/api/v2/research-projects/{pid}/training-progress',response_model=TrainingProgressView)
+def training_progress(pid:str,response:Response):
+    response.headers['Cache-Control']='private, no-store'
+    return project_progress(service(),pid)
+
+@app.get('/api/v2/research-projects/{pid}/training-progress/{eid}/attempts/{aid}',response_model=TrainingTelemetryView)
+def training_telemetry(pid:str,eid:str,aid:str,response:Response):
+    response.headers['Cache-Control']='private, no-store'
+    return telemetry(service(),pid,eid,aid)
+
 @app.get('/api/v1/settings/status',response_model=RuntimeStatus)
 async def runtime_status():
     try:health=await service().runtime.health()

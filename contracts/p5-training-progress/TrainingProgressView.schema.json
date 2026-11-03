@@ -1,0 +1,39 @@
+{
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.training-progress/1",
+      "default": "pathoreason.training-progress/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "observed_at": {
+      "title": "Observed At",
+      "type": "string"
+    },
+    "experiments": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Experiments",
+      "type": "array"
+    },
+    "execution_authority": {
+      "const": false,
+      "default": false,
+      "title": "Execution Authority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "project_id",
+    "observed_at",
+    "experiments"
+  ],
+  "title": "TrainingProgressView",
+  "type": "object"
+}

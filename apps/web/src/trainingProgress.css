@@ -1,0 +1,25 @@
+.tp{display:flex;flex-direction:column;gap:var(--card-gap);min-width:0}
+.tp-overview h2{font-size:var(--text-subheading);overflow-wrap:anywhere}
+.tp-counts strong{font-size:var(--text-heading-sm)}
+.tp-boundaries{display:flex;flex-wrap:wrap;align-items:center;gap:var(--spacing-12);font-size:var(--text-body);margin-block:var(--spacing-16)}
+.tp-budget-grid,.tp-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--spacing-24);margin-block:var(--spacing-24)}
+.tp-budget-grid h3,.tp-chart h3{font-size:var(--text-body-lg);margin-bottom:var(--spacing-12)}
+.tp-budget-grid strong{font-size:var(--text-heading-sm);font-weight:var(--weight-support)}
+.tp progress{width:100%;height:8px;accent-color:var(--status-info);margin-top:var(--spacing-12)}
+.tp-chart{min-width:0}.tp-chart .composer-select{width:100%;margin-bottom:var(--spacing-12)}
+.tp-chart svg{display:block;width:100%;overflow:visible}
+.tp-chart text{font-size:12px;fill:var(--color-text-secondary)}
+.tp-grid{stroke:var(--color-hairline);stroke-width:1}.tp-line{stroke-width:2;stroke:var(--status-info)}
+.tp-dot{fill:var(--status-info)}.tp-line.validation{stroke:var(--color-ink);stroke-dasharray:5 3}.tp-dot.validation{fill:var(--color-ink)}
+.tp-matrix tr[aria-selected=true]{background:var(--color-surface-alt)}
+.tp-logs pre{max-height:320px;overflow:auto;overscroll-behavior:contain;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--color-ink);font-size:var(--text-body)}
+.tp-detail>.composer-select{max-width:100%;margin-bottom:var(--spacing-12)}
+.tp .rw-table-scroll{overscroll-behavior:contain}
+@container(max-width:950px){.tp-charts,.tp-budget-grid{grid-template-columns:1fr}}
+
+.tp .rw-table-scroll{max-height:480px;scrollbar-gutter:stable}
+.tp table{min-width:860px;table-layout:fixed}
+.tp thead th{position:sticky;top:0;background:var(--color-paper);z-index:1}
+.tp-matrix th:first-child{width:200px}.tp-matrix th:nth-child(2){width:70px}.tp-matrix th:nth-child(3){width:220px}.tp-matrix th:nth-child(4){width:100px}.tp-matrix th:nth-child(5){width:110px}.tp-matrix th:nth-child(6){width:120px}
+.tp-matrix .status-badge{white-space:nowrap}.tp-matrix details{margin:0}.tp-matrix summary{font-size:var(--text-body)}
+@container(max-width:620px){.tp .rw-table-scroll{max-height:380px}}
