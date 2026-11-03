@@ -1,16 +1,24 @@
-.training-dialog {max-width:720px}
-.training-dialog .dialog-body {min-height:0;max-height:calc(100dvh - 160px)}
-.training-scroll {overflow:auto;min-height:0;display:flex;flex-direction:column;gap:var(--spacing-24)}
+.training-inline {display:flex;flex-direction:column;gap:var(--spacing-24);min-width:0}
+.training-scroll {display:flex;flex-direction:column;gap:var(--spacing-24);min-width:0}
 .training-summary {display:flex;flex-direction:column;gap:var(--spacing-12)}
 .training-summary h3 {font-size:var(--text-body-lg);margin:0}
+.training-inline p {margin:0;overflow-wrap:anywhere}
+.training-inline details p,.training-inline details ul {margin-top:var(--spacing-12)}
+.training-inline summary {cursor:pointer;font-weight:var(--weight-support)}
+.training-inline fieldset {border:1px solid var(--color-control-border);border-radius:var(--radius-cards);padding:var(--card-padding-compact);min-width:0;margin:0}
+.training-inline legend {padding:0 var(--spacing-8);font-weight:var(--weight-support)}
 .training-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--spacing-16);margin-top:var(--spacing-16)}
 .training-fields label {display:flex;flex-direction:column;gap:var(--spacing-8);min-width:0}
-.training-fields input {min-width:0;width:100%;box-sizing:border-box}
+.training-fields input {min-width:0;width:100%;box-sizing:border-box;border:1px solid var(--color-control-border);border-radius:var(--radius-inputs);padding:var(--spacing-8) var(--spacing-12);font:inherit;color:var(--color-ink);background:var(--color-paper)}
 .training-fields span {font-size:var(--text-caption);color:var(--color-text-secondary)}
-.training-dialog footer {display:flex;gap:var(--spacing-12);flex-wrap:wrap;justify-content:flex-end;flex:none}
-.training-dialog ul {padding-left:var(--spacing-24);overflow-wrap:anywhere}
+.training-inline footer {display:flex;gap:var(--spacing-12);flex-wrap:wrap;justify-content:flex-end}
+.training-inline button {font:inherit;cursor:pointer;border:1px solid var(--color-control-border);border-radius:var(--radius-buttons);background:var(--color-paper);color:var(--color-ink);padding:8px 12px}
+.training-inline button.primary-button {background:var(--color-ink);color:var(--color-paper)}
+.training-inline button:disabled {cursor:default;opacity:.6}
+.training-inline ul {padding-left:var(--spacing-24);overflow-wrap:anywhere}
 .training-tabs {display:flex;gap:var(--spacing-8);flex-wrap:wrap}
-.training-tabs [aria-current=true] {font-weight:var(--weight-support);border-color:var(--color-control-border)}
-@media(max-width:760px){.training-fields{grid-template-columns:1fr}.training-dialog .dialog-body{max-height:calc(100dvh - 140px)}}
-
+.training-tabs button {overflow-wrap:anywhere;max-width:100%;text-align:start}
+.training-tabs [aria-current=true] {font-weight:var(--weight-support);border-color:var(--color-ink)}
 .training-device {overflow-wrap:anywhere}
+.training-inline + .goal-progress-details {border-top:1px solid var(--color-hairline);margin-top:var(--spacing-24);padding-top:var(--spacing-24)}
+@media(max-width:760px){.training-fields{grid-template-columns:1fr}}
