@@ -22,7 +22,10 @@
   --text-body: 14px;
   --text-body-lg: 16px;
   --text-subheading: 18px;
-  --text-project-brand: 22px;
+  --font-project-brand: Georgia, 'Times New Roman', serif;
+  --text-project-brand: 30px;
+  --leading-project-brand: 1.1;
+  --tracking-project-brand: -.04em;
   --text-heading-sm: 24px;
   --text-heading: 30px;
   --text-heading-lg: 36px;
@@ -82,4 +85,8 @@
 
 @media (min-width: 761px) and (max-width: 1150px) {
   :root { --project-space-width: 308px; }
+}
+
+@media (max-width: 360px) {
+  :root { --text-project-brand: 25px; }
 }

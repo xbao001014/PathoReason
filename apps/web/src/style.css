@@ -432,7 +432,9 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--color-control-bo
 .navigation-rail [data-tooltip]::after{color:var(--color-paper);font-size:var(--text-caption);letter-spacing:0}
 
 .project-space-header{gap:8px;padding-left:0;padding-right:0}
-.project-space-header strong{font-size:var(--text-project-brand);font-weight:600}
+/* The project nickname is a wordmark, with an editorial serif rhythm. */
+.project-space-header .project-wordmark{display:block;white-space:nowrap;font-family:var(--font-project-brand);font-size:var(--text-project-brand);line-height:var(--leading-project-brand);letter-spacing:var(--tracking-project-brand);font-weight:700;color:var(--color-ink);font-kerning:normal}
+.project-wordmark-reason{font-style:italic;font-weight:400;font-synthesis:style}
 
 .project-space-header small,.project-space-footer,.section-label{font-size:var(--text-caption);color:var(--color-text-muted);font-weight:500}
 

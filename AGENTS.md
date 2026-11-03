@@ -274,3 +274,6 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 2026-11-03 标题字号补发：项目空间 PathoReason 由 18px 调至22px 品牌字号 token；构建与四屏宽布局/折叠验证通过，静态发布。见 [标题字号记录](docs/p5/CONVERSATION_ARCHIVE_TABS.md#项目空间标题字号补发)。
 
 2026-11-03 项目列表折叠补发：当前项目右侧箭头独立控制对话列表展开；右侧对话、草稿和当前 cid 选中态保持，来源跳转自动展开定位。构建、四屏宽夹具及真实只读检查通过，静态发布无服务重启。见 [列表折叠记录](docs/p5/CONVERSATION_ARCHIVE_TABS.md#当前项目对话列表折叠补发)。
+
+
+2026-11-03 项目昵称字标：PathoReason 改为衬线粗体＋斜体文字标识，30px／极窄屏 25px；构建及四屏宽布局、折叠检查通过，静态补发无服务重启。见 [昵称字标记录](docs/p5/CONVERSATION_ARCHIVE_TABS.md#项目昵称字标补发)。

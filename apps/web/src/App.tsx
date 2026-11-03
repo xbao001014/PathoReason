@@ -136,7 +136,7 @@ export function App(){
  {compact&&mobile&&<button className="drawer-shade" aria-label="关闭项目空间" onClick={()=>{setMobile(false);setTimeout(()=>projectToggle.current?.focus(),0);}}/>}
  <div className={'project-space-shell'+(projectsVisible?' is-open':' is-collapsed')} aria-hidden={!projectsVisible} ref={node=>{if(node)node.inert=!projectsVisible;}}>
  <aside id="project-space" aria-label="项目空间" className="sidebar project-sidebar">
-  <header className="project-space-header"><div><strong>PathoReason</strong><small>项目空间</small></div><button ref={projectCollapse} className="icon-button" aria-label="向左折叠项目空间" title="向左折叠项目空间" aria-controls="project-space" aria-expanded="true" onClick={collapseProjects}><Icon name="collapse"/></button></header>
+  <header className="project-space-header"><div><strong className="project-wordmark">Patho<span className="project-wordmark-reason">Reason</span></strong><small>项目空间</small></div><button ref={projectCollapse} className="icon-button" aria-label="向左折叠项目空间" title="向左折叠项目空间" aria-controls="project-space" aria-expanded="true" onClick={collapseProjects}><Icon name="collapse"/></button></header>
   <ConversationTabs value={sessionTab} onChange={setSessionTab} sessions={sessions.filter(s=>s.project_id===pid)} loading={sessionsLoading}/>
   <div className="project-search-row"><div className="search"><Icon name="chat"/><input aria-label="搜索项目或会话" value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜索"/></div><button className="new-conversation" aria-label="新建对话" title="新建对话" onClick={newConversation} disabled={!pid||busy}><Icon name="plus"/></button></div>
 
