@@ -23,7 +23,9 @@
 .history-entry-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 8px;font-size:var(--text-caption);color:var(--color-text-secondary)}
 .history-excerpt{font-size:var(--text-body);color:var(--color-text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .history-entry time{font-size:var(--text-caption);color:var(--color-text-muted)}
-.messages .turn:focus,.messages .turn.history-located{outline:2px solid var(--status-info-border);outline-offset:12px;border-radius:var(--radius-cards)}
+/* Enlarge the located turn's outline by 10%, without scaling its content. */
+.messages .turn:focus,.messages .turn.history-located{position:relative;outline:none;border-radius:var(--radius-cards)}
+.messages .turn:focus::after,.messages .turn.history-located::after{content:"";position:absolute;pointer-events:none;box-sizing:border-box;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(110% + 30.8px);max-width:calc(100% + 2 * var(--chat-content-offset) - 4px);height:calc(110% + 30.8px);border:2px solid var(--status-info-border);border-radius:var(--radius-cards)}
 @media(max-width:760px){
  .history-navigation{top:8px;left:12px;bottom:auto;transform:none;width:32px;height:32px}
  .history-rail{display:none}
