@@ -1,0 +1,410 @@
+{
+  "$defs": {
+    "TrainingBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "max_wall_seconds": {
+          "exclusiveMinimum": 0,
+          "maximum": 2592000,
+          "title": "Max Wall Seconds",
+          "type": "number"
+        },
+        "max_gpu_seconds": {
+          "maximum": 2592000,
+          "minimum": 0,
+          "title": "Max Gpu Seconds",
+          "type": "number"
+        },
+        "max_unit_seconds": {
+          "exclusiveMinimum": 0,
+          "maximum": 604800,
+          "title": "Max Unit Seconds",
+          "type": "number"
+        },
+        "max_attempts_per_unit": {
+          "maximum": 10,
+          "minimum": 1,
+          "title": "Max Attempts Per Unit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_wall_seconds",
+        "max_gpu_seconds",
+        "max_unit_seconds",
+        "max_attempts_per_unit"
+      ],
+      "title": "TrainingBudget",
+      "type": "object"
+    },
+    "TrainingInput": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "path": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "development",
+            "sealed"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "subject_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Subject Id",
+          "type": "string"
+        },
+        "prior_test_exposures": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prior Test Exposures"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "sha256",
+        "role",
+        "subject_id"
+      ],
+      "title": "TrainingInput",
+      "type": "object"
+    },
+    "TrainingPlan": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "task_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "environment_id": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Environment Id",
+          "type": "string"
+        },
+        "protocol": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Protocol",
+          "type": "string"
+        },
+        "evaluation": {
+          "default": "development_only",
+          "enum": [
+            "development_only",
+            "previously_exposed",
+            "independent_holdout"
+          ],
+          "title": "Evaluation",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/TrainingInput"
+          },
+          "maxItems": 100000,
+          "title": "Inputs",
+          "type": "array"
+        },
+        "units": {
+          "items": {
+            "$ref": "#/$defs/TrainingUnit"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Units",
+          "type": "array"
+        },
+        "memory_gib": {
+          "default": 16,
+          "maximum": 512,
+          "minimum": 1,
+          "title": "Memory Gib",
+          "type": "integer"
+        },
+        "gpu_uuid": {
+          "anyOf": [
+            {
+              "pattern": "^GPU-[a-fA-F0-9-]{36}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gpu Uuid"
+        },
+        "proposed_budget": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TrainingBudget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "title",
+        "task_id",
+        "snapshot_id",
+        "environment_id",
+        "protocol",
+        "units"
+      ],
+      "title": "TrainingPlan",
+      "type": "object"
+    },
+    "TrainingUnit": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "phase": {
+          "default": "fit",
+          "enum": [
+            "fit",
+            "evaluate"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "entrypoint": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Entrypoint",
+          "type": "string"
+        },
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Args",
+          "type": "array"
+        },
+        "input_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 100000,
+          "title": "Input Ids",
+          "type": "array"
+        },
+        "depends_on": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "title": "Depends On",
+          "type": "array"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        },
+        "output_files": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Output Files",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "entrypoint",
+        "output_files"
+      ],
+      "title": "TrainingUnit",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "grant": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Grant",
+      "type": "string"
+    },
+    "operation": {
+      "enum": [
+        "list",
+        "inspect",
+        "environment",
+        "prepare",
+        "launch",
+        "stop",
+        "retry"
+      ],
+      "title": "Operation",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Idempotency Key"
+    },
+    "experiment_id": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Experiment Id"
+    },
+    "expected_revision": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Expected Revision"
+    },
+    "python": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Python"
+    },
+    "extra_paths": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Extra Paths",
+      "type": "array"
+    },
+    "plan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TrainingPlan"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 2000,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    }
+  },
+  "required": [
+    "turn_id",
+    "grant",
+    "operation"
+  ],
+  "title": "TrainingToolInput",
+  "type": "object"
+}

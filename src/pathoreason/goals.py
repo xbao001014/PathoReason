@@ -35,7 +35,7 @@ class GoalEvidence(BaseModel):
 
 class GoalWait(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    kind: Literal['synthetic_run']
+    kind: Literal['synthetic_run','training_run']
     run_id: Identifier
 
 
@@ -107,6 +107,7 @@ class GoalView(BaseModel):
     summary: str = ''
     next_action: str = ''
     reason: str | None = None
+    wait_for: GoalWait | None = None
     completion_criteria: list[str] = Field(default_factory=list)
     turns_used: int = 0
     max_turns: int = 8
@@ -356,7 +357,7 @@ class Goals:
         if body.outcome=='completed' and not verified and not body.answer_only:
             raise ValueError('goal_completion_evidence_required')
         if body.wait_for:
-            view = self.s.business.inspect(row['project_id'])
+            view = self.s.training.run_view(row['project_id'],body.wait_for.run_id) if body.wait_for.kind=='training_run' else self.s.business.inspect(row['project_id'])
             if view.run_id != body.wait_for.run_id:raise Conflict('goal_wait_run_not_registered')
         payload['verified_evidence'] = verified
         with self.s.store.connect(True) as db:
@@ -418,7 +419,7 @@ class Goals:
             'For blocked outcomes include blocker={kind:platform|permission|input|resource,required_action:one concrete remedy}; for the unavailable training backend also set capability=training_execution. '
             'Distinguish a platform capability gap from missing user permission. Set capability=training_execution only when the CURRENT authorized goal requires training launch. For preparation-only goals, explain the later launch gap separately and use permission blockers for denied preparation tools; do not require a training backend to resume preparation. Complete a preparation-only goal only when its actual deliverables are verified. Do not ask for launch approval while the platform cannot launch. '
             'Repeated absent/unchanged evidence triggers a bounded stop. No budget is reset. '
-            'waiting needs wait_for={kind:synthetic_run,run_id:...} from a real registered platform run; '
+            'waiting needs wait_for={kind:synthetic_run or training_run,run_id:...} from a real registered platform run; '
             'no general real-training backend is connected yet. Never invent a run or poll training with the model. '
             'After a checkpoint finish briefly with progress; automatic continuation is handled by the controller.\n')
 
@@ -487,9 +488,26 @@ class Goals:
             current=self._latest(db,goal['conversation_id'])
             if not current or current['id']!=goal['id'] or current['revision']!=goal['revision']:return
             current.update(state=state,reason=reason)
-            if reason=='goal_wait_completed':current.pop('wait_for',None)
+            if reason in ('goal_wait_completed','goal_training_needs_repair'):current.pop('wait_for',None)
             if summary:current['summary']=summary
             self._save(db,current,reason)
+
+    def bind_training(self,db,experiment,run_id):
+        """A user launch decision connects the prepared goal without another model turn."""
+        gid=experiment.get('goal_id')
+        if not gid:return
+        row=db.execute('SELECT document FROM research_goals WHERE id=?',(gid,)).fetchone()
+        if not row:return
+        goal=json.loads(row[0]);latest=self._latest(db,goal['conversation_id'])
+        turn=db.execute('SELECT status FROM turns WHERE id=?',(goal.get('last_turn_id'),)).fetchone()
+        if turn and turn[0] in ACTIVE:return  # Agent will checkpoint its own active turn.
+        if not latest or latest['id']!=gid or goal['state'] in ('completed','cancelled'):return
+        if goal['last_turn_id']!=experiment.get('prepared_turn_id') and (goal.get('wait_for') or {}).get('kind')!='training_run':return
+        if goal['state']=='blocked' and goal.get('reason') not in ('training_budget_exhausted','training_stopped','training_needs_reconciliation'):return
+        goal.update(wait_for={'kind':'training_run','run_id':run_id},wait_started_at=now(),next_action='核对后台训练回执、失败与累计预算，再整理结果或在已授权范围内修复。')
+        if goal['state'] not in ('paused','budget_exhausted'):
+            goal.update(state='waiting',reason='training_run_dispatched',summary='训练已按确认的方案和独立预算启动，等待后台回执。',blocker=None)
+        self._save(db,goal,'training_run_bound')
 
     def permissions_changed(self, db, cid, before, after, revision):
         """Settings are not proof of Agent progress; keep the goal stopped for review."""
@@ -593,6 +611,15 @@ class Goals:
                 except (Missing,Conflict,Gone):
                     self._set_state(goal,'paused','conversation_unavailable');continue
                 if goal['state']=='waiting':
+                    if goal['wait_for']['kind']=='training_run':
+                        try:view=await asyncio.to_thread(self.s.training.run_view,goal['project_id'],goal['wait_for']['run_id'])
+                        except (Missing,ValueError):
+                            self._set_state(goal,'blocked','goal_wait_run_changed');continue
+                        if view.status in ('queued','running','waiting_resource','stopping'):continue
+                        if view.status in ('completed','failed'):
+                            self._set_state(goal,'active','goal_wait_completed' if view.status=='completed' else 'goal_training_needs_repair')
+                        else:self._set_state(goal,'blocked','training_'+view.status)
+                        continue
                     waited=(datetime.now(timezone.utc)-datetime.fromisoformat(goal['wait_started_at'].replace('Z','+00:00'))).total_seconds()
                     if waited>7200:
                         self._set_state(goal,'blocked','goal_wait_timeout');continue

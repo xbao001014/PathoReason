@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "source_repository": "/home/bxn/projects/auto-research",
+  "source_commit": "55a19217f9c7ad89f1fc390d9dbb64bc44c30890",
+  "files": [
+    {
+      "source": "packages/core/experiment_agent/performance_loop/linux_restrictions.py",
+      "destination": "src/pathoreason/training_restrictions.py",
+      "sha256": "022a750eb377cc612e0b7844960c1d144745a465753090068e86390306d0c6f5",
+      "adaptation": "byte_for_byte"
+    }
+  ],
+  "new_components": [
+    "training_contracts",
+    "training_account",
+    "training_files",
+    "training_service",
+    "training_sandbox",
+    "training_worker"
+  ],
+  "legacy_ledger": "preserved; independent experiments use a new explicit ledger, never reset the original",
+  "license_note": "User-owned local source reuse; no repository LICENSE file found; no external redistribution performed."
+}

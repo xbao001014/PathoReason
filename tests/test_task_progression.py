@@ -116,7 +116,9 @@ def test_short_acceptance_only_selects_a_unique_proposal(fixture,single):
     asyncio.run(case())
 
 
-def test_platform_blocker_does_not_become_resumable_by_adding_budget(fixture):
+def test_platform_blocker_does_not_become_resumable_by_adding_budget(fixture,monkeypatch):
+    monkeypatch.setattr("pathoreason.training_sandbox.availability",lambda:{"available":False})
+    monkeypatch.setattr("pathoreason.training_service.availability",lambda:{"available":False})
     from test_budget_settings import change,project
     async def case():
         s,r,v,cid,tid,body=await start(fixture)

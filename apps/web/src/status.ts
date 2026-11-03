@@ -7,6 +7,7 @@ const tones: Record<string, StatusTone> = {
   running:'info', interrupt_requested:'info', pending_login:'info',
   completed:'success', passed:'success', connected:'success', authenticated:'success', ready:'success',
   failed:'danger', error:'danger', cancelled:'danger', interrupted:'danger', stopped:'danger', runtime_unavailable:'danger',
+  draft:'warning',waiting_resource:'warning',stopping:'info',
   queued:'warning', pending:'warning', recovery_required:'warning', credential_missing:'warning', reload_required:'warning',
   not_checked:'neutral', not_authenticated:'neutral', unavailable:'neutral', not_started:'neutral', unknown:'neutral',
 };

@@ -167,7 +167,8 @@
         "/home/bxn/projects/PathoReason/.venv/bin/python",
         "/home/bxn/projects/PathoReason/src/pathoreason/guidance_mcp.py"
       ],
-      "enabled": true
+      "enabled": true,
+      "timeout": 3600000
     }
   }
 }

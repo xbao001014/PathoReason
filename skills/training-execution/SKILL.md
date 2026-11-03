@@ -1,0 +1,36 @@
+---
+name: training-execution
+description: Prepare, run, inspect, stop and repair independent experiment matrices using frozen Python environments, controlled inputs and a user-owned training budget. Use after baseline selection and adaptation, for any supported Python training task.
+---
+
+# Training execution
+
+Use `pathoreason_dialogue_training` with the CURRENT `turn_id` and `grant`, or `/home/bxn/projects/PathoReason/.venv/bin/python /home/bxn/projects/PathoReason/scripts/training.py` with one JSON object on stdin. Never print or persist the grant. The bridge binds the project; it never accepts an Agent-authored approval or budget increase.
+
+The user's task is the experiment outcome, not the freeze procedure. Inspect current experiments, reuse unchanged choices, prepare internally and request only consequential scope/resource decisions. Do not ask the user for Git hashes, environment paths or repeated synthetic-check approvals. `compute.json real_training_authorized` is NOT this executor's authority. Do not launch a runner through bare bash or compute_exec to bypass a rejected preparation.
+
+## Prepare and review once
+
+1. `list` returns registered experiments, frozen environments, runtime catalog and actual backend readiness. Use `inspect` plus `experiment_id` to recover state after compaction, tool timeout or interruption. A repeated key returns its original receipt; a pending/failed key is not permission to repeat the side effect.
+2. Use task-code-workspaces to adapt/check/freeze an independent task snapshot. The new execution engine supports Python entrypoints, threads and file I/O; fork/exec/network are denied inside the worker. Adapt data loading to threads or zero subprocess workers in YOUR task code. Do not edit old snapshots.
+3. `environment` freezes a Python from `runtime_catalog`, plus optional dependency directories under the project `.deps` or `environments`. Use a stable `idempotency_key`; provide `python` and `extra_paths`. It copies executable/stdlib/packages, binds all bytes and checks them before execution. Environment preparation may take time; it is distinct from training. Do not reuse a mutable environment path as an environment ID.
+4. `prepare` takes `plan`, a stable key, and optionally an existing `experiment_id` + `expected_revision` for a repair. The plan binds title, task_id, snapshot_id, environment_id, protocol, evaluation, inputs, units, gpu_uuid and optional proposed_budget. The frozen environment must match every exact requirements.lock pin; resolve a mismatch in task code/dependencies instead of bypassing it. Existing experiment repairs retain consumed time and attempt counts. Changed scientific scope requires renewed user review; do not create a new experiment to evade an exhausted allowance.
+5. The Training panel now holds the concrete plan. Checkpoint needs_input for the Training panel decision (not a separate Guidance choice), finish the turn, and say briefly that it is ready for one plan-and-budget confirmation. The user sets/accepts cumulative execution seconds, GPU seconds, per-unit timeout and attempts per unit; these are independent of Agent rounds/time. Proposed numbers are suggestions until the user confirms. Approval starts the background controller directly; no extra “continue” or Agent turn is needed.
+
+## Generic plan contract
+
+Each input: `{id,path,sha256,role:development|sealed,subject_id,prior_test_exposures:int|null}`. Reference regular files in this project's workspace/study storage (or an operator-configured input root), never whole directories. Group every file from one subject consistently. Input files are byte-checked before and after use. Fit units never receive sealed files. Unknown exposure stays unknown; new IDs/manifests/splits cannot reset recorded exposure. `independent_holdout` requires known zero prior exposure; `previously_exposed` explicitly does not claim independent testing; `development_only` forbids evaluation units. Preserve old scientific gates and accurately declare lineage. These mechanical checks are not scientific approval.
+
+Each unit: `{id,label,phase:fit|evaluate,entrypoint,args,input_ids,depends_on,parameters,output_files}`. Entry is a relative `.py` file in the registered snapshot; no shell commands. Include model/seed/fold/epochs/selection criterion in parameters so the user can review the matrix. `args` supports `{inputs}` (a read-only JSON manifest with files, dependency outputs and parameters), `{output}` (the unique attempt output directory), `{device}` (`cpu` or `cuda:0`). Environment variables PATHOREASON_INPUT_MANIFEST and PATHOREASON_OUTPUT_DIR provide the same paths. Adapt a small task-owned entrypoint to read them; it may reuse the existing runner/modules. The declared output_files are relative files that must exist and are hashed before a unit is marked completed. Save checkpoints and raw metrics inside output; do not write to task source or platform state. Write per-epoch/checkpoint files promptly so a stopped attempt retains evidence.
+
+Declare depends_on for prior units whose checkpoints/results this unit needs. These referenced outputs are byte-verified and passed read-only in manifest.dependencies, each with unit_id, name, path and sha256. Only declared dependencies are accessible. Order dependencies before their consumers; fits always precede evaluations. No manual copying or unregistered checkpoint paths.
+
+The matrix runs serially on CPU or the single selected GPU UUID. Evaluation follows successful completion of EVERY fit unit; exposure is recorded before dispatch, including failures. All unit attempts share the experiment's training allowance. Budget amendments append user decisions and preserve usage. The active unit retains its starting timeout even when the user adds future allowance.
+
+## Monitor, repair and finish
+
+After launch, checkpoint `waiting` with `wait_for:{kind:training_run,run_id:<actual receipt>}`. Do not poll in a model loop. The detached controller continues across browser disconnects, model-budget exhaustion and application restart. The goal engine resumes after terminal status when Agent budget permits. Pause/cancel of the Agent is separate from stopping training; use the Training panel or `stop` to stop the experiment.
+
+On a failed run, inspect the attempt's raw log, isolation receipt, outputs and immutable plan. Diagnose the cause, repair only your task repository, register/check/freeze a new revision, and `prepare` it on the SAME experiment. Repairs within the approved matrix/protocol/data/resource scope reuse approval and budget; `retry` uses a new key and current revision. Do not overwrite old attempts. User-stopped, cancelled, budget-exhausted or unknown runs require the corresponding user action/inspection; never silently restart them. Unknown attempts conservatively retain the reservation and cannot be blindly replayed.
+
+After completed status, inspect/hash actual outputs, publish the appropriate result artifacts through study_io, and report the matrix completion and any remaining scientific checks. A completed process/file manifest is engineering evidence, not evidence that the model is useful, the test set is independent, or the study is scientifically approved. Do not change research conclusions to make this verification pass.

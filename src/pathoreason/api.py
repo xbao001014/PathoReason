@@ -26,6 +26,7 @@ from .guidance import GuidanceView,Selection,OfferInput
 from .task_workspaces import TaskCodeRequest
 from .goals import GoalCheckpoint,GoalControl,GoalView,GoalRecoveryInput
 from .budget_settings import BudgetSettingsUpdate,BudgetSettingsView
+from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision
 from .research_workbench import ResearchWorkbenchView, project_snapshot
 
 class ProjectInput(BaseModel):
@@ -200,8 +201,29 @@ async def goal_checkpoint(body:GoalCheckpoint,request:Request):
     if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'goal_bridge_auth_required')
     async with service().lock:return service().goals.checkpoint(body)
 
+
+@app.get('/api/v2/conversations/{cid}/training',response_model=list[TrainingView])
+async def training_list(cid:str):
+    conv=service().formal.mode(cid)
+    return await asyncio.to_thread(service().training.list,conv['project_id'])
+
+@app.post('/api/v2/conversations/{cid}/training/{eid}',response_model=TrainingView)
+async def training_decision(cid:str,eid:str,body:TrainingDecision):
+    async with service().lock:
+        result=await asyncio.to_thread(service().training.decide,cid,eid,body)
+        service().goals.start()
+        return result
+
+@app.post('/internal/training',include_in_schema=False)
+async def training_tool(body:TrainingToolInput,request:Request):
+    expected='Bearer '+service().guidance.token()
+    if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'training_bridge_auth_required')
+    # Environment copying can take minutes; never hold the global conversation
+    # lock while a user may need to stop a different background experiment.
+    return await asyncio.to_thread(service().training.call,body)
+
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.20-p5-permission-modes'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.21-p5-training-executor'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

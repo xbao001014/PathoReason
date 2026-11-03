@@ -57,7 +57,7 @@ def formal_rules(directory, settings=None, execution_scope="standard"):
     rules = [
         {'permission': '*', 'pattern': '*', 'action': 'deny'},
         *[{'permission': k, 'pattern': '*', 'action': 'allow'}
-          for k in ['read', 'glob', 'grep', 'list', 'skill', 'pathoreason_dialogue_offer', 'pathoreason_dialogue_checkpoint']],
+          for k in ['read', 'glob', 'grep', 'list', 'skill', 'pathoreason_dialogue_offer', 'pathoreason_dialogue_checkpoint', 'pathoreason_dialogue_training']],
         *[{'permission': k, 'pattern': '*', 'action': policy.action(k)}
           for k in ['bash', 'edit', 'webfetch', 'external_directory']],
         {'permission': 'websearch', 'pattern': '*', 'action': policy.action('webfetch')},

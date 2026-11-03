@@ -86,7 +86,7 @@ with (control/"service.lock").open("a") as lock:
         def save_receipt(value):
             with receipt.open('a') as file:file.write(json.dumps(value,ensure_ascii=False)+'\n')
         asyncio.run(refresh_idle_instances(OpenCode(data,cfg['opencode_port']),directories,
-            {name:ROOT/'skills'/name/'SKILL.md' for name in ['benchmark-design','task-code-workspaces']},save_receipt))
+            {name:ROOT/'skills'/name/'SKILL.md' for name in ['benchmark-design','task-code-workspaces','training-execution']},save_receipt))
         print(json.dumps({'native_refresh_receipt':str(receipt)}))
     elif args.action=="restart-app":stop("app");start("app")
     elif args.action=="restart-runtime":

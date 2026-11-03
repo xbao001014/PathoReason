@@ -18,7 +18,7 @@ class TaskCodeService:
 
     def execution_readiness(self):
         # This is the actual public launch gate, not an Agent-authored readiness claim.
-        return self.workspaces.execution_readiness()
+        return self.s.training.readiness() if hasattr(self.s,'training') else self.workspaces.execution_readiness()
 
     def call(self,body):
         row=self.s.store.turn(body.turn_id)
@@ -49,7 +49,7 @@ class TaskCodeService:
 
     def prompt(self):
         return ('\nAuthoritative training execution readiness: '+json.dumps(self.execution_readiness())+
-                '\nUnavailable execution blocks training launch only. Independent adaptation, synthetic checks and source freezing do not require the training backend. For a goal that currently requires launch, report blocked with blocker={kind:platform,capability:training_execution,required_action:...}. For preparation-only goals, report a denied preparation tool as a permission blocker, and mention later training readiness separately; do not make the training backend a condition for resuming preparation. '
+                '\nUnavailable execution blocks training launch only. Independent adaptation, synthetic checks and source freezing do not require the training backend. If the backend is unavailable and the goal currently requires launch, report blocked with blocker={kind:platform,capability:training_execution,required_action:...}. For preparation-only goals, report a denied preparation tool as a permission blocker, and mention later training readiness separately; do not make the training backend a condition for resuming preparation. '
                 'Do not ask the user to toggle compute.json, supply Git hashes, approve each source freeze or repeat a launch confirmation while the backend remains unavailable. '
                 '\nCurrent published task template catalog: '+json.dumps(self.workspaces.catalog(),ensure_ascii=False)+'\nIndependent task code repositories are available through '+str(ROOT/'scripts/task_code.py')+
                 '. For task creation, repair, source freezing or template updates, read '+str(ROOT/'skills/task-code-workspaces/SKILL.md')+
