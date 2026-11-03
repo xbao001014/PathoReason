@@ -5,7 +5,7 @@ import './conversationLifecycle.css';
 const errors:Record<string,string>={conversation_busy:'会话仍在执行，请等待完成或停止后再操作。',context_operation_unresolved:'压缩结果尚未确认，请先核对上下文状态。',conversation_permission_pending:'仍有工具等待确认，请先处理。',permission_outcome_requires_native_reconciliation:'工具执行结果尚未确认，请先核对原生执行状态。',native_state_unavailable:'暂时无法核对引擎状态，请稍后重试。',native_deletion_unsupported:'此执行引擎暂不支持彻底删除，请使用归档。',native_child_sessions_exist:'原生会话包含派生会话，需先核对其归属；当前不会级联删除。',native_session_shared:'原生会话仍被其他对话引用，当前不会删除。',native_session_scope_mismatch:'原生会话所属目录不一致，已阻止删除。',native_deletion_unconfirmed:'原生删除尚未确认，请重试清理。',conversation_cleanup_incomplete:'清理未完成，请重试。'};
 export function clearConversationCache(cid:string){
  try{for(const key of Object.keys(localStorage)){
-  if(['draft:','skill:','model:','execution-mode:','refs:'].some(p=>key==='pathoreason:'+p+cid)||key.startsWith('pathoreason:reasoning:'+cid+':')||(key.startsWith('pathoreason:conversation:')&&localStorage.getItem(key)===cid))localStorage.removeItem(key);
+  if(['draft:','skill:','model:','execution-mode:','refs:'].some(p=>key==='pathoreason:'+p+cid)||(key.startsWith('pathoreason:reasoning:'+cid+':')||key.startsWith('pathoreason:output:'+cid+':'))||(key.startsWith('pathoreason:conversation:')&&localStorage.getItem(key)===cid))localStorage.removeItem(key);
  }}catch{/* Browser storage can be unavailable. */}
 }
 export function ConversationActions({conversation,onChange,close}:{conversation:ManagedConversation;onChange:(view:ConversationLifecycleView)=>Promise<void>;close:()=>void}){

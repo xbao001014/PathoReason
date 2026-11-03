@@ -56,6 +56,7 @@ def start(name):
         env["OPENCODE_DISABLE_PROJECT_CONFIG"]="true"
         env["OPENCODE_DISABLE_EXTERNAL_SKILLS"]="true"
         env["OPENCODE_DISABLE_AUTOUPDATE"]="true"
+        env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]="65536"  # Ceiling only; base profiles still request 8192.
         env["OPENCODE_ENABLE_EXA"]="1"  # Native search for non-Zen providers; permission still applies.
         env["DEEPSEEK_API_KEY"]=credential()
         command=[cfg["opencode_binary"],"serve","--pure","--hostname","127.0.0.1","--port",str(port)]
@@ -65,7 +66,7 @@ def start(name):
         cwd=ROOT
     with (control/f"{name}.log").open("ab") as log:
         child=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"credential_loaded":bool(env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None})+"\n")
+    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"credential_loaded":bool(env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None,"output_token_max":int(env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]) if name=="opencode" else None})+"\n")
     time.sleep(.4)
     if child.poll() is not None:raise RuntimeError(name+" failed; inspect its service log")
 

@@ -87,7 +87,7 @@ class Service:
             catalog={m['model'] for m in getattr(self.runtime,'catalog',[])}
             return [c.ModelDescriptor(runtime='codex',provider='openai',model=name,context_limit_tokens=metadata.get(name,{}).get('context_window'),input_limit_tokens=None,output_limit_tokens=None,tool_support=metadata.get(name,{}).get('tool_support','unknown'),usage_source='runtime',metadata_source=metadata.get(name,{}).get('source','unknown'),availability=('inference_verified' if self.inference_verified(name) else 'authenticated') if self.credential_ready() and name in catalog else 'unavailable').model_dump(mode='json') for name in self.config['codex']['models']]
         config=json.loads((ROOT/'config/opencode.json').read_text())['provider']
-        return [c.ModelDescriptor(runtime='opencode',provider=provider,model=name,context_limit_tokens=item.get('limit',{}).get('context'),input_limit_tokens=item.get('limit',{}).get('input'),output_limit_tokens=item.get('limit',{}).get('output'),tool_support='supported' if item.get('tool_call') else 'unknown',usage_source='runtime',metadata_source='Configured provider limits; runtime usage reported separately',availability=('inference_verified' if self.inference_verified(name) else 'catalog_only') if self.credential_ready() and provider=='deepseek-direct' else 'unavailable').model_dump(mode='json') for provider,cfg in config.items() for name,item in cfg.get('models',{}).items()]
+        return [c.ModelDescriptor(runtime='opencode',provider=provider,model=name,context_limit_tokens=item.get('limit',{}).get('context'),input_limit_tokens=item.get('limit',{}).get('input'),output_limit_tokens=item.get('limit',{}).get('output'),tool_support='supported' if item.get('tool_call') else 'unknown',usage_source='runtime',metadata_source='Configured provider limits; runtime usage reported separately',availability=('inference_verified' if self.inference_verified(name) else 'catalog_only') if self.credential_ready() and provider=='deepseek-direct' else 'unavailable').model_dump(mode='json') for provider,cfg in config.items() for name,item in cfg.get('models',{}).items() if not name.startswith('pathoreason-output-')]
     def reasoning_options(self):
         from .reasoning import configured_options
         return configured_options(json.loads((ROOT/'config/opencode.json').read_text())) if self.runtime_name=='opencode' else []
@@ -126,6 +126,13 @@ class Service:
             models={m['model']:m for m in self.models()}
             if request['model'] not in models:raise ValueError('model_not_configured')
             if models[request['model']]['availability']=='unavailable':raise NotReady('model_not_available')
+            output_limit=request.get('output_limit_tokens')
+            if output_limit is not None:
+                from .output_settings import validate_output
+                if self.runtime_name!='opencode':raise ValueError('output_limit_not_supported')
+                validate_output(request['model'],output_limit)
+                models[request['model']]={**models[request['model']],'output_limit_tokens':output_limit,
+                    'input_limit_tokens':models[request['model']]['context_limit_tokens']-output_limit}
             reasoning=next((o for o in self.reasoning_options() if o['model']==request['model']),None)
             effort=request.get('reasoning_effort')
             if effort is not None and (not reasoning or effort not in reasoning['efforts']):raise ValueError('reasoning_effort_not_supported')
@@ -182,6 +189,7 @@ class Service:
                 runtime_config.update(time_accounting='tool_excluded_v1',max_turn_wall_seconds=study['budget'].get('max_turn_wall_seconds',86400))
                 gpu_binding=self.gpu_settings.frozen(cid)
                 if gpu_binding:runtime_config['gpu_binding']=gpu_binding
+            if output_limit is not None:runtime_config['output_limit_tokens']=output_limit
             if effort is not None:runtime_config['reasoning_effort']=effort
             runtime_config=(FormalConfiguration if study else RuntimeConfiguration).model_validate(runtime_config).model_dump(mode='json')
             turn=c.Turn(id=uid('turn'),project_id=pid,conversation_id=cid,runtime_binding_id=conv_doc['active_runtime_binding_id'],request_key=request['request_key'],status='queued',model=models[request['model']],config_digest=c.canonical_digest(runtime_config),created_at=now(),finished_at=None,native_turn_id=None,error_code=None)
@@ -296,7 +304,7 @@ class Service:
                 prompt=self.prompt(row)
                 self.store.update(tid,dispatch_state='dispatching')
                 dispatch=self.runtime.prompt_formal if self.formal.record(row['project_id']) else self.runtime.prompt
-                await dispatch(sid,directory,row['native_message_id'],json.loads(row['document'])['model']['model'],prompt,**({'reasoning_effort':frozen['reasoning_effort']} if frozen.get('reasoning_effort') is not None else {}))
+                await dispatch(sid,directory,row['native_message_id'],json.loads(row['document'])['model']['model'],prompt,**({'reasoning_effort':frozen['reasoning_effort']} if frozen.get('reasoning_effort') is not None else {}),**({'output_limit_tokens':frozen['output_limit_tokens']} if frozen.get('output_limit_tokens') is not None else {}))
                 self.store.update(tid,dispatch_state='accepted')
                 if self.store.turn(tid)['status']!='interrupt_requested':self.state(tid,'running')
             # On restart, reconcile native message identity, never resend a dispatching/accepted turn.
