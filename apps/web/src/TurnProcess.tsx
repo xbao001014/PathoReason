@@ -9,15 +9,15 @@ const toolLabels:Record<string,string>={completed:'完成',running:'进行中',p
 const describe=(tool:ToolSummary)=>tool.summary||actions[tool.name]||'调用工具';
 function duration(ms:number){const seconds=Math.max(0,Math.floor(ms/1000));return seconds<60?seconds+'秒':Math.floor(seconds/60)+'分'+seconds%60+'秒';}
 const recordedDuration=(seconds:number|null|undefined)=>seconds==null?'—':duration(seconds*1000);
-type Group={key:string;summary:string;status:string;tools:ToolSummary[];repeat:string|null;name:string};
+type Group={key:string;summary:string;status:string;tools:ToolSummary[];repeat:string|null;name:string;objects:string};
 function groups(tools:ToolSummary[],active:boolean){
  const result:Group[]=[];
  for(const tool of tools){
   const summary=describe(tool),status=!active&&['running','pending'].includes(tool.status)?'unknown':tool.status;
-  const previous=result.at(-1),repeat=tool.repeat_key??null;
+  const previous=result.at(-1),repeat=tool.repeat_key??null,objects=JSON.stringify([tool.targets||[],tool.operation||null,tool.working_directory||null]);
   // Only verified identical read/status operations collapse. Training and generic commands stay separate.
-  if(status==='completed'&&repeat&&previous?.status===status&&previous.repeat===repeat&&previous.summary===summary&&previous.name===tool.name){previous.tools.push(tool);}
-  else result.push({key:tool.id,summary,status,tools:[tool],repeat,name:tool.name});
+  if(status==='completed'&&repeat&&previous?.status===status&&previous.repeat===repeat&&previous.summary===summary&&previous.name===tool.name&&previous.objects===objects){previous.tools.push(tool);}
+  else result.push({key:tool.id,summary,status,tools:[tool],repeat,name:tool.name,objects});
  }
  return result;
 }
@@ -31,6 +31,31 @@ function ToolResult({tool,status,showDuration=true}:{tool:ToolSummary;status:str
  const label=status==='completed'&&tool.name==='bash'?'已返回':toolLabels[status]||'状态未知';
  return <span className="process-result"><span className={'status-text status-'+statusTone(status)}>{label}</span>{showDuration&&tool.duration_ms!=null&&<span className="process-duration">{duration(tool.duration_ms)}</span>}</span>;
 }
+const objectActions:Record<string,string>={read:'读取',write:'写入',edit:'修改',delete:'删除',run:'运行'};
+const objectKinds:Record<string,string>={file:'文件',directory:'目录',script:'脚本',website:'网页',skill:'Skill',experiment:'实验',pattern:'文件范围'};
+function objectPreview(tool:ToolSummary){
+ const target=tool.targets?.[0];
+ if(!target)return tool.name+(tool.operation?' · '+tool.operation:'');
+ const path=['file','directory','script'].includes(target.kind)?target.label.split('/').filter(Boolean).slice(-2).join('/')||target.label:target.label;
+ return (target.action&&['bash','apply_patch'].includes(tool.name)?objectActions[target.action]+' · ':'')+path;
+}
+function ObjectDetails({tool}:{tool:ToolSummary}){
+ const remaining=Math.max(0,(tool.target_count||0)-(tool.targets?.length||0));
+ return <dl className="process-object-facts">
+  <div><dt>工具</dt><dd><code>{tool.name}</code>{tool.operation&&<><span aria-hidden="true"> · </span><code>{tool.operation}</code></>}</dd></div>
+  {tool.working_directory&&<div><dt>工作目录</dt><dd><code>{tool.working_directory}</code></dd></div>}
+  {tool.targets?.map((target,index)=><div key={index}><dt>{target.action?objectActions[target.action]:objectKinds[target.kind]}</dt><dd><code>{target.label}</code></dd></div>)}
+  {remaining>0&&<div><dt>其他</dt><dd>另 {remaining} 项，仅显示前 {tool.targets?.length} 项</dd></div>}
+ </dl>;
+}
+function ObjectPreview({tool}:{tool:ToolSummary}){
+ const count=tool.target_count||tool.targets?.length||0;
+ return <span className="process-object-preview"><code>{objectPreview(tool)}</code>{count>1&&<span className="process-object-count">+{count-1}</span>}</span>;
+}
+function ToolObjects({tool}:{tool:ToolSummary}){
+ return <details className="process-objects"><summary aria-label={'查看 '+tool.name+' 的调用对象'}><ObjectPreview tool={tool}/><svg className="process-object-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m7 5 5 5-5 5"/></svg></summary><ObjectDetails tool={tool}/></details>;
+}
+
 export function TurnProcess({view}:{view:TurnView}){
  const status=view.turn.status,active=liveStatuses.includes(status),responding=view.usage.activity_phase==='responding'||(!view.usage.activity_phase&&Boolean(view.text));
  const [expanded,setExpanded]=useState(active&&!responding),[showHelp,setShowHelp]=useState(false),[clock,setClock]=useState(Date.now),id=useId();
@@ -52,7 +77,7 @@ export function TurnProcess({view}:{view:TurnView}){
   <div id={id} hidden={!expanded} className="process-content">
    {rows.length>0?<ol className="process-timeline" tabIndex={0} aria-label="工具调用记录">{rows.map(row=><li key={row.key} className={'process-step status-'+statusTone(row.status)+(row.status==='running'?' is-current':'')+(['error','failed'].includes(row.status)?' is-failed':'')}>
     <span className="process-node"><ProcessIcon status={row.status}/></span>
-    {row.tools.length>1?<details className="process-repeated"><summary><span className="process-action">{row.summary}</span><span className="process-repeat-count">{row.tools.length} 次</span><ToolResult tool={row.tools[0]} status={row.status} showDuration={false}/><svg className="process-repeat-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m7 5 5 5-5 5"/></svg></summary><ol aria-label={row.summary+'的重复调用'}>{row.tools.map((tool,index)=><li key={tool.id}><span>第 {index+1} 次</span><ToolResult tool={tool} status={row.status}/></li>)}</ol></details>:<div className="process-step-body"><span className="process-action">{row.summary}</span><ToolResult tool={row.tools[0]} status={row.status}/></div>}
+    {row.tools.length>1?<details className="process-repeated"><summary><span className="process-description"><span className="process-action">{row.summary}</span><ObjectPreview tool={row.tools[0]}/></span><span className="process-repeat-count">{row.tools.length} 次</span><ToolResult tool={row.tools[0]} status={row.status} showDuration={false}/><svg className="process-repeat-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m7 5 5 5-5 5"/></svg></summary><ObjectDetails tool={row.tools[0]}/><ol aria-label={row.summary+'的重复调用'}>{row.tools.map((tool,index)=><li key={tool.id}><span>第 {index+1} 次</span><ToolResult tool={tool} status={row.status}/></li>)}</ol></details>:<div className="process-step-body"><div className="process-description"><span className="process-action">{row.summary}</span><ToolObjects tool={row.tools[0]}/></div><ToolResult tool={row.tools[0]} status={row.status}/></div>}
    </li>)}</ol>:<p className="process-empty">暂无工具调用</p>}
    {(hasHelp||view.usage.compaction_observed)&&<footer className="process-footer">
     {hasTiming&&<dl className="process-timing"><div><dt>Agent</dt><dd>{recordedDuration(view.timing?.agent_seconds)}</dd></div><div><dt>工具 / 等待</dt><dd>{recordedDuration(view.timing?.tool_seconds)}</dd></div></dl>}

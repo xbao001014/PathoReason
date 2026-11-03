@@ -52,7 +52,16 @@ class TurnInput(BaseModel):
     artifact_ids:list[c.Identifier]=Field(default_factory=list,max_length=20)
 from .timing import TurnTiming
 
+class ToolTarget(BaseModel):
+    kind:Literal['file','directory','script','website','skill','experiment','pattern']
+    label:str=Field(min_length=1,max_length=1024)
+    action:Literal['read','write','edit','delete','run']|None=None
+
 class ToolSummary(BaseModel):
+    targets:list[ToolTarget]=Field(default_factory=list,max_length=12)
+    target_count:int=Field(default=0,ge=0)
+    operation:str|None=None
+    working_directory:str|None=Field(default=None,max_length=1024)
     kind:str|None=None
     repeat_key:str|None=None
     id:str;name:str;status:str

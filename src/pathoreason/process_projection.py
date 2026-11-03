@@ -19,7 +19,7 @@ async def refresh_process(store,runtime,tid):
     for tool in original:
         found=matching.get(tool['id'])
         if not found or found['name']!=tool['name']:raise Conflict('process_source_incomplete')
-        enriched.append({**tool,**{k:found[k] for k in ('summary','kind','repeat_key')}})
+        enriched.append({**tool,**{k:found[k] for k in ('summary','kind','repeat_key','targets','target_count','operation','working_directory')}})
     digest=hashlib.sha256(row['tools'].encode()).hexdigest()
     with store.connect(True) as db:
         store.check_conversation(db,row['conversation_id'])
