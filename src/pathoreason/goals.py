@@ -87,13 +87,20 @@ class GoalControl(BaseModel):
     max_turns: int | None = Field(default=None, ge=1, le=40)
     reasoning_effort: ReasoningEffort | None = None
     output_limit_tokens: int | None = Field(default=None,ge=1,le=65536,strict=True)
+    resume_scope: Literal['standard','inspection'] | None = None
 
     @model_validator(mode='after')
     def resume_settings(self):
+        if self.resume_scope is not None and self.action!='resume':raise ValueError('goal_scope_requires_resume')
         if self.output_limit_tokens is not None and self.action!='resume':raise ValueError('goal_output_requires_resume')
         if self.reasoning_effort is not None and self.action!='resume':
             raise ValueError('goal_effort_requires_resume')
         return self
+
+
+class GoalScopeRecovery(BaseModel):
+    source_turn_id: str
+    execution_scope: Literal['standard','inspection']
 
 
 class GoalView(BaseModel):
@@ -122,6 +129,7 @@ class GoalView(BaseModel):
     continued_from: str|None=None
     continued_in: str|None=None
     limit_revision:int=0
+    scope_recovery: GoalScopeRecovery | None = None
 
 
 class Goals:
@@ -139,6 +147,10 @@ class Goals:
                   origin TEXT NOT NULL, goal_revision INTEGER NOT NULL, parent_turn_id TEXT,
                   processed INTEGER NOT NULL DEFAULT 0, checkpoint TEXT,
                   UNIQUE(goal_id,parent_turn_id));
+                CREATE TABLE IF NOT EXISTS goal_checkpoint_rejections(
+                  turn_id TEXT NOT NULL REFERENCES turns(id), revision INTEGER NOT NULL,
+                  code TEXT NOT NULL, created_at TEXT NOT NULL,
+                  PRIMARY KEY(turn_id,revision,code));
                 CREATE TABLE IF NOT EXISTS goal_events(
                   id INTEGER PRIMARY KEY AUTOINCREMENT, goal_id TEXT NOT NULL REFERENCES research_goals(id),
                   document TEXT NOT NULL);
@@ -174,6 +186,7 @@ class Goals:
                     goal=move['source_goal']
                     goal.update(state='paused',reason='goal_continued_elsewhere',continued_in=move['conversation_id'])
         if goal:
+            with self.s.store.connect() as db:goal['scope_recovery']=self.scope_recovery(db,goal)
             goal['suggested_reasoning_effort']=None
             request=goal.get('request_template',{})
             if goal.get('reason')=='runtime_output_limit':
@@ -182,6 +195,42 @@ class Goals:
                 if suggestion and any(o['model']==request.get('model') and suggestion in o['efforts'] for o in self.s.reasoning_options()):
                     goal['suggested_reasoning_effort']=suggestion
         return GoalView.model_validate(goal) if goal else None
+
+    def frozen_config(self, db, tid):
+        turn=json.loads(self.s.store.turn(tid)['document'])
+        frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['config_digest'],)).fetchone()[0])
+        if canonical_digest(frozen)!=turn['config_digest']:raise Conflict('runtime_configuration_changed')
+        return frozen
+
+    def scope_recovery(self, db, goal):
+        '''Read-only provenance, never infer execution authority from model prose.
+
+        Only a selected legacy clarify decision and its automatic descendants
+        may return to the same goal's source scope, on an explicit user action.
+        Ambiguous acceptance, free-form dialogue, and cross-goal sources cannot.
+        '''
+        if goal['state'] not in ('blocked','paused') or goal.get('continued_in') or goal.get('reason') in CONTEXT_BLOCKERS:return None
+        tid=goal['last_turn_id']
+        seen=set()
+        while tid and tid not in seen:
+            seen.add(tid)
+            link=db.execute('SELECT * FROM goal_turns WHERE turn_id=?',(tid,)).fetchone()
+            if not link or link['goal_id']!=goal['id']:return None
+            if self.frozen_config(db,tid).get('execution_scope')!='dialogue':return None
+            if link['origin']=='goal':
+                tid=link['parent_turn_id'];continue
+            record=db.execute('SELECT document FROM turn_guidance_context WHERE turn_id=?',(tid,)).fetchone()
+            if not record:return None
+            context=json.loads(record[0])
+            choice=next((o for o in context['proposal']['options'] if o['id']==context.get('selected_option_id')),None)
+            if not choice or choice['scope']!='clarify':return None
+            source=context['source_turn_id']
+            source_link=db.execute('SELECT goal_id FROM goal_turns WHERE turn_id=?',(source,)).fetchone()
+            if not source_link or source_link['goal_id']!=goal['id']:return None
+            scope=self.frozen_config(db,source).get('execution_scope','standard')
+            if scope not in ('standard','inspection'):return None
+            return {'source_turn_id':source,'execution_scope':scope}
+        return None
 
     def recover_interrupted_context(self):
         with self.s.store.connect(True) as db:
@@ -348,6 +397,19 @@ class Goals:
         return result
 
     def checkpoint(self, body):
+        try:return self._checkpoint(body)
+        except Conflict as exc:
+            if str(exc)!='goal_outside_turn_scope':raise
+            row=self.s.store.turn(body.turn_id)
+            # Only an authenticated, current-turn rejection may affect settling.
+            # No grant, model text, or unverified evidence is stored here.
+            with self.s.store.connect(True) as db:
+                self._check_checkpoint(db,row,body,check_scope=False)
+                db.execute('INSERT OR IGNORE INTO goal_checkpoint_rejections VALUES(?,?,?,?)',
+                    (body.turn_id,body.expected_revision,'goal_outside_turn_scope',now()))
+            raise
+
+    def _checkpoint(self, body):
         row = self.s.store.turn(body.turn_id)
         if not hmac.compare_digest(body.grant,self.s.guidance.grant(body.turn_id)):
             raise Conflict('goal_grant_invalid')
@@ -370,7 +432,7 @@ class Goals:
         return {'status':'recorded','outcome':body.outcome,'evidence':verified,
                 'next':'Finish this turn briefly. The controller will verify and continue within the original scope and budget; do not ask the user to say continue.'}
 
-    def _check_checkpoint(self, db, row, body):
+    def _check_checkpoint(self, db, row, body, check_scope=True):
         self.s.store.check_conversation(db,row['conversation_id'],writable=True)
         status = db.execute('SELECT status FROM turns WHERE id=?',(body.turn_id,)).fetchone()[0]
         link = db.execute('SELECT * FROM goal_turns WHERE turn_id=?',(body.turn_id,)).fetchone()
@@ -386,7 +448,7 @@ class Goals:
         turn=json.loads(row['document'])
         frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['config_digest'],)).fetchone()[0])
         if canonical_digest(frozen)!=turn['config_digest']:raise Conflict('runtime_configuration_changed')
-        if frozen.get('execution_scope')=='dialogue' and (body.evidence.files or body.evidence.task_check_ids or body.wait_for):
+        if check_scope and frozen.get('execution_scope')=='dialogue' and (body.evidence.files or body.evidence.task_check_ids or body.wait_for):
             raise Conflict('goal_outside_turn_scope')
         return link
 
@@ -422,9 +484,9 @@ class Goals:
             'Report inability honestly instead of calling an unfinished goal complete. '
             'For blocked outcomes include blocker={kind:platform|permission|input|resource,required_action:one concrete remedy}; for the unavailable training backend also set capability=training_execution. '
             'Distinguish a platform capability gap from missing user permission. Set capability=training_execution only when the CURRENT authorized goal requires training launch. For preparation-only goals, explain the later launch gap separately and use permission blockers for denied preparation tools; do not require a training backend to resume preparation. Complete a preparation-only goal only when its actual deliverables are verified. Do not ask for launch approval while the platform cannot launch. '
-            'Repeated absent/unchanged evidence triggers a bounded stop. No budget is reset. '
+            'A goal_outside_turn_scope error means the frozen turn cannot access that evidence, not that the goal is detached. Do not report missing user tool permission when the turn execution scope is dialogue. Correct the checkpoint within this turn: blocked with blocker kind=input and no out-of-scope file/task/run evidence, explain the scope mismatch. Never silently widen scope. Repeated absent/unchanged evidence triggers a bounded stop. No budget is reset. '
             'waiting needs wait_for={kind:synthetic_run or training_run,run_id:...} from a real registered platform run; '
-            'no general real-training backend is connected yet. Never invent a run or poll training with the model. '
+            'Check current training-execution readiness; never invent a run or poll training with the model. '
             'After a checkpoint finish briefly with progress; automatic continuation is handled by the controller.\n')
 
     def process(self, tid):
@@ -465,6 +527,11 @@ class Goals:
                 guide = db.execute('SELECT payload FROM conversation_guidance WHERE source_turn_id=?',(tid,)).fetchone()
                 if guide and not (json.loads(guide[0])['kind']=='next_step' and checkpoint and checkpoint['outcome']=='completed'):
                     goal.update(state='waiting_input',reason='goal_user_choice',summary=json.loads(guide[0])['question'])
+                elif not checkpoint and (db.execute('SELECT 1 FROM goal_checkpoint_rejections WHERE turn_id=?',(tid,)).fetchone() or self.frozen_config(db,tid).get('execution_scope')=='dialogue'):
+                    goal.update(state='blocked',reason='goal_scope_blocked',
+                        summary='本轮仅允许对话，无法完成需要文件或作业证据的任务；已停止自动接续。',
+                        next_action='核对任务范围后继续；工具自动批准不会改变本轮范围。',
+                        blocker={'kind':'input','required_action':'使用任务栏的原范围恢复入口，或在输入框说明下一步工作。'})
                 elif not checkpoint:
                     goal['stagnant_turns'] += 1
                     goal.update(summary='本轮未保存目标检查点。',next_action='核对当前目标和已有结果，保存真实目标检查点；不要重复已完成的操作。',reason='goal_checkpoint_missing')
@@ -560,6 +627,10 @@ class Goals:
                     if (goal.get('blocker') or {}).get('capability')=='training_execution' and not self.s.task_code.execution_readiness()['available']:
                         raise Conflict('goal_training_backend_not_ready')
                     if goal.get('reason') in CONTEXT_BLOCKERS:raise Conflict('goal_context_recovery_required')
+                    recovery=self.scope_recovery(db,goal)
+                    if body.resume_scope is not None:
+                        if not recovery or body.resume_scope!=recovery['execution_scope']:raise Conflict('goal_scope_recovery_not_available')
+                    elif recovery:raise Conflict('goal_scope_recovery_required')
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
                     if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
@@ -573,6 +644,10 @@ class Goals:
                         if not any(o['model']==model and body.reasoning_effort in o['efforts'] for o in self.s.reasoning_options()):
                             raise ValueError('reasoning_effort_not_supported')
                         goal['request_template']['reasoning_effort']=body.reasoning_effort
+                    if body.resume_scope is not None:
+                        goal['scope_resume']={**recovery,'parent_turn_id':goal['last_turn_id'],'approved_revision':goal['revision']}
+                        goal['user_instructions']=[*goal['user_instructions'],{'source':'scope_recovery','text':'用户选择按此前同一目标范围继续；保留最近任务要求、当前工具权限、数据与独立训练预算门禁，不新增训练授权。'}][-12:]
+                        goal['blocker']=None
                     goal.update(state='waiting' if goal.get('wait_for') else 'active',reason='user_resume',stagnant_turns=0)
                     if active and active['status']!='completed':
                         goal['next_action']='先核对上一轮失败或中断的实际执行状态，再修复并推进；不得重复派发状态未知的操作。'
@@ -618,6 +693,7 @@ class Goals:
         if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='goal_context_recoveries_legacy'").fetchone():
             db.execute("DELETE FROM goal_context_recoveries_legacy WHERE source_conversation=? OR json_extract(document,'$.conversation_id')=?",(cid,cid))
         db.execute('DELETE FROM goal_events WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
+        db.execute('DELETE FROM goal_checkpoint_rejections WHERE turn_id IN (SELECT turn_id FROM goal_turns WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?))',(cid,))
         db.execute('DELETE FROM goal_turns WHERE goal_id IN (SELECT id FROM research_goals WHERE conversation_id=?)',(cid,))
         db.execute('DELETE FROM research_goals WHERE conversation_id=?',(cid,))
 

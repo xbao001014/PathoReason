@@ -1,0 +1,29 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 0,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "max_turns": {
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Max Turns",
+      "type": "integer"
+    },
+    "max_wall_seconds": {
+      "maximum": 86400,
+      "minimum": 60,
+      "title": "Max Wall Seconds",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "max_turns",
+    "max_wall_seconds"
+  ],
+  "title": "ProjectBudgetChange",
+  "type": "object"
+}

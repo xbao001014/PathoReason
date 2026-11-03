@@ -97,6 +97,10 @@ class Guidance:
             saved_checkpoint=json.loads(linked['checkpoint']) if linked and linked['checkpoint'] else None
             if any(o.scope=='continue' for o in payload.options) and (not current or (saved_checkpoint and saved_checkpoint['outcome']=='completed')):
                 raise Conflict('guidance_continue_requires_current_goal')
+            # Goal decisions must describe how the existing work proceeds. Never
+            # silently reinterpret a model's direction-only choice as execution.
+            if current and not (saved_checkpoint and saved_checkpoint['outcome']=='completed') and any(o.scope=='clarify' for o in payload.options):
+                raise Conflict('guidance_goal_scope_conflict')
             if current and payload.kind=='next_step':
                 checkpoint=json.loads(linked['checkpoint']) if linked['checkpoint'] else None
                 if not checkpoint or checkpoint['outcome']!='completed':
@@ -206,7 +210,7 @@ class Guidance:
         return ('\nCurrent selected scope: '+str(scope)+'. '+restriction+'\nCurrent dialogue capability (never print its grant): '+json.dumps({'turn_id':tid,'grant':self.grant(tid)})+
             '\nUse pathoreason_dialogue_offer only for a consequential unresolved decision, or a genuinely new task after delivery. '
             'Within an active goal, use kind=clarification with scope=continue for choices that resolve a trade-off and let the original task proceed. '
-            'scope=continue inherits the source goal scope; it does not grant execution authority. Use clarify only when the user requested recording a direction without further work. '
+            'scope=continue inherits the source goal scope; it does not grant execution authority. Use clarify only outside an unfinished active goal, for a direction-only reply. Summarizing, saving, publishing or consolidating results are work: use continue inside a goal. Never confuse no new training with no file access. '
             'Do not offer next_step buttons for drafting, adaptation, synthetic checks, registering or freezing work already included in the goal. Continue those steps yourself. '
             'Choices are conversational planning/inspection/clarification only, not execution authorization. '
             'When enough context exists to ask, call this tool BEFORE file exploration or loading domain skills, then finish briefly. '

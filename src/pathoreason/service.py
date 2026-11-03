@@ -186,6 +186,10 @@ class Service:
                         prior=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(parent['config_digest'],)).fetchone()[0])
                     runtime_config['execution_scope']=prior.get('execution_scope','standard')
                     runtime_config['goal_execution_scope']=prior.get('goal_execution_scope')
+                    restored_scope=_goal_auto.get('scope_resume')
+                    if restored_scope and restored_scope['parent_turn_id']==_goal_auto['last_turn_id']:
+                        runtime_config['execution_scope']=restored_scope['execution_scope']
+                        runtime_config['goal_execution_scope']=restored_scope['execution_scope']
                 runtime_config.update(time_accounting='tool_excluded_v1',max_turn_wall_seconds=study['budget'].get('max_turn_wall_seconds',86400))
                 gpu_binding=self.gpu_settings.frozen(cid)
                 if gpu_binding:runtime_config['gpu_binding']=gpu_binding
