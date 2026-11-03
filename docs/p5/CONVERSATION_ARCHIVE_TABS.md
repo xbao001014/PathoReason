@@ -24,3 +24,7 @@
 - 原生集成、模型行为及科学验证：此次未新增验收，不以 UI/后端夹具通过代替。
 
 证据：`/data/bxn/PathoReason/acceptance/archive-tabs-20261103/`，包含构建、回归、浏览器脚本/结果/截图、失败与干预说明，以及静态发布记录。发布仅追加新静态资源并原子替换 index.html，保留旧资源与发布前备份，不重启应用/OpenCode/训练。线上结果见 `browser-live.json`，进程身份见 `release.json`。
+
+## 项目空间宽度补发
+
+同日按用户要求将整体宽度增加 10%：桌面 320→352px，761–1150px 屏宽 280→308px。统一修改 tokens.css；移动抽屉继续受可用视口上限约束，避免横向溢出。TypeScript/Vite 及 1440/1024/390/320px 浏览器实际宽度、无横向溢出、折叠/展开检查通过，真实 API 写入 0。静态补发不重启应用、OpenCode 或训练。证据位于 `/data/bxn/PathoReason/acceptance/project-space-width-20261103/`。

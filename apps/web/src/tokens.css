@@ -59,7 +59,7 @@
   --page-max-width: 1280px;
   --chat-gutter: 28px;
   --chat-width-scale: .8;
-  --project-space-width: 320px;
+  --project-space-width: 352px;
   --sidebar-transition: 280ms;
   --shell-inset: 12px;
   --shell-gap: 12px;
@@ -80,5 +80,5 @@
 }
 
 @media (min-width: 761px) and (max-width: 1150px) {
-  :root { --project-space-width: 280px; }
+  :root { --project-space-width: 308px; }
 }
