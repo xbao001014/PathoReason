@@ -38,3 +38,7 @@
 ## 搜索焦点边框补发
 
 同日按用户反馈移除搜索 input 继承的内部灰色 outline，仅在整个搜索容器 focus-within 时高亮蓝色圆角边框（沿用 status-info），以 inset 描边避免尺寸变化。失焦恢复原边框，键盘与鼠标焦点效果一致；作用域仅限项目空间搜索。构建与 1440/1024/390/320px 实际鼠标点击、Shift+Tab、失焦、无布局偏移/溢出检查通过。静态发布无服务重启、真实写请求或模型调用。证据：`/data/bxn/PathoReason/acceptance/project-search-focus-20261103/`。
+
+## 项目空间标题字号补发
+
+同日按用户要求将项目空间顶部 PathoReason 从 18px 调至集中维护的品牌字号 22px（text-project-brand），桌面与手机保持一致。构建及 1440/1024/390/320px 浏览器字号实测、标题与折叠按钮间距、无横向溢出、折叠/展开检查通过。静态发布无服务重启或真实写请求。证据：`/data/bxn/PathoReason/acceptance/project-brand-size-20261103/`。
