@@ -53,7 +53,7 @@ export const ConversationHistory=forwardRef<HistoryHandle,{turns:TurnView[];chil
   const el=scroll.current,body=content.current,container=frame.current;if(!el||!body||!container)return;
   let raf=0;
   const changed=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(updatePosition);};
-  const resize=new ResizeObserver(()=>{setHeight(container.clientHeight);const panel=container.parentElement!.getBoundingClientRect();setNavigationCenter(panel.top+panel.height/2-container.getBoundingClientRect().top);if(following.current)latest();else changed();});
+  const resize=new ResizeObserver(()=>{if(!container.isConnected||!container.parentElement)return;setHeight(container.clientHeight);const panel=container.parentElement.getBoundingClientRect();setNavigationCenter(panel.top+panel.height/2-container.getBoundingClientRect().top);if(following.current)latest();else changed();});
   resize.observe(body);resize.observe(container);resize.observe(container.parentElement!);el.addEventListener('scroll',changed,{passive:true});
   // Stop following immediately on upward input, before a streaming update arrives.
   const wheel=(e:WheelEvent)=>{if(e.deltaY<0)following.current=false;};
