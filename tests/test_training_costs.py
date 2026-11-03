@@ -1,6 +1,6 @@
 import copy
 import pytest
-from pathoreason.training_costs import summarize
+from pathoreason.training_costs import summarize,render_table
 
 
 def projection():
@@ -67,3 +67,16 @@ def test_evaluation_groups_inherit_parent_fit_parameters():
     groups=summarize(p)['experiments'][0]['completed_groups']
     assert len(groups)==2
     assert {g['dependency_parameters'][0]['parameters']['early_stop_patience'] for g in groups}=={0,5}
+
+
+def test_display_keeps_model_identity_next_to_actual_group_not_expected_order():
+    p=projection();e=p['experiments'][0]
+    e['units'][0]['parameters']['model']='other'
+    e['units'][1]['parameters']['model']='target'
+    e['attempts']=e['attempts'][:2]
+    result=summarize(p);table=render_table(result)
+    target=next(line for line in table.splitlines() if '| target |' in line)
+    other=next(line for line in table.splitlines() if '| other |' in line)
+    assert '| 120 |' in target and '| 100 |' not in target
+    assert '| 100 |' in other and '| 120 |' not in other
+    assert len({g['group_id'] for g in result['experiments'][0]['completed_groups']})==2

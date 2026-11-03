@@ -2,6 +2,7 @@
 import json
 import math
 import statistics
+import hashlib
 
 
 def _measured(value):
@@ -54,6 +55,7 @@ def summarize(progress):
             dependencies.sort(key=lambda d:json.dumps(d,sort_keys=True))
             key = json.dumps([unit['phase'],parameters,dependencies], sort_keys=True, ensure_ascii=False)
             group = groups.setdefault(key, {'phase':unit['phase'], 'parameters':parameters,
+                                            'group_id':hashlib.sha256(key.encode()).hexdigest()[:16],
                                             'dependency_parameters':dependencies,
                                             'attempts':[]})
             group['attempts'].append(receipt)
@@ -72,3 +74,32 @@ def summarize(progress):
             'metric':'attempt elapsed wall seconds; not per-attempt GPU billing',
             'scope':'descriptive evidence, not a budget authorization or future cost prediction',
             'experiments':experiments}
+
+
+def render_table(summary):
+    """Keep identities beside numbers so callers need not relabel array indices."""
+    lines=['Elapsed wall seconds, not GPU billing. Read-only observations; no training authorization.']
+    def cell(value):
+        if value is None:return 'unknown'
+        if isinstance(value,float):return f'{value:.3f}'
+        return str(value).replace('|','\\|').replace('\n',' ')
+    for experiment in summary['experiments']:
+        lines.extend(['', '| experiment | group | phase | model | epochs | early_stop | wd | mechanism | n/measured | mean | median | min | max |',
+                      '|---|---|---|---|---|---|---|---|---|---|---|---|---|'])
+        for group in experiment['completed_groups']:
+            params=group['parameters']
+            parent=group['dependency_parameters']
+            inherited=parent[0].get('parameters',{}) if len(parent)==1 else {}
+            def parameter(key):return params.get(key,inherited.get(key))
+            stats=group['statistics']
+            values=[experiment['experiment_id'],group['group_id'],group['phase'],parameter('model'),
+                    parameter('epochs'),parameter('early_stop_patience'),str(parameter('weight_decay')) if parameter('weight_decay') is not None else None,
+                    parameter('mechanism'),str(stats['attempt_count'])+'/'+str(stats['measured_count']),
+                    stats['mean_seconds'],stats['median_seconds'],stats['min_seconds'],stats['max_seconds']]
+            lines.append('| '+' | '.join(cell(value) for value in values)+' |')
+        failed=experiment['failed_elapsed_statistics']
+        lines.append(f"\n{experiment['experiment_id']} failed attempts: {failed['attempt_count']}; "
+                     f"measured elapsed sum: {cell(failed['observed_sum_seconds'])}; "
+                     f"ledger wall/GPU: {cell(experiment['ledger_used_wall_seconds'])}/{cell(experiment['ledger_used_gpu_seconds'])}.\n")
+    lines.append('Display labels omit some parameters. JSON preserves all grouping parameters, dependency parameters and attempt references. Do not rename groups by row position.')
+    return '\n'.join(lines)
