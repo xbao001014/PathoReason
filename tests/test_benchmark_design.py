@@ -91,8 +91,7 @@ def test_catalog_navigation_and_network_permission_binding():
             rules = formal_rules('/workspace', PermissionSettings(mode=mode, webfetch=value))
             network = {r['permission']: r['action'] for r in rules if r['permission'] in ('webfetch', 'websearch')}
             assert network['webfetch'] == network['websearch']
-            if value == 'deny':
-                assert network['websearch'] == 'deny'
+            assert network['websearch'] == {'ask':'ask','auto':'allow','custom':value}[mode]
 
 
 def pdf_fixture():

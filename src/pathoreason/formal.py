@@ -205,7 +205,7 @@ For pathology API data acquisition, load the native pathology-data-api skill and
         with self.s.store.connect() as db:
             frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()
         frozen=json.loads(frozen[0]) if frozen else {}
-        policy=PermissionSettings.model_validate(frozen['permission_settings']) if frozen.get('permission_settings') else self.permissions.view(row['conversation_id']).settings
+        policy=PermissionSettings.from_stored(frozen['permission_settings']) if frozen.get('permission_settings') else self.permissions.view(row['conversation_id']).settings
         rules=formal_rules(record['workspace'],policy,frozen.get('execution_scope','standard'))
         effective={tool:next(r['action'] for r in reversed(rules) if r['permission']==tool and r['pattern']=='*') for tool in TOOLS}
         if frozen.get('invocation_policy'):

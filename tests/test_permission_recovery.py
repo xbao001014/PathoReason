@@ -8,7 +8,7 @@ from pathoreason.persistence import Conflict
 
 
 def policy(**overrides):
-    return PermissionSettings(mode='auto',**{t:overrides.get(t,'deny') for t in TOOLS})
+    return PermissionSettings(mode='custom',**{t:overrides.get(t,'deny') for t in TOOLS})
 
 
 async def blocked(fixture,kind='permission'):
@@ -21,7 +21,7 @@ async def blocked(fixture,kind='permission'):
     return s,r,v,cid,tid,body
 
 
-def test_auto_preserves_denials_and_reports_actual_actions(fixture):
+def test_same_custom_actions_do_not_change_goal(fixture):
     async def case():
         s,r,v,cid,tid,body=await blocked(fixture)
         initial=await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=PermissionSettings(mode='custom',**{t:'deny' for t in TOOLS})))
@@ -40,7 +40,7 @@ def test_effective_change_marks_permission_blocker_for_review_without_dispatch(f
         await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=policy()))
         original=s.store.turn(tid);g=s.goals.view(cid)
         with s.store.connect() as db:old_events=[tuple(x) for x in db.execute('SELECT * FROM goal_events ORDER BY id')]
-        saved=await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=1,settings=policy(**{t:'allow' for t in TOOLS})))
+        saved=await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=1,settings=PermissionSettings(mode='auto',**{t:'deny' for t in TOOLS})))
         assert saved.effective_actions=={t:'allow' for t in TOOLS}
         updated=s.goals.view(cid)
         assert updated.state=='blocked' and updated.reason=='goal_permissions_updated'
@@ -72,7 +72,7 @@ def test_permission_save_does_not_clear_unrelated_or_user_stopped_goals(fixture,
             with s.store.connect(True) as db:
                 g=s.goals._latest(db,cid);g['state']=state;s.goals._save(db,g,'fixture_state')
         before=s.goals.view(cid)
-        await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=policy(**{t:'allow' for t in TOOLS})))
+        await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=PermissionSettings(mode='auto',**{t:'deny' for t in TOOLS})))
         assert s.goals.view(cid)==before and len(r.calls)==1
         await s.close()
     asyncio.run(case())
@@ -85,7 +85,7 @@ def test_permission_and_goal_projection_rollback_together(fixture,monkeypatch):
         def fail(*args):raise RuntimeError('receipt unavailable')
         monkeypatch.setattr(s.goals,'_save',fail)
         with pytest.raises(RuntimeError,match='receipt unavailable'):
-            await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=policy(**{t:'allow' for t in TOOLS})))
+            await s.formal.permissions.update(cid,PermissionSettingsUpdate(expected_revision=0,settings=PermissionSettings(mode='auto',**{t:'deny' for t in TOOLS})))
         assert s.formal.permissions.view(cid)==before and s.goals.view(cid)==goal
         await s.close()
     asyncio.run(case())

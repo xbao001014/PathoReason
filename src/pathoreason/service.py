@@ -290,7 +290,7 @@ class Service:
                     frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()[0])
                 if self.formal.record(row['project_id']):
                     from .permission_settings import PermissionSettings
-                    await self.runtime.configure_formal_permissions(sid,directory,PermissionSettings.model_validate(frozen.get('permission_settings') or {}),**({'execution_scope':frozen['execution_scope']} if frozen.get('execution_scope','standard')!='standard' else {}))
+                    await self.runtime.configure_formal_permissions(sid,directory,PermissionSettings.from_stored(frozen.get('permission_settings') or {}),**({'execution_scope':frozen['execution_scope']} if frozen.get('execution_scope','standard')!='standard' else {}))
                 prompt=self.prompt(row)
                 self.store.update(tid,dispatch_state='dispatching')
                 dispatch=self.runtime.prompt_formal if self.formal.record(row['project_id']) else self.runtime.prompt

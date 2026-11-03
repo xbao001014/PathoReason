@@ -1,6 +1,6 @@
 """Conversation-scoped permissions. Changes affect future turns, never replay tools."""
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .persistence import Conflict, encoded, now
 import json
 
@@ -9,17 +9,36 @@ TOOLS = ('bash', 'edit', 'webfetch', 'external_directory')
 
 class PermissionSettings(BaseModel):
     model_config = ConfigDict(extra='forbid')
+    semantics_version: Literal[2] = 2
     mode: Literal['ask', 'auto', 'custom'] = 'ask'
     bash: Action = 'ask'
     edit: Action = 'ask'
     webfetch: Action = 'ask'
     external_directory: Action = 'ask'
 
+    @model_validator(mode='after')
+    def apply_preset(self):
+        if self.mode != 'custom':
+            for tool in TOOLS:
+                setattr(self, tool, 'allow' if self.mode == 'auto' else 'ask')
+        return self
+
     def action(self, tool):
-        value = getattr(self, tool)
-        if value == 'deny':
-            return value
-        return {'ask': 'ask', 'auto': 'allow'}.get(self.mode, value)
+        return getattr(self, tool)
+
+    @classmethod
+    def from_stored(cls, document):
+        """Project legacy effective actions without rewriting history or granting access."""
+        value = json.loads(document) if isinstance(document, str) else dict(document)
+        if 'semantics_version' not in value:
+            mode = value.get('mode', 'ask')
+            actions = {tool: ('deny' if value.get(tool) == 'deny' else
+                {'ask': 'ask', 'auto': 'allow'}.get(mode, value.get(tool, 'ask')))
+                for tool in TOOLS}
+            if mode != 'custom' and 'deny' in actions.values():
+                value['mode'] = 'custom'
+            value.update(actions)
+        return cls.model_validate(value)
 
 class PermissionSettingsUpdate(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -72,7 +91,7 @@ class ConversationPermissions:
         with self.s.store.connect() as db:
             row = db.execute('SELECT revision,document FROM conversation_permission_settings '
                              'WHERE conversation_id=? ORDER BY revision DESC LIMIT 1', (cid,)).fetchone()
-        policy=PermissionSettings.model_validate_json(row['document']) if row else PermissionSettings()
+        policy=PermissionSettings.from_stored(row['document']) if row else PermissionSettings()
         return PermissionSettingsView(conversation_id=cid, revision=row['revision'] if row else 0,
             settings=policy,effective_actions={tool:policy.action(tool) for tool in TOOLS})
 

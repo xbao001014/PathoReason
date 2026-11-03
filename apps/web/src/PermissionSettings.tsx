@@ -10,9 +10,9 @@ const permissionIcons={ask:'permissionAsk',auto:'permissionAuto',custom:'permiss
 const tools={bash:'命令执行',edit:'文件修改',webfetch:'网络访问',external_directory:'外部目录'};
 type Tool=keyof typeof tools;
 function effective(policy:Policy):Record<Tool,'allow'|'ask'|'deny'>{
- return Object.fromEntries(Object.keys(tools).map(key=>{const value=policy[key as Tool]||'ask';return [key,value==='deny'?'deny':policy.mode==='auto'?'allow':policy.mode==='ask'?'ask':value];})) as Record<Tool,'allow'|'ask'|'deny'>;
+ return Object.fromEntries(Object.keys(tools).map(key=>[key,policy.mode==='auto'?'allow':policy.mode==='custom'?(policy[key as Tool]||'ask'):'ask'])) as Record<Tool,'allow'|'ask'|'deny'>;
 }
-function policyLabel(policy:Policy){return modes[policy.mode||'ask']+(Object.values(effective(policy)).includes('deny')?' · 有禁止项':'');}
+function policyLabel(policy:Policy){return modes[policy.mode||'ask'];}
 const errors:Record<string,string>={permission_settings_turn_active:'当前回合仍在执行，请结束后修改权限。',permission_settings_revision_conflict:'权限已在其他窗口更新，请关闭并重新打开设置。',permission_settings_native_mismatch:'原生权限尚未确认，未发送新请求。'};
 
 export function PermissionSettings({cid,active}:{cid:string;active:boolean}){
@@ -30,10 +30,9 @@ export function PermissionSettings({cid,active}:{cid:string;active:boolean}){
    <header><h2>权限设置</h2><button type="button" className="icon-button" aria-label="关闭权限设置" disabled={busy} onClick={close}>×</button></header>
    <form className="dialog-body" onSubmit={e=>{e.preventDefault();save();}}>
     {draft&&<>
-     <fieldset disabled={busy||active}><legend>当前对话</legend><div className="permission-modes">{Object.entries(modes).map(([key,label])=><label key={key}><input type="radio" name="permission-mode" checked={draft.mode===key} onChange={()=>setDraft({...draft,mode:key as Policy['mode']})}/>{label}</label>)}</div></fieldset>
-     {draft.mode==='auto'&&<p className="permission-consequence">自动执行原本需要确认的操作，可能修改文件、启动进程或产生费用；明确禁止的规则仍然生效。</p>}
+     <fieldset disabled={busy||active}><legend>当前对话</legend><div className="permission-modes">{Object.entries(modes).map(([key,label])=><label key={key}><input type="radio" name="permission-mode" checked={draft.mode===key} onChange={()=>{const next={...draft,mode:key as Policy['mode']};setDraft({...next,...effective(next)});}}/>{label}</label>)}</div></fieldset>
+     {draft.mode==='auto'&&<p className="permission-consequence">允许全部四项工具直接执行，可能修改文件、启动进程或产生费用。</p>}
      {<fieldset disabled={busy||active} className="permission-tools"><legend>实际工具权限</legend>{Object.entries(tools).map(([key,label])=><label key={key}>{label}<ComposerSelect label={label} variant="form" disabled={busy||active} value={effective(draft)[key as Tool]} options={[{value:'ask',label:'询问'},{value:'allow',label:'允许'},{value:'deny',label:'禁止'}]} onChange={value=>setDraft({...draft,...effective(draft),mode:'custom',[key]:value})}/></label>)}</fieldset>}
-     {draft.mode==='auto'&&Object.values(effective(draft)).includes('deny')&&<button type="button" disabled={busy||active} onClick={()=>setDraft({...draft,mode:'auto',bash:'allow',edit:'allow',webfetch:'allow',external_directory:'allow'})}>允许全部工具并自动批准</button>}
      <div className="permission-notes"><p className="permission-scope">仅作用于当前对话的后续回合。研究预算与审核要求保持不变。</p>
      <details><summary>会话授权与限制</summary><p>“本会话同类操作”按审批卡片展示的规则授权；切回逐次确认不会撤销这些原生会话授权。需要禁止某类操作时使用自定义“禁止”，或新建对话重新授权。工具权限不是操作系统沙箱。</p><a href="https://opencode.ai/docs/permissions/" target="_blank" rel="noreferrer">OpenCode 权限文档 ↗</a></details></div>
     </>}

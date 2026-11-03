@@ -13,13 +13,13 @@ def action(rules,tool,path='anything'):
     matches=[r['action'] for r in rules if fnmatchcase(tool,r['permission']) and fnmatchcase(path,r['pattern'])]
     return matches[-1]
 
-def test_modes_preserve_explicit_denies_and_private_file_rules():
+def test_presets_and_custom_keep_private_file_rules():
     for mode in ['ask','auto','custom']:
         rules=formal_rules('/workspace',PermissionSettings(mode=mode,bash='deny',edit='ask',external_directory='deny'))
-        assert action(rules,'bash')=='deny'
+        assert action(rules,'bash')=={'ask':'ask','auto':'allow','custom':'deny'}[mode]
         assert action(rules,'read','/home/bxn/.config/pathoreason/credentials.env')=='deny'
         assert action(rules,'task')=='deny'
-        assert action(rules,'external_directory','/workspace/file')=='deny'
+        assert action(rules,'external_directory','/workspace/file')==('deny' if mode=='custom' else 'allow')
         assert action(rules,'edit')==('allow' if mode=='auto' else 'ask')
     assert action(formal_rules('/workspace',PermissionSettings(mode='custom',edit='allow')),'edit')=='allow'
     with pytest.raises(ValidationError):PermissionSettings(mode='all',bash='allow')
@@ -52,7 +52,7 @@ def test_policy_frozen_before_prompt_active_change_refused(fixture):
         for _ in range(30):
             if r.calls:break
             await asyncio.sleep(.02)
-        assert applied[0]['mode']=='auto' and applied[0]['webfetch']=='deny'
+        assert applied[0]['mode']=='auto' and applied[0]['webfetch']=='allow'
         with s.store.connect() as db:
             cfg=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['turn']['config_digest'],)).fetchone()[0])
         assert cfg['permission_revision']==1 and cfg['permission_settings']==applied[0]
@@ -73,7 +73,7 @@ def test_native_rule_update_is_verified_and_idempotent():
         await runtime.configure_formal_permissions('ses_test','/workspace',policy)
         await runtime.configure_formal_permissions('ses_test','/workspace',policy)
         assert calls==['GET','PATCH','GET','GET']
-        assert action(current['permission'],'bash')=='deny'
+        assert action(current['permission'],'bash')=='allow'
         async def stale(*args,**kwargs):return {'permission':[]}
         runtime.call=stale
         with pytest.raises(ValueError,match='native_mismatch'):await runtime.configure_formal_permissions('ses_test','/workspace',policy)
