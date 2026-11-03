@@ -369,7 +369,7 @@ dialog>header{padding:var(--card-padding)}
 .navigation-rail [data-tooltip]::after{content:attr(data-tooltip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#262626;color:var(--color-paper);font-size:var(--text-caption);font-weight:400;white-space:nowrap;padding:7px 10px;border-radius:var(--radius-buttons);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .12s}
 .navigation-rail [data-tooltip]:hover::after,.navigation-rail [data-tooltip]:focus-visible::after{opacity:1;visibility:visible}
 .project-sidebar{width:260px;padding:25px 18px 18px}
-.project-space-header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:0 2px 27px 8px}
+.project-space-header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:0 2px var(--spacing-16) 8px}
 .project-space-header strong{font-size:var(--text-project-brand);font-weight:600;letter-spacing:-.5px}
 .project-space-header small{display:block;font-size:var(--text-caption);color:var(--color-text-muted);margin-top:7px}
 .project-space-header .icon-button{flex:none;margin-top:0;width:27px;height:27px}

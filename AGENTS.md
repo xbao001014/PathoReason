@@ -277,3 +277,5 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 
 
 2026-11-03 项目昵称字标：PathoReason 改为衬线粗体＋斜体文字标识，30px／极窄屏 25px；构建及四屏宽布局、折叠检查通过，静态补发无服务重启。见 [昵称字标记录](docs/p5/CONVERSATION_ARCHIVE_TABS.md#项目昵称字标补发)。
+
+2026-11-03 标题留白：项目空间标题区下方间距从 27px 收紧为 16px；构建及四屏宽检查通过，已静态更新，见 [留白记录](docs/p5/CONVERSATION_ARCHIVE_TABS.md#标题区下方留白收紧)。
