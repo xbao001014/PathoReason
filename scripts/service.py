@@ -3,6 +3,7 @@ import argparse, json, os, signal, socket, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from pathoreason.settings import ROOT, settings, credential
+from pathoreason.service_ports import wait_until_bindable
 
 cfg=settings(); data=Path(cfg["data_root"]); control=data/"runtime/control";control.mkdir(parents=True,exist_ok=True)
 
@@ -36,9 +37,7 @@ def stop(name):
 def start(name):
     if record(name):return
     port=cfg["opencode_port"] if name=="opencode" else cfg["api_port"]
-    with socket.socket() as sock:
-        sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-        sock.bind(("127.0.0.1",port))
+    wait_until_bindable(port,timeout=5.0)
     env=dict(os.environ,PYTHONDONTWRITEBYTECODE="1",PYTHONPATH=str(ROOT/"src"))
     env["PATH"]=str(Path(cfg["codex_binary"]).parent)+":"+env.get("PATH","")
     tool_path_file=ROOT/".tools/manuscript-path.json"
