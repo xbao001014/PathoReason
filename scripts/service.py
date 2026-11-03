@@ -69,24 +69,41 @@ def start(name):
     time.sleep(.4)
     if child.poll() is not None:raise RuntimeError(name+" failed; inspect its service log")
 
-parser=argparse.ArgumentParser();parser.add_argument("action",choices=["start","stop","stop-app","status","restart-app","restart-runtime","refresh-native"]);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument("action",choices=["start","stop","stop-app","status","restart-app","restart-runtime","refresh-native","check-native"]);args=parser.parse_args()
 import fcntl
 with (control/"service.lock").open("a") as lock:
     fcntl.flock(lock,fcntl.LOCK_EX)
     if args.action=="stop":stop("app");stop("opencode")
     elif args.action=="stop-app":stop("app")
-    elif args.action=="refresh-native":
+    elif args.action in {"refresh-native", "check-native"}:
         import asyncio
         from pathoreason.runtime import OpenCode
-        from pathoreason.native_refresh import maintenance_directories,refresh_idle_instances
+        from pathoreason.native_refresh import maintenance_directories,refresh_idle_instances,configured_skills,bound_directories,inspect_skills
         if cfg.get("primary_runtime")=="codex":raise RuntimeError('native_refresh_requires_opencode')
-        if record('app'):raise RuntimeError('native_refresh_requires_app_offline')
-        directories=maintenance_directories(data,cfg['api_port'])
+        required= configured_skills(ROOT)
+        if args.action=='refresh-native':
+            if record('app'):raise RuntimeError('native_refresh_requires_app_offline')
+            directories=maintenance_directories(data,cfg['api_port'])
+        else:
+            directories=bound_directories(data)
         receipt=control/('native-refresh-'+str(time.time_ns())+'.jsonl')
         def save_receipt(value):
             with receipt.open('a') as file:file.write(json.dumps(value,ensure_ascii=False)+'\n')
-        asyncio.run(refresh_idle_instances(OpenCode(data,cfg['opencode_port']),directories,
-            {name:ROOT/'skills'/name/'SKILL.md' for name in ['benchmark-design','task-code-workspaces','training-execution']},save_receipt))
+        runtime=OpenCode(data,cfg['opencode_port'])
+        if args.action=='refresh-native':
+            asyncio.run(refresh_idle_instances(runtime,directories,required,save_receipt))
+        else:
+            async def audit():
+                results=[]
+                for directory in directories:
+                    result=await inspect_skills(runtime,directory,required)
+                    save_receipt(result);results.append(result)
+                return results
+            results=asyncio.run(audit())
+            print(json.dumps({'native_check_receipt':str(receipt),'directories':len(results),
+                'verified':bool(results) and all(r['verified'] for r in results),
+                'mismatches':[{'directory':r['directory'],'mismatches':r['mismatches']} for r in results if not r['verified']]}))
+            if not results or not all(r['verified'] for r in results):sys.exit(1)
         print(json.dumps({'native_refresh_receipt':str(receipt)}))
     elif args.action=="restart-app":stop("app");start("app")
     elif args.action=="restart-runtime":

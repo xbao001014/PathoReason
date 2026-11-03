@@ -30,6 +30,9 @@
         "title": "机制与消融",
         "description": "提出机制假设，组织对照与消融验证。",
         "skill_ids": [
+          "baseline-innovation",
+          "innovation-experiments",
+          "innovation-checkpoint",
           "mechanism_study"
         ]
       },
