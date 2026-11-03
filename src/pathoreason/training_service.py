@@ -50,7 +50,15 @@ class Training:
         return row
     def receipt(self,view,full=False):
         value=view.model_dump()
-        if full:return value
+        subjects={f.subject_id for f in view.plan.inputs if f.role=='sealed'}
+        exposure={}
+        with self.s.store.connect() as db:
+            for subject in sorted(subjects):
+                row=db.execute('SELECT document FROM training_exposure WHERE project_id=? AND subject_id=?',(view.project_id,subject)).fetchone()
+                exposure[subject]=json.loads(row[0])['count'] if row else None
+        if full:return {**value,'test_exposure':exposure}
+        known=[n for n in exposure.values() if n is not None]
+        value['test_exposure_summary']={'subjects':len(subjects),'unknown_subjects':sum(n is None for n in exposure.values()),'minimum':min(known) if known else None,'maximum':max(known) if known else None}
         plan=value.pop('plan');attempts=value.pop('attempts');events=value.pop('events')
         value.update(plan_summary={k:plan[k] for k in ('title','task_id','snapshot_id','environment_id','protocol','evaluation','gpu_uuid','memory_gib','proposed_budget')},
             input_count=len(plan['inputs']),fit_units=sum(u['phase']=='fit' for u in plan['units']),evaluation_units=sum(u['phase']=='evaluate' for u in plan['units']),
@@ -85,7 +93,7 @@ class Training:
                 if old[0]!=signature:raise Conflict('training_request_conflict')
                 if old[1] is None:raise Conflict('training_operation_pending_inspect_before_retry')
                 previous=json.loads(old[1])
-                if not body.include_plan and 'plan' in previous and 'attempts' in previous:previous=self.receipt(TrainingView.model_validate(previous))
+                if not body.include_plan and 'plan' in previous and 'attempts' in previous:previous=self.receipt(TrainingView.model_validate({k:v for k,v in previous.items() if k in TrainingView.model_fields}))
                 return previous
             db.execute('INSERT INTO training_requests VALUES(?,?,?,NULL)',(pid,key,signature))
         try:
@@ -148,8 +156,10 @@ class Training:
         link=self.s.goals.link(actor['turn_id']) if actor.get('turn_id') else None
         with self.account.db() as db:
             self._actor_running(db,actor)
+            previous_inputs={}
             if body.experiment_id:
                 d=self.account.get(db,body.experiment_id,pid)
+                previous_inputs={(f['id'],f['sha256'],f['subject_id'],f['role']):f['prior_test_exposures'] for f in d['plan']['inputs']}
                 if d['revision']!=body.expected_revision:raise Conflict('training_revision_conflict')
                 if d['status'] in ('queued','running','waiting_resource','stopping','completed','cancelled'):raise Conflict('training_plan_not_editable')
                 if d['scope_digest']!=scope_id:d.update(authorized=False,status='draft')
@@ -174,7 +184,11 @@ class Training:
                 if previous:
                     if previous.get('sealed') and f['role']=='development':raise Conflict('training_subject_previously_sealed_requires_protocol_review')
                     count=previous['count'];incoming=f['prior_test_exposures']
-                    if (count is None and incoming is not None) or (count is not None and incoming is not None and incoming<count):raise Conflict('training_test_exposure_cannot_be_reset')
+                    identity=(f['id'],f['sha256'],f['subject_id'],f['role'])
+                    same_baseline=identity in previous_inputs and incoming==previous_inputs[identity]
+                    # Repairing this experiment keeps its original declaration;
+                    # live exposures from its attempts are never overwritten.
+                    if not same_baseline and ((count is None and incoming is not None) or (count is not None and incoming is not None and incoming<count)):raise Conflict('training_test_exposure_cannot_be_reset')
                     previous['sealed']=previous.get('sealed',False) or f['role']=='sealed'
                     if incoming is None or (count is not None and incoming>count):previous['count']=incoming
                     db.execute('UPDATE training_exposure SET document=? WHERE project_id=? AND subject_id=?',(json.dumps(previous),pid,f['subject_id']))

@@ -356,6 +356,8 @@ def test_compact_receipts_and_project_plan_file_preserve_plan_and_idempotency(fi
         assert s.training.call(tool)==result
         inspect=tool.model_copy(update={'operation':'inspect','experiment_id':result['id'],'plan_path':None,'include_plan':True})
         full=s.training.call(inspect);assert full['plan']==body.plan.model_dump()
+        with s.training.account.db() as db:db.execute('UPDATE training_requests SET result=? WHERE project_id=? AND key=?',(json.dumps(full),v.project_id,'agent:from_file'))
+        assert s.training.call(tool)['plan_summary']['title']==body.plan.title
         path.write_text(body.plan.model_copy(update={'title':'Changed plan'}).model_dump_json())
         with pytest.raises(Conflict,match='request_conflict'):s.training.call(tool)
         outside=s.data/'other.json';outside.write_text(body.plan.model_dump_json())
@@ -395,3 +397,35 @@ def test_completed_preparation_kept_and_launch_phase_carries_used_goal_turns(fix
         assert s.goals.view(cid).turns_used==old.turns_used+1
         await s.close()
     asyncio.run(case())
+
+
+def test_evaluation_repair_keeps_original_exposure_baseline_without_reapproval(fixture,environment):
+    script='''import os,json,pathlib
+out=pathlib.Path(os.environ['PATHOREASON_OUTPUT_DIR']);spec=json.load(open(os.environ['PATHOREASON_INPUT_MANIFEST']))
+if spec['phase']=='evaluate':raise ValueError('synthetic evaluation failure')
+(out/'checkpoint.json').write_text('checkpoint')
+(out/'result.json').write_text('synthetic result')
+'''
+    s,r,v,cid,request,task,p,body,op=setup_plan(fixture,environment,script,units=1)
+    file=Path(v.workspace)/'sealed-synthetic.txt';file.write_text('synthetic sealed fixture')
+    plan=body.plan.model_dump();plan['evaluation']='previously_exposed'
+    plan['inputs']=[dict(id='sealed',path=str(file),sha256=file_digest(file),role='sealed',subject_id='test_subject',prior_test_exposures=21)]
+    plan['units'].append(dict(id='eval',label='Evaluate',phase='evaluate',entrypoint='runner.py',input_ids=['sealed'],depends_on=['unit_0'],output_files=['result.json']))
+    body=body.model_copy(update={'experiment_id':p.id,'expected_revision':p.revision,'plan':TrainingPlan.model_validate(plan)})
+    p=s.training.prepare(v.project_id,cid,body,{'kind':'fixture'});approve(s,cid,p)
+    failed=wait(s,p.id,v.project_id);assert failed.status=='failed'
+    with s.training.account.db() as db:assert json.loads(db.execute('SELECT document FROM training_exposure WHERE project_id=? AND subject_id=?',(v.project_id,'test_subject')).fetchone()[0])['count']==22
+    code=Path(task['code_path']);(code/'runner.py').write_text(script.replace("if spec['phase']=='evaluate':raise ValueError('synthetic evaluation failure')",''));commit(code)
+    op('revise','evaluation-repair',task_id=task['id'],expected_revision=1,reason='Synthetic evaluation repair')
+    check=op('check','evaluation-check',task_id=task['id'],expected_revision=2)
+    snap=op('freeze','evaluation-freeze',task_id=task['id'],expected_revision=2,check_id=check['id'])
+    body=body.model_copy(update={'expected_revision':failed.revision,'plan':body.plan.model_copy(update={'snapshot_id':snap['id']})})
+    repaired=s.training.prepare(v.project_id,cid,body,{'kind':'fixture'})
+    assert repaired.authorized and repaired.scope_digest==p.scope_digest and repaired.plan.inputs[0].prior_test_exposures==21
+    s.training.launch(p.id,v.project_id,{'kind':'fixture'},repaired.revision)
+    done=wait(s,p.id,v.project_id);assert done.status=='completed'
+    assert [a['phase'] for a in done.attempts]==['fit','evaluate','evaluate']
+    with s.training.account.db() as db:
+        assert json.loads(db.execute('SELECT document FROM training_exposure WHERE project_id=? AND subject_id=?',(v.project_id,'test_subject')).fetchone()[0])['count']==23
+        assert db.execute("SELECT count(*) FROM training_events WHERE experiment_id=? AND json_extract(document,'$.kind')='user_authorize'",(p.id,)).fetchone()[0]==1
+    with pytest.raises(Conflict,match='cannot_be_reset'):s.training.prepare(v.project_id,cid,body.model_copy(update={'experiment_id':None,'expected_revision':None}),{'kind':'fixture'})
