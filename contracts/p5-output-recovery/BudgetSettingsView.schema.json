@@ -96,7 +96,10 @@
         "suggested_reasoning_effort": {
           "anyOf": [
             {
-              "const": "low",
+              "enum": [
+                "low",
+                "none"
+              ],
               "type": "string"
             },
             {

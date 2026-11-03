@@ -103,7 +103,7 @@ class GoalView(BaseModel):
     objective: str
     state: Literal['active','paused','blocked','waiting_input','waiting','completed','budget_exhausted','cancelled']
     blocker: GoalBlocker | None = None
-    suggested_reasoning_effort: Literal['low'] | None = None
+    suggested_reasoning_effort: Literal['low','none'] | None = None
     summary: str = ''
     next_action: str = ''
     reason: str | None = None
@@ -173,9 +173,11 @@ class Goals:
         if goal:
             goal['suggested_reasoning_effort']=None
             request=goal.get('request_template',{})
-            if goal.get('reason')=='runtime_output_limit' and (request.get('reasoning_effort') or 'high') in ('high','max'):
-                if any(o['model']==request.get('model') and 'low' in o['efforts'] for o in self.s.reasoning_options()):
-                    goal['suggested_reasoning_effort']='low'
+            if goal.get('reason')=='runtime_output_limit':
+                current=request.get('reasoning_effort') or 'high'
+                suggestion='low' if current in ('high','max') else 'none' if current=='low' else None
+                if suggestion and any(o['model']==request.get('model') and suggestion in o['efforts'] for o in self.s.reasoning_options()):
+                    goal['suggested_reasoning_effort']=suggestion
         return GoalView.model_validate(goal) if goal else None
 
     def recover_interrupted_context(self):
@@ -398,7 +400,7 @@ class Goals:
             'The objective and actual user instructions define scope; your next_action is a proposal, never authority to expand it. '
             'Context transfer, if present, is prior dialogue provenance, not new execution authorization. Verify current files and receipts before continuing; never replay completed training or test evaluations. '
             'Existing permission, compute, test-data, executor and scientific gates remain unchanged. '
-            'For an unavailable execution backend report blocked; do not run a raw script around it. '
+            'An unavailable training backend blocks training launch, not independently available adaptation, synthetic checks or source freezing. Never run a raw training script around it. '
             'Repair task code in a new Agent-authored revision, preserve old failures and results. '
             'After an agreed baseline, pursue adaptation, dependency preparation, internal synthetic checks, checkpoint/receipt verification and source freezing as ready nodes of the same goal, within existing permissions and budget. These are not separate user approvals. '
             'For a necessary user choice offer clarification options with scope=continue to resolve the choice and advance this same goal, then report needs_input. Use scope=clarify only for an explicitly direction-only request. '
@@ -414,7 +416,7 @@ class Goals:
             'Use paused/cancelled only for an actual user request to pause/cancel, not for a missing capability or failure. '
             'Report inability honestly instead of calling an unfinished goal complete. '
             'For blocked outcomes include blocker={kind:platform|permission|input|resource,required_action:one concrete remedy}; for the unavailable training backend also set capability=training_execution. '
-            'Distinguish a platform capability gap from missing user permission; finish independent authorized preparation first and do not ask for launch approval while the platform cannot launch. '
+            'Distinguish a platform capability gap from missing user permission. Set capability=training_execution only when the CURRENT authorized goal requires training launch. For preparation-only goals, explain the later launch gap separately and use permission blockers for denied preparation tools; do not require a training backend to resume preparation. Complete a preparation-only goal only when its actual deliverables are verified. Do not ask for launch approval while the platform cannot launch. '
             'Repeated absent/unchanged evidence triggers a bounded stop. No budget is reset. '
             'waiting needs wait_for={kind:synthetic_run,run_id:...} from a real registered platform run; '
             'no general real-training backend is connected yet. Never invent a run or poll training with the model. '
@@ -445,7 +447,7 @@ class Goals:
             if row['status']!='completed':
                 error=json.loads(row['document']).get('error_code')
                 explanations={
-                    'runtime_output_limit':'模型达到单次输出上限，本轮回复未完成，已停止自动接续。思考内容也占用输出额度；可降低思考强度后重试，已有成果和消耗保留。',
+                    'runtime_output_limit':'模型达到单次输出上限，本轮回复未完成，已停止自动接续。思考内容也占用输出额度；可降低或关闭思考后重试，已有成果和消耗保留。',
                     'runtime_empty_response':'模型结束但未返回公开回复或工具结果，已停止自动接续；请核对模型运行状态后重试。',
                     'turn_time_limit':'项目 Agent 时间预算已用完，自动接续已停止；已有成果和消耗保留。',
                     'runtime_retry_blocked':'模型服务请求失败，自动重试已停止；请核对连接状态后恢复。',

@@ -4374,7 +4374,10 @@
             "anyOf": [
               {
                 "type": "string",
-                "const": "low"
+                "enum": [
+                  "low",
+                  "none"
+                ]
               },
               {
                 "type": "null"

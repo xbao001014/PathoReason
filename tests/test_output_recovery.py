@@ -48,6 +48,8 @@ def test_failed_native_output_blocks_goal_without_automatic_retry(fixture,finish
         row=s.store.turn(tid);assert row['status']=='failed' and json.loads(row['document'])['error_code']==expected
         goal=s.goals.view(cid);assert goal.state=='blocked' and goal.reason==expected
         assert goal.next_action=='' and '停止自动接续' in goal.summary
+        assert 'For preparation-only goals' in r.calls[0][3]
+        assert 'do not make the training backend a condition for resuming preparation' in r.calls[0][3]
         await s.goals.tick();await s.goals.tick();assert len(r.calls)==1
         assert s.formal.view(v.project_id).used_turns==1
         if finish=='length':assert goal.suggested_reasoning_effort=='low'
@@ -55,21 +57,22 @@ def test_failed_native_output_blocks_goal_without_automatic_retry(fixture,finish
     asyncio.run(case())
 
 
-def test_resume_effort_changes_next_dispatch_only_and_keeps_goal_and_usage(fixture):
+@pytest.mark.parametrize('effort',['low','none'])
+def test_resume_effort_changes_next_dispatch_only_and_keeps_goal_and_usage(fixture,effort):
     async def case():
         s,r,v,cid,tid,body=await start(fixture)
         original=s.store.turn(tid);digest=json.loads(original['document'])['config_digest']
         with s.store.connect() as db:frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(digest,)).fetchone()[0]
         s.state(tid,'failed','runtime_output_limit');s.goals.process(tid)
         goal=s.goals.view(cid)
-        await s.goals.control(cid,GoalControl(expected_revision=goal.revision,action='resume',reasoning_effort='low'))
+        await s.goals.control(cid,GoalControl(expected_revision=goal.revision,action='resume',reasoning_effort=effort))
         await s.goals.tick();next_id=s.store.turns(cid)[-1]['id'];await accepted(s,next_id)
-        assert next_id!=tid and r.last_effort=='low'
+        assert next_id!=tid and r.last_effort==effort
         assert s.goals.view(cid).id==goal.id and s.goals.view(cid).turns_used==2
         with s.store.connect() as db:
             assert db.execute('SELECT document FROM runtime_configs WHERE digest=?',(digest,)).fetchone()[0]==frozen
         assert s.formal.view(v.project_id).used_turns==2
-        assert s.view(s.store.turn(next_id))['reasoning_effort']=='low'
+        assert s.view(s.store.turn(next_id))['reasoning_effort']==effort
         assert s.store.turn(tid)['status']=='failed'
         await s.close()
     asyncio.run(case())
@@ -88,3 +91,17 @@ def test_invalid_resume_effort_is_rejected_without_goal_mutation(fixture,monkeyp
     asyncio.run(case())
     with pytest.raises(ValidationError,match='requires_resume'):
         GoalControl(expected_revision=1,action='pause',reasoning_effort='low')
+
+
+def test_low_exhaustion_suggests_none_without_automatic_parameter_change(fixture):
+    async def case():
+        s,r,v,cid,tid,body=await start(fixture)
+        s.state(tid,'failed','runtime_output_limit');s.goals.process(tid)
+        g=s.goals.view(cid)
+        await s.goals.control(cid,GoalControl(expected_revision=g.revision,action='resume',reasoning_effort='low'))
+        await s.goals.tick();tid2=s.store.turns(cid)[-1]['id'];await accepted(s,tid2)
+        s.state(tid2,'failed','runtime_output_limit');s.goals.process(tid2)
+        assert s.goals.view(cid).suggested_reasoning_effort=='none'
+        await s.goals.tick();assert len(r.calls)==2 and r.last_effort=='low'
+        await s.close()
+    asyncio.run(case())
