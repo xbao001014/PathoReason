@@ -44,3 +44,54 @@
 .output-recovery-fields label{display:flex;flex-direction:column;gap:var(--spacing-8);min-width:0}
 .output-usage{font-variant-numeric:tabular-nums;color:var(--color-text-secondary)}
 @media(max-width:480px){.output-recovery-fields{grid-template-columns:1fr}}
+
+/* One full-width trigger and distinct modules share the same inset and spacing scale. */
+.goal-panel{container-type:inline-size;container-name:status-panel}
+.goal-heading{padding:0;border-radius:var(--radius-cards)}
+.goal-panel[data-expanded="true"] .goal-heading{border-radius:0 0 var(--radius-cards) var(--radius-cards)}
+.goal-heading-toggle{min-height:48px;margin:0;padding:var(--spacing-12) var(--card-padding-input);border-radius:inherit;line-height:1.5}
+.goal-heading-toggle:hover,.goal-heading-toggle:focus-visible{background:var(--color-control-fill)}
+.goal-heading-toggle:focus{outline:none}
+.goal-heading-toggle:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--color-control-border);border-radius:inherit}
+.goal-body{display:flex;flex-direction:column;padding:0;overflow:hidden;max-height:min(42dvh,480px)}
+.goal-body[hidden]{display:none}
+.goal-module-tabs{display:grid;gap:var(--spacing-4);flex:none;padding:var(--spacing-8) var(--card-padding-compact);border-bottom:1px solid var(--color-hairline)}
+.goal-module-tabs button{min-width:0;padding:var(--spacing-8) var(--spacing-4);border:0;border-radius:var(--radius-buttons);background:transparent;color:var(--color-text-muted);font:inherit;line-height:1.5;white-space:nowrap}
+.goal-module-tabs button:hover{background:var(--color-control-fill)}
+.goal-module-tabs button[aria-selected="true"]{background:var(--color-paper);color:var(--color-ink);font-weight:var(--weight-primary);box-shadow:0 0 0 1px var(--color-hairline)}
+.goal-module-tabs button:focus-visible{outline:2px solid var(--color-ink);outline-offset:-2px}
+.goal-tab-short{display:none}
+.goal-module-panel{padding:var(--card-padding-compact);min-height:0;overflow:auto;overscroll-behavior:contain}
+.goal-module-panel[hidden]{display:none}
+.goal-progress-details{display:flex;flex-direction:column;gap:var(--spacing-16)}
+.goal-summary{margin:0;font-weight:var(--weight-support);line-height:1.65}
+.goal-progress-details>p{margin:0;line-height:1.65}
+.goal-details{padding-top:var(--spacing-16);border-top:1px solid var(--color-hairline)}
+.goal-details>summary{cursor:pointer;font-weight:var(--weight-support);color:var(--color-text-secondary)}
+.goal-details>summary:focus-visible{outline:2px solid var(--color-ink);outline-offset:3px;border-radius:var(--radius-buttons)}
+.goal-details p,.goal-details ul{margin:var(--spacing-12) 0 0;line-height:1.65}
+.goal-details ul{padding-left:var(--spacing-20)}
+.goal-details li+li{margin-top:var(--spacing-8)}
+.goal-details .goal-actions{margin-top:var(--spacing-16)}
+.goal-editor,.goal-recovery,.goal-progress-details .output-recovery{margin:0}
+.goal-editor .goal-actions{justify-content:flex-end}
+.goal-recovery p{margin:var(--spacing-12) 0 0;line-height:1.6}
+.goal-progress-details .output-recovery{display:flex;flex-direction:column;gap:var(--spacing-16)}
+.goal-progress-details .output-recovery p{margin:0}
+.goal-progress-details .output-recovery form{display:flex;flex-direction:column;gap:var(--spacing-16)}
+.goal-progress-details .output-recovery form>button{align-self:flex-end}
+@container status-panel (max-width:520px){
+ .goal-tab-full{display:none}
+ .goal-tab-short{display:inline}
+ .goal-module-tabs{padding-inline:var(--spacing-16)}
+ .output-recovery-fields{grid-template-columns:1fr}
+}
+@media(max-width:760px){.goal-body{max-height:min(32dvh,300px)}}
+@container status-panel (max-width:520px){
+ .goal-heading-toggle:has(.goal-state + .goal-state){display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:var(--spacing-12)}
+ .goal-heading-toggle:has(.goal-state + .goal-state) .goal-state:first-child{grid-column:1 / 3}
+ .goal-heading-toggle:has(.goal-state + .goal-state) .goal-heading-chevron{grid-column:3;grid-row:1 / 3}
+}
+/* A short transcript must not paint or intercept clicks over the expanded controls. */
+.chat-layout:has(.goal-panel[data-expanded="true"]:not([hidden])) .conversation-timeline{overflow:clip}
+@media(max-width:760px){.goal-body{max-height:min(25dvh,240px)}}
