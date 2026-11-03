@@ -108,3 +108,8 @@ def test_search_exposes_file_scope_not_search_contents():
 def test_heredoc_data_and_dynamic_python_are_not_claimed_as_written_files():
     assert tool_objects('bash',{'command':'cat <<\'PY\'\nPath("fake.txt").write_text("PRIVATE")\nPY\n'})['targets']==[]
     assert tool_objects('bash',{'command':'python -c \'open(get_path(), "w")\''})['targets']==[]
+
+
+def test_dynamic_open_mode_does_not_claim_read_or_write():
+    value=tool_objects('bash',{'command': 'python -c \'open("known.txt", choose_mode())\''})
+    assert value['targets']==[{'kind':'file','label':'known.txt','action':None}]

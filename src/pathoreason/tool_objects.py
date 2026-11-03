@@ -54,14 +54,14 @@ def python_objects(code):
                 for item in node.keywords:
                     if item.arg == 'mode':
                         mode = value(item.value)
-                action = 'write' if mode and any(c in mode for c in 'wax+') else 'read'
+                action = None if mode is None else 'write' if any(c in mode for c in 'wax+') else 'read'
             found.append(('file', path, action))
         elif isinstance(node.func, ast.Name) and node.func.id == 'open' and node.args:
             mode = value(node.args[1]) if len(node.args) > 1 else 'r'
             for item in node.keywords:
                 if item.arg == 'mode':
                     mode = value(item.value)
-            found.append(('file', value(node.args[0]), 'write' if mode and any(c in mode for c in 'wax+') else 'read'))
+            found.append(('file', value(node.args[0]), None if mode is None else 'write' if any(c in mode for c in 'wax+') else 'read'))
 
     def statements(body):
         for node in body:
