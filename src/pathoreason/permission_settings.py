@@ -5,6 +5,7 @@ from .persistence import Conflict, encoded, now
 import json
 
 Action = Literal['allow', 'ask', 'deny']
+TOOLS = ('bash', 'edit', 'webfetch', 'external_directory')
 
 class PermissionSettings(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -29,6 +30,7 @@ class PermissionSettingsView(BaseModel):
     conversation_id: str
     revision: int
     settings: PermissionSettings
+    effective_actions: dict[str, Action] = Field(default_factory=dict)
     applies_to: Literal['next_turn'] = 'next_turn'
 
 def formal_rules(directory, settings=None, execution_scope="standard"):
@@ -70,8 +72,9 @@ class ConversationPermissions:
         with self.s.store.connect() as db:
             row = db.execute('SELECT revision,document FROM conversation_permission_settings '
                              'WHERE conversation_id=? ORDER BY revision DESC LIMIT 1', (cid,)).fetchone()
+        policy=PermissionSettings.model_validate_json(row['document']) if row else PermissionSettings()
         return PermissionSettingsView(conversation_id=cid, revision=row['revision'] if row else 0,
-            settings=PermissionSettings.model_validate_json(row['document']) if row else PermissionSettings())
+            settings=policy,effective_actions={tool:policy.action(tool) for tool in TOOLS})
 
     async def update(self, cid, body):
         self.s.store.conversation(cid,writable=True)
@@ -97,4 +100,5 @@ class ConversationPermissions:
                 raise Conflict('permission_settings_revision_conflict')
             db.execute('INSERT INTO conversation_permission_settings VALUES(?,?,?,?)',
                        (cid, revision+1, encoded(body.settings), now()))
+            self.s.goals.permissions_changed(db,cid,current.settings,body.settings,revision+1)
         return self.view(cid)

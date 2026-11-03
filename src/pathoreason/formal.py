@@ -9,7 +9,7 @@ from . import contracts as c
 from .settings import ROOT
 from .persistence import Conflict,Missing,now,uid,encoded
 from .schema_v2 import RuntimeConfiguration,InvocationPolicy
-from .permission_settings import PermissionSettings,ConversationPermissions
+from .permission_settings import PermissionSettings,ConversationPermissions,formal_rules,TOOLS
 from .gpu_settings import GpuBinding
 
 class StudyBudget(BaseModel):
@@ -202,10 +202,12 @@ For pathology API data acquisition, load the native pathology-data-api skill and
 '''
     def prompt(self,row):
         record=self.record(row['project_id'])
-        policy=self.permissions.view(row['conversation_id'])
         with self.s.store.connect() as db:
             frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(json.loads(row['document'])['config_digest'],)).fetchone()
         frozen=json.loads(frozen[0]) if frozen else {}
+        policy=PermissionSettings.model_validate(frozen['permission_settings']) if frozen.get('permission_settings') else self.permissions.view(row['conversation_id']).settings
+        rules=formal_rules(record['workspace'],policy,frozen.get('execution_scope','standard'))
+        effective={tool:next(r['action'] for r in reversed(rules) if r['permission']==tool and r['pattern']=='*') for tool in TOOLS}
         if frozen.get('invocation_policy'):
             record={**record,'budget':{**record['budget'],**{k:frozen['invocation_policy'][k] for k in ['max_turns','max_wall_seconds']},'max_turn_wall_seconds':frozen.get('max_turn_wall_seconds',86400)}}
         instructions=self.instructions(row['project_id'],record)+'\nThe budget above is frozen for this turn. Workspace study.json and AGENTS.md retain the initial creation snapshot; later budget settings apply only to subsequent turns.'
@@ -215,7 +217,7 @@ For pathology API data acquisition, load the native pathology-data-api skill and
             command=shlex.join([str(ROOT/'.venv/bin/python'),str(ROOT/'scripts/compute_exec.py'),'--turn',row['id'],'--'])
             instructions=instructions.replace("AUTORESEARCH_COMPUTE_CONFIG to this workspace's compute.json",'AUTORESEARCH_COMPUTE_CONFIG to '+binding['compute_path'])
             instructions+='\nFrozen GPU binding for this turn: '+encoded(binding)+'\nFor every new GPU compute or legacy engine command, prefix the command with '+command+' . This launcher sets CUDA_VISIBLE_DEVICES to the selected UUID and AUTORESEARCH_COMPUTE_CONFIG to the frozen configuration, and checks the current UUID/index mapping. Do not override these variables or use a stale GPU index from previous chat or project files. Inside a single visible CUDA device use cuda:0. This is a future-task selection, not a reservation or permission to train. Existing jobs, frozen experiment plans, worker budgets and scientific/author gates remain unchanged. If an existing experiment is bound to another device, prepare and validate a new binding under its existing workflow; never edit its frozen config or silently migrate it. Recheck available memory before launching; if busy, report the resource blocker and allow another selection, without killing other processes.\n'
-        return instructions+'\nConversation permission settings: '+encoded(policy.settings)+'\nCurrent user request:\n'+row['user_text']
+        return instructions+'\nFrozen permission settings for this turn (revision '+str(frozen.get('permission_revision','legacy'))+'): '+encoded(policy)+'\nEffective tool actions for this turn, with execution scope applied: '+encoded(effective)+'\nEarlier dialogue permission claims describe older turns; use the frozen actions above to reassess an old permission blocker. These actions do not change scientific constraints, training authority or budgets.\nCurrent user request:\n'+row['user_text']
     def mode(self,cid):
         conv=self.s.store.conversation(cid)
         if not self.record(conv['project_id']):raise Conflict('formal_study_required')

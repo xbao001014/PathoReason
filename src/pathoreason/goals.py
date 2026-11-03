@@ -491,6 +491,20 @@ class Goals:
             if summary:current['summary']=summary
             self._save(db,current,reason)
 
+    def permissions_changed(self, db, cid, before, after, revision):
+        """Settings are not proof of Agent progress; keep the goal stopped for review."""
+        from .permission_settings import TOOLS
+        previous={tool:before.action(tool) for tool in TOOLS}
+        effective={tool:after.action(tool) for tool in TOOLS}
+        if previous==effective:return
+        goal=self._latest(db,cid)
+        if not goal or goal['state']!='blocked' or (goal.get('blocker') or {}).get('kind')!='permission':return
+        goal.update(reason='goal_permissions_updated',
+            summary='工具权限已更新，旧权限阻塞需按新设置重新核对。',
+            next_action='先按本轮冻结的实际权限重新核对旧权限阻塞，再推进已获授权的准备工作；保留原研究范围、历史暴露与训练门禁。',
+            permission_update={'revision':revision,'before':previous,'effective_actions':effective})
+        self._save(db,goal,'permission_settings_updated')
+
     async def control(self, cid, body):
         abort = None
         async with self.s.lock:
