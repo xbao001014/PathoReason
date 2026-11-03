@@ -12,3 +12,5 @@
 .training-tabs {display:flex;gap:var(--spacing-8);flex-wrap:wrap}
 .training-tabs [aria-current=true] {font-weight:var(--weight-support);border-color:var(--color-control-border)}
 @media(max-width:760px){.training-fields{grid-template-columns:1fr}.training-dialog .dialog-body{max-height:calc(100dvh - 140px)}}
+
+.training-device {overflow-wrap:anywhere}
