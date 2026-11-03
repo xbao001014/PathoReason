@@ -38,3 +38,11 @@ OpenCode 的请求上限由模型配置决定，普通 variant 不直接覆盖 m
 - 发布时核对全局模型回合、原生会话、权限和上下文操作空闲，再停应用、重载原生引擎并启动应用；训练执行器保持，原生会话 ID/数据库和原始产物保留。发布脚本记录前后身份、研究文件/表摘要和当前额度，原生目录/Skill 与输出 profile 均只读复核。
 
 证据：`/data/bxn/PathoReason/acceptance/output-settings-20261103/`。发布及线上验证以该目录 release.json、browser-live.json 为准。当前目标保持 blocked，未自动恢复、未增加项目预算、未启动训练。
+
+## 发布后只读复核与维护记录
+
+最终发布代码 `4c463f8`，应用与原生引擎已恢复健康。线上原生只读核验两个基模 × 三个输出档位及 high variant 全部匹配，加载的引擎天花板为 65536；8 个目录的 Skill 核验通过。真实页面 1440/390/320 三宽度显示历史失败思考 8192、正文 0、默认 8K；可选择 32K/64K 并保留 high，没有写请求或控制台异常。测试页面中的选值没有提交到用户项目。
+
+发布前后 turns、runtime_configs、research_goals、goal_events、training_experiments、training_attempts、bindings 全表摘要一致，3768 个研究文件保持不变，7 项实验仍 completed。目标保持原阻塞、已用预算保留，无真实模型调用或训练启动。完整证据为 release.json、live-profiles.json、native-check.txt、browser-live.json 与 interventions.json。
+
+维护失败也保留：首次使用系统 Python 缺少 httpx，已恢复旧应用后改用仓库虚拟环境；原生重载遇到进程退出与端口释放之间的竞态，确认端口释放后恢复服务，并在公共启动器补充 5 秒有界等待。两个专项测试覆盖延迟释放可启动、持续占用仍拒绝且不终止占用者。首次冷启动原生核验读取超时，原超时值不变，只读重试后 8 个目录通过。没有通过删历史、重置额度或终止未知进程完成发布。
