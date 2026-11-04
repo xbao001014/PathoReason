@@ -351,3 +351,6 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 
 
 2026-11-04 新窗口论文链路交接：[当前状态、已确认范围与后续优化入口](docs/p5/HANDOFF_MANUSCRIPT_CHAIN_20261104.md)。核对时 blueprint 已由用户批准并自动接续，当前 draft 待审；最新审核位于输入框上方。额度、材料及科学边界以交接快照和实时接口分别核对，不重建已进行的研究任务。
+
+
+2026-11-04 初稿完整性门禁：`0.6.33-p5-manuscript-integrity` 要求 draft 同包携带实际文献库及绑定正文 SHA 的跨材料完整性报告；后续审核请求结构化展示本版变化、关键结论与限制，非空图表清单逐图绑定编号、文件和图注。研究 Agent 修稿，平台不代替作者批准、不新增实验或额度。失败、验证与边界见 [初稿完整性](docs/p5/MANUSCRIPT_DRAFT_INTEGRITY.md)。

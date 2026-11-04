@@ -1,0 +1,491 @@
+{
+  "$defs": {
+    "GoalBlocker": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "platform",
+            "permission",
+            "input",
+            "resource"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "capability": {
+          "anyOf": [
+            {
+              "const": "training_execution",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability"
+        },
+        "required_action": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Required Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "required_action"
+      ],
+      "title": "GoalBlocker",
+      "type": "object"
+    },
+    "GoalEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Artifact Ids",
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Files",
+          "type": "array"
+        },
+        "task_check_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Task Check Ids",
+          "type": "array"
+        }
+      },
+      "title": "GoalEvidence",
+      "type": "object"
+    },
+    "GoalWait": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "synthetic_run",
+            "training_run"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "run_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "run_id"
+      ],
+      "title": "GoalWait",
+      "type": "object"
+    },
+    "ReviewIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "finding": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Finding",
+          "type": "string"
+        },
+        "location": {
+          "default": "",
+          "maxLength": 300,
+          "title": "Location",
+          "type": "string"
+        },
+        "blocking": {
+          "default": false,
+          "title": "Blocking",
+          "type": "boolean"
+        },
+        "resolved": {
+          "default": false,
+          "title": "Resolved",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "finding"
+      ],
+      "title": "ReviewIssue",
+      "type": "object"
+    },
+    "ReviewMaterial": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Role",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "artifact_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Artifact Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "label",
+        "artifact_id"
+      ],
+      "title": "ReviewMaterial",
+      "type": "object"
+    },
+    "ReviewRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "gate": {
+          "enum": [
+            "blueprint",
+            "draft",
+            "review",
+            "scientific",
+            "delivery"
+          ],
+          "title": "Gate",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "summary": {
+          "maxLength": 1800,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "materials": {
+          "items": {
+            "$ref": "#/$defs/ReviewMaterial"
+          },
+          "maxItems": 24,
+          "minItems": 1,
+          "title": "Materials",
+          "type": "array"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/ReviewIssue"
+          },
+          "maxItems": 40,
+          "title": "Issues",
+          "type": "array"
+        },
+        "author_questions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Author Questions",
+          "type": "array"
+        },
+        "changes": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Changes",
+          "type": "array"
+        },
+        "key_findings": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Key Findings",
+          "type": "array"
+        },
+        "key_limitations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Key Limitations",
+          "type": "array"
+        },
+        "audit_status": {
+          "default": "not_applicable",
+          "enum": [
+            "not_applicable",
+            "passed",
+            "blocked"
+          ],
+          "title": "Audit Status",
+          "type": "string"
+        },
+        "audited_manuscript_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Audited Manuscript Sha256"
+        },
+        "scientific_basis_digest": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scientific Basis Digest"
+        }
+      },
+      "required": [
+        "gate",
+        "expected_revision",
+        "summary",
+        "materials"
+      ],
+      "title": "ReviewRequest",
+      "type": "object"
+    },
+    "StageHandoff": {
+      "additionalProperties": false,
+      "properties": {
+        "stage_id": {
+          "enum": [
+            "data",
+            "baseline",
+            "innovation",
+            "analysis",
+            "manuscript"
+          ],
+          "title": "Stage Id",
+          "type": "string"
+        },
+        "workflow_revision": {
+          "minimum": 1,
+          "title": "Workflow Revision",
+          "type": "integer"
+        },
+        "summary": {
+          "maxLength": 1600,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "decisions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Decisions",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Limitations",
+          "type": "array"
+        },
+        "open_questions": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Open Questions",
+          "type": "array"
+        },
+        "next_action": {
+          "maxLength": 1200,
+          "minLength": 1,
+          "title": "Next Action",
+          "type": "string"
+        },
+        "training_run_ids": {
+          "items": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "type": "string"
+          },
+          "maxItems": 12,
+          "title": "Training Run Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "stage_id",
+        "workflow_revision",
+        "summary",
+        "limitations",
+        "next_action"
+      ],
+      "title": "StageHandoff",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "grant": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Grant",
+      "type": "string"
+    },
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "outcome": {
+      "enum": [
+        "continue",
+        "completed",
+        "needs_input",
+        "blocked",
+        "paused",
+        "waiting",
+        "cancelled"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "summary": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Summary",
+      "type": "string"
+    },
+    "next_action": {
+      "default": "",
+      "maxLength": 1200,
+      "title": "Next Action",
+      "type": "string"
+    },
+    "completion_criteria": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8,
+      "title": "Completion Criteria",
+      "type": "array"
+    },
+    "evidence": {
+      "$ref": "#/$defs/GoalEvidence"
+    },
+    "answer_only": {
+      "default": false,
+      "title": "Answer Only",
+      "type": "boolean"
+    },
+    "stage_handoff": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StageHandoff"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "manuscript_review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewRequest"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "wait_for": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalWait"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "blocker": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalBlocker"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "turn_id",
+    "grant",
+    "expected_revision",
+    "outcome",
+    "summary"
+  ],
+  "title": "GoalCheckpoint",
+  "type": "object"
+}

@@ -5,7 +5,7 @@ import {ComposerSelect} from './ComposerSelect';
 import './manuscript-review.css';
 type Material={role:string;label:string;artifact_id:string;sha256:string};
 type Issue={id:string;finding:string;location:string;blocking:boolean;resolved:boolean};
-type Packet={id:string;digest:string;materials:Material[];request:{gate:string;summary:string;issues:Issue[];author_questions:string[];audit_status:string}};
+type Packet={id:string;digest:string;materials:Material[];request:{gate:string;summary:string;changes?:string[];key_findings?:string[];key_limitations?:string[];issues:Issue[];author_questions:string[];audit_status:string}};
 export type ManuscriptView={revision:number;goal_state?:string|null;index:number;status:string;gate:string;label:string;next_work:string;pending:Packet|null;gates:{id:string;label:string;status:string}[];history:{event:string;action?:string;comment?:string;issues?:{issue_id:string;decision:string;rationale:string}[];at:string;target_gate?:string;question_response?:{questions:string[];answer:string;confirmed_with_plan:boolean};packet?:Packet|null}[];author_content_approved:boolean;delivery_approved:boolean};
 export const reviewErrors:Record<string,string>={manuscript_snapshot_changed:'审核存档校验失败，请保留现场并核查存储；不能沿用旧批准。',manuscript_review_changed:'审核版本已更新，请查看最新材料。',manuscript_active_turn:'Agent 回合尚未结束，请稍后提交审核。',manuscript_evidence_changed:'被审阅的原材料已变化，请退回相应节点重新审核。',manuscript_unresolved_blockers:'仍有未解决的完整性阻塞，请先退回修改。',manuscript_author_facts_required:'请答复当前问题；方案阶段可随答复一起确认，后续稿件需先更新材料。',manuscript_answer_confirmation_wrong_gate:'当前节点需要先更新材料，请提交反馈后审阅新版本。',manuscript_written_confirmation_required:'请明确确认当前版本的科学内容或交付文件。',manuscript_each_issue_requires_decision:'每条审稿意见都需要裁定及理由。',manuscript_feedback_required:'请填写修改要求或补充事实。',manuscript_reopen_reason_required:'请填写返工原因。',manuscript_no_pending_review:'当前没有可批准的稿件版本。',manuscript_goal_changed:'稿件目标已变化，请由 Agent 重新提交当前审核。'};
 const decisions=[{value:'',label:'选择裁定'},{value:'accept',label:'接受'},{value:'modify',label:'调整后接受'},{value:'reject',label:'拒绝'},{value:'defer',label:'暂缓'}];
@@ -15,7 +15,7 @@ export function ManuscriptReview({cid,value,readOnly,running,onUpdate,onError}:{
  const [comment,setComment]=useState(''),[ack,setAck]=useState(false),[busy,setBusy]=useState(false),[target,setTarget]=useState(value.gate),[choices,setChoices]=useState<Record<string,{decision:string;rationale:string}>>({});
  const flight=useRef(false),retry=useRef<{signature:string;key:string}>();
  useEffect(()=>{setComment('');setAck(false);setChoices({});setTarget(value.gate);retry.current=undefined;},[value.revision,value.gate]);
- const packet=value.pending,issues=packet?.request.issues||[],questions=packet?.request.author_questions||[],blocked=issues.some(i=>i.blocking&&!i.resolved)||packet?.request.audit_status==='blocked',written=['scientific','delivery'].includes(value.gate);
+ const packet=value.pending,issues=packet?.request.issues||[],questions=packet?.request.author_questions||[],changes=packet?.request.changes||[],findings=packet?.request.key_findings||[],limitations=packet?.request.key_limitations||[],blocked=issues.some(i=>i.blocking&&!i.resolved)||packet?.request.audit_status==='blocked',written=['scientific','delivery'].includes(value.gate);
  const affirm=value.gate==='scientific'?'我已审阅本版修订稿及核验材料，确认科学内容并允许冻结排版；不代表伦理批准、独立外部评审或投稿授权。':'我已审阅本版 PDF、图表及交付清单，确认交付文件；不授权投稿或对外发布。';
  const answerWithPlan=value.gate==='blueprint'&&questions.length>0;
  const needsAnswers=questions.length>0&&(!answerWithPlan||!comment.trim());
@@ -40,6 +40,10 @@ export function ManuscriptReview({cid,value,readOnly,running,onUpdate,onError}:{
   {value.goal_state==='completed'&&value.index<5&&<p>审核材料尚待准备，请在对话中发起稿件准备任务。</p>}
   {packet?<>
    {blocked&&<p className="status-text status-warning" role="status">完整性检查仍有阻塞，先处理后再审核。</p>}
+   {(changes.length>0||findings.length>0||limitations.length>0)&&<div className="manuscript-overview">
+    {changes.length>0&&<section><h4>本版变化</h4><ul>{changes.map((item,i)=><li key={i}>{item}</li>)}</ul></section>}
+    {(findings.length>0||limitations.length>0)&&<section><h4>关键结论与限制</h4><ul>{findings.map((item,i)=><li key={'finding-'+i}>{item}</li>)}{limitations.map((item,i)=><li key={'limitation-'+i}><strong>限制：</strong>{item}</li>)}</ul></section>}
+   </div>}
    {questions.length>0&&<div className="manuscript-required"><h4>这次需要你决定</h4><ul>{questions.map((q,i)=><li key={i}>{q}</li>)}</ul></div>}
 
    {(value.gate==='review'||blocked)&&issues.length>0&&<div className="manuscript-issues">{issues.map(i=><div key={i.id} className="manuscript-issue"><strong>{i.id}{i.blocking&&!i.resolved?' · 阻塞':''}</strong><p>{i.finding}</p>{i.location&&<small>{i.location}</small>}{value.gate==='review'&&!readOnly&&<><ComposerSelect label={'裁定 '+i.id} variant="form" value={choices[i.id]?.decision||''} options={decisions} onChange={decision=>setChoices(c=>({...c,[i.id]:{rationale:c[i.id]?.rationale||'',decision}}))}/><label>裁定理由<textarea aria-label={'裁定理由 '+i.id} maxLength={1200} value={choices[i.id]?.rationale||''} onChange={e=>setChoices(c=>({...c,[i.id]:{decision:c[i.id]?.decision||'',rationale:e.target.value}}))}/></label></>}</div>)}</div>}

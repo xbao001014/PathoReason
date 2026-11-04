@@ -8,7 +8,7 @@ from test_goals import accepted as accepted_goal,finish as finish_goal
 from pathoreason.study_io import publish_artifact
 from pathoreason.goals import GoalCheckpoint,GoalControl
 from pathoreason.stages import StageAssign,StageHandoff
-from pathoreason.manuscript import ReviewRequest,ReviewDecision,GATES
+from pathoreason.manuscript import ReviewRequest,ReviewDecision,ReviewMaterial,GATES
 from pathoreason.persistence import Conflict
 
 async def accepted(s,tid):
@@ -43,6 +43,8 @@ def request_review(s,v,cid,tid,**overrides):
         if role=='figure_manifest':p.write_text(json.dumps({'artifact_ids':[],'no_figures_reason':'Synthetic text-only test; no real paper or figures.'}))
         a=publish_artifact(s,v.project_id,rel,role);materials.append({'role':role,'label':role,'artifact_id':a.id})
     raw=dict(gate=gate,expected_revision=w['revision'],summary='Synthetic materials ready for author review',materials=materials)
+    if gate!='blueprint':raw.update(changes=['Prepared the current evidence-bound version.'],key_findings=['The synthetic fixture remains exploratory.'],key_limitations=['No independent scientific approval.'])
+    if gate=='draft':raw.update(audit_status='passed',audited_manuscript_sha256=s.store.artifact(next(m['artifact_id'] for m in materials if m['role']=='manuscript'),v.project_id)['sha256'])
     if gate=='review':raw.update(audited_manuscript_sha256=next(m['sha256'] for m in w['approved'][1]['materials'] if m['role']=='manuscript'),issues=[{'id':'issue_one','finding':'Clarify the exploratory limitation','blocking':False}],audit_status='passed')
     if gate=='scientific':raw.update(audit_status='passed',audited_manuscript_sha256=s.store.artifact(next(m['artifact_id'] for m in materials if m['role']=='manuscript'),v.project_id)['sha256'])
     if gate=='delivery':raw.update(audit_status='passed',scientific_basis_digest=w['approved'][3]['digest'])
@@ -228,6 +230,44 @@ def test_figure_manifest_requires_actual_version_bound_artifacts(fixture):
         manifest.artifact_id=publish_artifact(s,v.project_id,'outputs/figure-manifest-bad.json','Broken figure list').id
         body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
         with pytest.raises(ValueError,match='figure_materials_mismatch'):s.goals.checkpoint(body)
+        await s.close()
+    asyncio.run(case())
+
+
+def test_nonempty_figure_manifest_requires_bound_entries_and_captions(fixture):
+    async def case():
+        s,r,v,cid,tid,body=await setup(fixture)
+        request_review(s,v,cid,tid);await finish(s,r,tid);await s.manuscripts.decide(cid,decision(s,cid));await s.goals.tick();tid=s.store.turns(cid)[-1]['id'];await accepted(s,tid)
+        original=s.goals.checkpoint;s.goals.checkpoint=lambda b:None
+        body=request_review(s,v,cid,tid);s.goals.checkpoint=original
+        image_path=Path(v.workspace)/'outputs/figure.png';image_path.write_bytes(b'fixture image')
+        image=publish_artifact(s,v.project_id,'outputs/figure.png','Figure')
+        manifest_path=Path(v.workspace)/'outputs/figure-manifest-incomplete.json';manifest_path.write_text(json.dumps({'artifact_ids':[image.id]}))
+        manifest=publish_artifact(s,v.project_id,'outputs/figure-manifest-incomplete.json','Incomplete figure manifest')
+        item=next(m for m in body.manuscript_review.materials if m.role=='figure_manifest');item.artifact_id=manifest.id
+        body.manuscript_review.materials.append(ReviewMaterial(role='figure',label='Figure',artifact_id=image.id))
+        body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
+        with pytest.raises(ValueError,match='figure_manifest_invalid'):s.goals.checkpoint(body)
+        await s.close()
+    asyncio.run(case())
+
+
+def test_draft_requires_bibliography_integrity_and_author_overview(fixture):
+    async def case():
+        s,r,v,cid,tid,body=await setup(fixture)
+        request_review(s,v,cid,tid);await finish(s,r,tid);await s.manuscripts.decide(cid,decision(s,cid));await s.goals.tick();tid=s.store.turns(cid)[-1]['id'];await accepted(s,tid)
+        with pytest.raises(ValidationError,match='manuscript_review_overview_invalid'):
+            request_review(s,v,cid,tid,changes=['   '])
+        original=s.goals.checkpoint;s.goals.checkpoint=lambda b:None
+        body=request_review(s,v,cid,tid);s.goals.checkpoint=original
+        reference=next(m for m in body.manuscript_review.materials if m.role=='references')
+        body.manuscript_review.materials=[m for m in body.manuscript_review.materials if m.role!='references']
+        body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
+        with pytest.raises(ValueError,match='material_roles_missing'):s.goals.checkpoint(body)
+        body.manuscript_review.materials.append(reference)
+        body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
+        body.manuscript_review.audited_manuscript_sha256='0'*64
+        with pytest.raises(Conflict,match='audit_version'):s.goals.checkpoint(body)
         await s.close()
     asyncio.run(case())
 
