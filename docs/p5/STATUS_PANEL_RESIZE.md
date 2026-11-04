@@ -17,3 +17,7 @@ ResizeObserver 和 requestAnimationFrame 合并测量；拖动仅刷新独立手
 - 保留同期主线的稿件审核回合窗口更新，未覆盖 GoalPanel 原有额度展示。
 
 证据：`/data/bxn/PathoReason/acceptance/status-panel-resize-20261104/`；浏览器截图另保留在本机 `/tmp/pathoreason-resize-20261104/`。工程/界面验证不等于模型或科学验收。
+
+## 发布结果
+
+`f265855` 已静态发布，保留主线 `0.6.37-p5-review-turns` 后端；应用 PID 2969892、OpenCode PID 3293916 及启动身份均未变化。1440/390px 线上只读检查通过，实际展开正文上限分别为 514px / 219px，输入框仍可见，收起再展开保留高度。源码/构建、发布回执和线上结果在同一验收目录；无 API 写入、模型调用或研究任务改动。
