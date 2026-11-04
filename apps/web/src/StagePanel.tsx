@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useId,useRef,useState} from 'react';
 import type {ResearchStageView,StageAssign} from './generated';
 import {formalApi} from './FormalStudy';
 import {ComposerSelect} from './ComposerSelect';
@@ -9,7 +9,8 @@ const errors:Record<string,string>={stage_changed:'阶段已更新，请查看�
 type Package={agent_report?:{summary?:string;decisions?:string[];limitations?:string[];open_questions?:string[];next_action?:string};verified_evidence?:{kind:string;id?:string;path?:string}[];digest?:string};
 export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{cid:string;readOnly:boolean;running:boolean;onNavigate:(id:string)=>void;onChange:()=>void;onError:(e:unknown)=>void}){
  const [value,setValue]=useState<ResearchStageView|null>(null),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[expanded,setExpanded]=useState(false),[stage,setStage]=useState<StageAssign['stage_id']>('data');
- const inFlight=useRef(false);
+ const inFlight=useRef(false),container=useRef<HTMLElement>(null),trigger=useRef<HTMLButtonElement>(null),contentId=useId();
+ useEffect(()=>{if(!expanded)return;const outside=(e:PointerEvent)=>{if(!container.current?.contains(e.target as Node)&&!(e.target as Element)?.closest?.('[role="listbox"]'))setExpanded(false);};const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setExpanded(false);trigger.current?.focus();}};document.addEventListener('pointerdown',outside);document.addEventListener('keydown',key);return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',key);};},[expanded]);
  useEffect(()=>{let alive=true,timer:ReturnType<typeof setTimeout>;async function refresh(){try{const v=await formalApi<ResearchStageView|null>('/conversations/'+cid+'/stage');if(alive){setValue(v);setLoaded(true);}}catch{}finally{if(alive)timer=setTimeout(()=>{if(document.visibilityState==='visible')void refresh();else timer=setTimeout(refresh,15000);},running?5000:10000);}}void refresh();return()=>{alive=false;clearTimeout(timer);};},[cid,running]);
  useEffect(()=>{if(value?.status==='ready')setExpanded(true);},[value?.revision,value?.status]);
  async function act(kind:'assign'|'switch'){
@@ -21,10 +22,11 @@ export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{c
  if(!loaded)return null;
  const owner=value?.conversation_id===cid,ready=owner&&value?.status==='ready',done=owner&&value?.status==='completed';
  const pack=(owner?(value?.handoff||value?.incoming_handoff):value?.incoming_handoff) as Package|undefined;
- return <section className={'stage-panel'+(ready?' stage-ready':'')} aria-label="研究阶段与会话交接">
-  <button type="button" className="stage-toggle" aria-expanded={expanded} onClick={()=>setExpanded(x=>!x)}><span>{value?`${stages.findIndex(s=>s[0]===value.stage_id)+1}/5 · ${value.stage_label}`:'关联研究阶段'}</span><span className={'status-text status-'+statusTone(ready?'pending':done?'completed':'running')}>{value?(ready?'待切换会话':done?'阶段交付完成':owner?'当前阶段':'其他会话正在推进'):''}</span><span aria-hidden="true">{expanded?'⌄':'⌃'}</span></button>
+ return <section className={'stage-panel'+(ready?' stage-ready':'')} aria-label="研究阶段与会话交接" ref={container}>
+  <button type="button" className="stage-toggle" ref={trigger} aria-controls={contentId} aria-expanded={expanded} onClick={()=>setExpanded(x=>!x)}><span title={value?.stage_label}>{value?`${stages.findIndex(s=>s[0]===value.stage_id)+1}/5 · ${value.stage_label}`:'关联研究阶段'}</span><span className={'stage-state'+(!ready&&!done&&owner?' stage-state-current':'')+' status-text status-'+statusTone(ready?'pending':done?'completed':'running')}>{value?(ready?'待切换会话':done?'阶段交付完成':owner?'当前阶段':'其他会话正在推进'):''}</span><span aria-hidden="true">{expanded?'⌃':'⌄'}</span></button>
   {ready&&<div className="stage-reminder" role="status"><span>本阶段已交付 · 下一阶段：{value!.next_stage_label}</span>{!readOnly&&<button type="button" className="primary-button" disabled={busy||running} onClick={()=>act('switch')}>{busy?'正在交接…':'切换并继续'}</button>}</div>}
-  {expanded&&<div className="stage-content">
+  {expanded&&<div className="stage-content" id={contentId}>
+   {ready&&<p className="stage-next">本阶段已交付 · 下一阶段：{value!.next_stage_label}</p>}
    {!value?<><p>选择当前所处环节。历史环节不会被自动标为完成。</p>{!readOnly&&<div className="stage-setup"><ComposerSelect label="当前研究阶段" variant="form" value={stage||'data'} options={stages.map(([value,label])=>({value,label}))} onChange={v=>setStage(v as StageAssign['stage_id'])}/><button className="primary-button" disabled={busy||running} onClick={()=>act('assign')}>关联当前会话</button></div>}</>:<>
     <ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span>{label}{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol>
     {!owner&&<button onClick={()=>onNavigate(value.conversation_id)}>打开当前阶段会话</button>}

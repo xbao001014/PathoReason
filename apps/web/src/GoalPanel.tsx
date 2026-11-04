@@ -1,4 +1,3 @@
-import {StagePanel} from './StagePanel';
 import {OutputRecovery} from './OutputRecovery';
 import {useEffect,useId,useRef,useState,type KeyboardEvent} from 'react';
 import type {GoalView,ContextView,GoalControl} from './generated';
@@ -59,7 +58,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
  const modules:PanelModule[]=[...(goal?['goal' as const]:[]),...(trainingStatus?['plan' as const,'budget' as const,'history' as const]:[])];
  const selectedModule=modules.includes(module)?module:modules[0]||'goal';
  const summary=goal?.scope_recovery?'此前选项将本轮限制为仅对话，文件操作未开放；工具自动批准设置仍然有效。':goal?(reasons[goal.reason||'']||goal.summary||goal.objective):'';
- return <><StagePanel cid={cid} readOnly={readOnly} running={running} onNavigate={onNavigate} onChange={onChange} onError={onError}/><section className="goal-panel" aria-label="任务进度与训练" data-expanded={expanded} hidden={!goal&&!trainingStatus}>
+ return <section className="goal-panel" aria-label="任务进度与训练" data-expanded={expanded} hidden={!goal&&!trainingStatus}>
   <div className="goal-body" id={bodyId} hidden={!expanded}>
    <div className="goal-module-tabs" role="tablist" aria-label="任务与训练分类" onKeyDown={navigateModules} style={{gridTemplateColumns:`repeat(${Math.max(1,modules.length)},minmax(0,1fr))`}}>{modules.map(value=><button key={value} id={bodyId+'-tab-'+value} type="button" role="tab" aria-label={moduleLabels[value][0]} aria-selected={selectedModule===value} aria-controls={bodyId+(value==='goal'?'-goal':'-training')} tabIndex={selectedModule===value?0:-1} onClick={()=>chooseModule(value)}><span className="goal-tab-full">{moduleLabels[value][0]}</span><span className="goal-tab-short" aria-hidden="true">{moduleLabels[value][1]}</span></button>)}</div>
    <div className="goal-module-panel" role="tabpanel" id={bodyId+'-goal'} aria-labelledby={bodyId+'-tab-goal'} hidden={selectedModule!=='goal'}>
@@ -86,5 +85,5 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
     <svg className="goal-heading-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
    </button>
   </div>
- </section></>;
+ </section>;
 }
