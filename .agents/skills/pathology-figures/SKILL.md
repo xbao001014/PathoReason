@@ -11,6 +11,15 @@ Use the author-confirmed research subject and TaskSpec, not a default method-pap
 
 ## Select the route from the evidence
 
+For a requested conceptual pathology illustration during draft, explicitly load
+the applicable figure skills and read manuscript-to-latex's
+`references/methodology-figures.md` and `references/raster-generation.md`.
+On PathoReason use the configured Seedream route via `scripts/study_io.py image`.
+Do not substitute a code-generated experiment block chart for this request.
+Record actual companion-file reads, generation receipt and image QA; native
+file listings do not prove those reads. Generated tissue motifs are schematic,
+not patient histology. Numeric plots and real specimen panels keep their routes.
+
 - Complete paper figure planning, evidence inventory, cross-figure QA and delivery packaging: read `../pathology-mil-paper-figures/SKILL.md` and its task-specific references. Preserve this router's five-task and manuscript binding rules.
 
 - Numeric results: read `../scientific-visualization/SKILL.md`. Use verified predictions and metric records with the declared patient split, target order, units, missing denominators and validation selection rule. Preserve negative and undefined results. No invented measurements or fold uncertainty for a single holdout.

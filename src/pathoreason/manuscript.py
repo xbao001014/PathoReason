@@ -10,7 +10,7 @@ from .legacy import read_verified_file
 Gate=Literal['blueprint','draft','review','scientific','delivery']
 GATES=[
  ('blueprint','事实与写作方案',['facts','plan','claims','figure_plan'],'整理事实、测试使用记录、冲突、论文主线、论点边界和图表计划，复用已确认事实，仅询问未决取舍。'),
- ('draft','初稿与图件',['manuscript','references','citations','author_inputs','integrity','figure_manifest'],'核验文献、论点支持和跨材料一致性，生成初稿与实际图件；作者事实未知时明确留空。提交原文、文献库、引用核验、完整性报告和作者待办。'),
+ ('draft','初稿与图件',['manuscript','references','citations','literature','argument','skill_usage','author_inputs','integrity','figure_manifest'],'核验文献、论点支持和跨材料一致性，生成初稿与实际图件；提交检索与证据矩阵、研究论证/段落覆盖及实际 Skill 使用记录。'),
  ('review','审稿意见裁定',['integrity','review_report'],'先核验初稿完整性并修复事实性阻塞，再提出有位置与依据的审稿意见，等作者逐条裁定；模型评议不是独立外部同行评审。'),
  ('scientific','修订稿与科学内容冻结',['manuscript','references','revision_matrix','integrity','figure_manifest'],'只按作者裁定修订；保留旧稿，完成逐条回应与针对确切修订稿的最终完整性核验。作者确认后才能冻结科学内容。'),
  ('delivery','最终交付',['pdf','source','pdf_qa','checklist'],'使用已批准科学内容排版，保存源包、PDF、真实页面检查与待办清单；内容变化须退回科学内容审核。交付确认不授权投稿。'),
@@ -257,6 +257,8 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
         return data,m['media_type']
     def prompt(self,cid):
         v=self.view(cid)
+        if v['gate']=='draft':
+            v['next_work']+=' 实际加载 method-results-to-manuscript 并完整读取 references/stage-execution.md，按其任务依赖加载子 Skill 和配套文件；目录清单不是已读证据。背景/引用/研究动机补强必须重走 paper-lookup、citation-management、文献综合及 scientific-writing，不能只审计旧稿。读取 authorial-voice.md；病理概念图读取 methodology-figures.md 和 raster-generation.md，获授权后用配置的 Seedream 链路生成真实候选，不以实验框图代替。文学证据和 argument 覆盖临床/病理背景、已有工作、具体缺口、研究问题与设计理由；不以引用数量代替语义支持。'
         # Keep original author statements across phases and context recovery; never replace them with a model paraphrase.
         statements=[{k:h.get(k) for k in ('at','action','comment','issues','target_gate','question_response')} for h in v['history'] if h['event']=='author_decision']
         if v['gate'] in ('draft','scientific'):
