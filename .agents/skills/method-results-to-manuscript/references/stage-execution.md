@@ -30,6 +30,11 @@ is audit evidence, not host attestation; compare it with the native trace.
 Mark conditional skips with reasons. For a narrow correction, verified prior
 literature can be reused with its source/version binding; background expansion
 requires fresh targeted discovery and synthesis.
+Budget exhaustion is an incomplete required dependency, not a conditional skip
+or successful execution. Before checkpointing, include every review material's
+artifact ID in checkpoint evidence, including reused artifacts. Rebind manifests
+and audits to the new manuscript/image bytes; partial outputs do not constitute
+a complete replacement packet.
 
 ## Introduction and research rationale
 

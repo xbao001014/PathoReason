@@ -1,5 +1,7 @@
 # PathoReason 执行计划
 
+2026-11-04 更新：稿件子 Skill 执行、Introduction 证据链与 Seedream 草稿路由已修复，29 项相关回归通过；真实 Agent 产出 v5 和 Seedream 候选，剩余验收因既有预算耗尽而未完成。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)。
+
 版本：v0.8  
 日期：2026-10-30  
 状态：**P0–P4 已完成（P2 为独立合成 MIL 闭环，P3 为双环境上下文兼容，P4 为领域 Schema 与历史只读适配）；P5 正式试验入口已交付，真实端到端验收待新窗口开展。**  

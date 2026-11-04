@@ -1,5 +1,7 @@
 # PathoReason 开发交接
 
+2026-11-04 稿件依赖修复：0.6.36 已显式要求子 Skill、配套文件正文读取和 literature/argument/skill_usage 材料。真实 Agent 已生成 Seedream 病理概念候选及 v5，但预算触顶且 checkpoint 材料证据不齐，未替换 revision 6 旧待审包；不要把旧包或候选成功当作本次验收通过。继续前读 [执行证据与未完成项](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，不擅自增加额度。
+
 ## 通用开发规则（长期适用）
 
 先读 [开发与能力验证规则](docs/DEVELOPMENT_PRINCIPLES.md)。开发目标是提升系统可复用的任务执行能力：从真实失败定位责任层，改进运行时、工具、Skill、上下文和恢复机制，再由目标引擎与基模验证。开发监控不代改研究 Agent 的项目脚本、数据处理结果、报告或成果来“完成”任务；用户另行明确要求的研究材料修复应独立标明人工来源，不能算模型验收成功。

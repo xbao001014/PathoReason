@@ -17,3 +17,13 @@ Introduction 以疾病问题、当前评估局限、计算病理/MIL 背景、�
 ## 验证与边界
 
 29 项稿件/正式入口回归通过。用户本轮已明确要求 Seedream 生成与文献补强；不新增实验、不增加研究预算、不代批稿件。开始时预算剩余约 358 秒，真实 Agent 行为与完成度需单独记录，不能由工程通过推定。
+
+## 真实行为与未完成项
+
+本轮 turn_f33850ba13db4fcd8bb1b6217f67c2b9 实际 native 加载主 Skill 与 paper-lookup；read 工具读取 stage-execution.md、authorial-voice.md、methodology-figures.md、raster-generation.md。其余要求的 citation-management、ARS、scientific-writing、病理图件专业 Skills 未执行，Agent 在 skill-usage-v1.md 如实记为预算不足，不能算完整通过。
+
+首次 image helper 因请求文件未创建而失败，未到供应商；随后 Agent 创建请求后单次 Seedream 调用成功。candidate.json 为 pending_review，模型 doubao-seedream-5-0-flash-260915，原图 JPEG 2816×1584，SHA bb1e9baca8fe3cd49ef487aa933d30362c6eb5924ad398e894a0468965390838。独立视觉检查确认病理组织示意/patch/embedding/pooling 内容已出现，并标明 AI-generated not patient data；残留 MIDDLE 标签、分类头及输出连接表达仍需完善，未批准。不能把候选成功等同图件科学验收。
+
+Agent 已登记正文 v5、literature-v1.md、argument-v1.md、skill-usage-v1.md 和 Seedream 原图。引言扩充并新增两条引用，但中央背景论断仍仅摘要级，新增引用元数据及 BibTeX 未完成绑定。旧稿已有的 pre-registered 表述也须追溯确切来源，不能从叙述推定预注册。
+
+最后 checkpoint 返回 manuscript_material_not_in_checkpoint，尚未完成修正即触及原有时间上限。目标 blocked/turn_time_limit，项目 112/160 回合，计时 14640.421/14640 秒（检查粒度产生约0.421秒超出，不是额度增加）；目标6/8。旧 draft pending revision 6 仍在，v5 未替换它。保留未完成事实，不回填批准、不由开发者补造研究材料。后续需明确可用额度，研究 Agent 再完成子 Skill 和语义核验、图件修订、文献库/manifest/完整性与 checkpoint evidence 全量绑定。
