@@ -34,3 +34,11 @@
 .project-conversations-toggle:hover{background:var(--color-control-fill)}
 .project-conversations-toggle[aria-expanded=false] svg{transform:rotate(-90deg)}
 .session-list[hidden]{display:none}
+.project-manage{flex:0 0 32px;width:32px;height:32px;padding:0;border-radius:var(--radius-buttons);color:var(--color-text-secondary)}
+.project-manage:hover{background:var(--color-control-fill)}
+.project-manage:focus-visible{outline:2px solid var(--color-ink);outline-offset:2px}
+.project-row small{font-size:var(--text-caption);white-space:nowrap;color:var(--color-text-muted)}
+.project-dialog .project-delete-assets{display:flex;flex-direction:row;align-items:flex-start;gap:var(--spacing-12);font-size:var(--text-body);line-height:1.6;margin-block:var(--spacing-16)}
+.project-dialog .project-delete-assets input{width:18px;height:18px;flex:none;margin-top:3px}
+.project-delete-title{display:grid;gap:var(--spacing-8);font-size:var(--text-body);margin-top:var(--spacing-16)}
+.project-delete-title input{width:100%;box-sizing:border-box;padding:12px 16px;border:1px solid var(--color-control-border);border-radius:var(--radius-inputs);font:inherit;color:var(--color-ink);background:var(--color-paper)}

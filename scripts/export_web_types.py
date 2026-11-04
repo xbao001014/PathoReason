@@ -60,3 +60,7 @@ for model in [ResearchStageView,StageAssign,StageSwitch,StageHandoff]:
 from pathoreason.manuscript import ReviewRequest,ReviewDecision,ReviewMaterial,ReviewIssue,IssueDecision
 for model in [ReviewRequest,ReviewDecision,ReviewMaterial,ReviewIssue,IssueDecision]:
     (root/'contracts/p5-manuscript-review'/f'{model.__name__}.schema.json').write_text(json.dumps(model.model_json_schema(),indent=2)+'\n')
+
+from pathoreason.project_lifecycle import ManagedProject,ProjectLifecycleView,ProjectActionInput,DeleteProjectInput
+for model in [ManagedProject,ProjectLifecycleView,ProjectActionInput,DeleteProjectInput]:
+    (root/'contracts/p5-manuscript-review'/f'{model.__name__}.schema.json').write_text(json.dumps(model.model_json_schema(),indent=2)+'\n')

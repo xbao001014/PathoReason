@@ -30,6 +30,8 @@ class Service:
         self.formal=Formal(self)
         from .conversation_lifecycle import ConversationLifecycle
         self.conversations=ConversationLifecycle(self)
+        from .project_lifecycle import ProjectLifecycle
+        self.projects=ProjectLifecycle(self)
         from .conversation_titles import ConversationTitles
         self.titles=ConversationTitles(self)
         from .hardware import HardwareMonitor
@@ -51,7 +53,7 @@ class Service:
         from .budget_settings import BudgetSettings
         self.budgets=BudgetSettings(self)
     def seed(self):
-        if self.store.projects() or self.config.get("seed_legacy") is False:return
+        if self.store.projects(include_removed=True) or self.config.get("seed_legacy") is False:return
         sample=json.loads((ROOT/'contracts/examples/cesc-reading.json').read_text())
         project=sample['project']
         from .legacy import index_evidence
@@ -62,7 +64,7 @@ class Service:
         for raw in sample['artifacts']:self.store.add_artifact(c.ArtifactIndex.model_validate(raw))
         self.new_conversation(project['id'],'已有成果解读')
     def new_conversation(self,pid,title):
-        self.store.project(pid)
+        self.store.project(pid,writable=True)
         directory=self.data/'projects'/pid;directory.mkdir(exist_ok=True)
         return self.store.create_conversation(pid,title,directory)
     def skills(self):

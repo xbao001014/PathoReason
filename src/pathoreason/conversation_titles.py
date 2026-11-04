@@ -57,6 +57,7 @@ class ConversationTitles:
         async with self.s.lock:
             with self.s.store.connect(True) as db:
                 conv = self.s.store.check_conversation(db, cid)
+                self.s.store.check_project(db, conv['project_id'], writable=True)
                 tid, doc = self._record(db, cid)
                 if doc['revision'] != body.expected_revision:
                     raise Conflict('conversation_title_changed')

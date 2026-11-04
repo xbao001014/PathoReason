@@ -90,6 +90,7 @@ class ConversationLifecycle:
     async def archive(self, cid, restore=False):
         async with self.s.lock:
             conv = self.s.store.conversation(cid)
+            self.s.store.project(conv['project_id'],writable=True)
             with self.s.store.connect() as db:
                 self._check_idle(db, cid)
             await self._native_idle(conv)
@@ -108,34 +109,39 @@ class ConversationLifecycle:
 
     async def delete(self, cid):
         async with self.s.lock:
-            conv = self.s.store.conversation(cid, include_removed=True)
-            previous = self.view(cid)
-            if previous.state == 'deleted':
-                return previous
-            if conv['native_session'] and not hasattr(self.s.runtime, 'delete_session'):
-                raise Conflict('native_deletion_unsupported')
-            with self.s.store.connect() as db:
-                self._check_idle(db, cid)
-                if conv['native_session'] and db.execute('SELECT 1 FROM conversations WHERE native_session=? AND id<>?', (conv['native_session'], cid)).fetchone():
-                    raise Conflict('native_session_shared')
-            await self._native_idle(conv)
-            view = ConversationLifecycleView(conversation_id=cid, state='deleting', requested_at=previous.requested_at or now(), native_deleted=previous.native_deleted)
-            # Lock new submissions before touching the external runtime. The marker
-            # survives a process crash, so unknown outcomes are never reported done.
+            conv=self.s.store.conversation(cid,include_removed=True)
+            self.s.store.project(conv['project_id'],writable=True)
+            return await self._delete_locked(cid)
+
+    async def _delete_locked(self, cid):
+        conv = self.s.store.conversation(cid, include_removed=True)
+        previous = self.view(cid)
+        if previous.state == 'deleted':
+            return previous
+        if conv['native_session'] and not hasattr(self.s.runtime, 'delete_session'):
+            raise Conflict('native_deletion_unsupported')
+        with self.s.store.connect() as db:
+            self._check_idle(db, cid)
+            if conv['native_session'] and db.execute('SELECT 1 FROM conversations WHERE native_session=? AND id<>?', (conv['native_session'], cid)).fetchone():
+                raise Conflict('native_session_shared')
+        await self._native_idle(conv)
+        view = ConversationLifecycleView(conversation_id=cid, state='deleting', requested_at=previous.requested_at or now(), native_deleted=previous.native_deleted)
+        # Lock new submissions before touching the external runtime. The marker
+        # survives a process crash, so unknown outcomes are never reported done.
+        self._save(view)
+        try:
+            if conv['native_session'] and not view.native_deleted:
+                await self.s.runtime.delete_session(conv['native_session'], conv['directory'])
+            view.native_deleted = True
             self._save(view)
-            try:
-                if conv['native_session'] and not view.native_deleted:
-                    await self.s.runtime.delete_session(conv['native_session'], conv['directory'])
-                view.native_deleted = True
-                self._save(view)
-                self._purge(cid, view)
-            except asyncio.CancelledError:
-                raise  # leave durable deleting state for explicit reconciliation
-            except Exception as exc:
-                view.state = 'failed'
-                view.error_code = str(exc) if isinstance(exc, Conflict) else 'conversation_cleanup_incomplete'
-                self._save(view)
-            return self.view(cid)
+            self._purge(cid, view)
+        except asyncio.CancelledError:
+            raise  # leave durable deleting state for explicit reconciliation
+        except Exception as exc:
+            view.state = 'failed'
+            view.error_code = str(exc) if isinstance(exc, Conflict) else 'conversation_cleanup_incomplete'
+            self._save(view)
+        return self.view(cid)
 
     def _purge(self, cid, view):
         # The project directory is shared, including model-authored files. Never

@@ -282,3 +282,25 @@ def test_restart_retains_review_and_original_author_statements(fixture):
         await restored.manuscripts.decide(cid,decision(restored,cid));assert restored.manuscripts.view(cid)['index']==1
         await restored.close()
     asyncio.run(case())
+
+
+@pytest.mark.parametrize('delete_assets',[True,False])
+def test_project_archive_blocks_review_and_explicit_cleanup_owns_review_snapshots(fixture,delete_assets):
+    from test_project_lifecycle import action,body as deletion
+    from test_conversation_lifecycle import install_delete
+    async def case():
+        s,r,v,cid,tid,body=await setup(fixture);request_review(s,v,cid,tid);await finish(s,r,tid);install_delete(r)
+        root=s.manuscripts.root/v.project_id;assert root.exists()
+        await s.projects.archive(v.project_id,action(s,v.project_id))
+        with pytest.raises(Conflict,match='project_archived'):await s.manuscripts.decide(cid,decision(s,cid))
+        await s.projects.archive(v.project_id,action(s,v.project_id),restore=True)
+        assert s.goals.view(cid).state=='paused'
+        with s.store.connect() as db:before=[dict(x) for x in s.store.budget_rows(db)]
+        result=await s.projects.delete(v.project_id,deletion(s,v.project_id,delete_assets))
+        assert result.state=='deleted' and root.exists()==(not delete_assets)
+        with s.store.connect() as db:
+            assert [dict(x) for x in s.store.budget_rows(db)]==before
+            for table in ['manuscript_workflows','manuscript_review_events','manuscript_review_commands']:
+                assert db.execute('SELECT COUNT(*) FROM '+table+' WHERE project_id=?',(v.project_id,)).fetchone()[0]==0
+        await s.close()
+    asyncio.run(case())

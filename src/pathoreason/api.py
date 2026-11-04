@@ -13,6 +13,7 @@ from .manuscript import ReviewDecision
 from .service import Service,NotReady
 from .persistence import Conflict,Missing,Gone,encoded
 from .conversation_lifecycle import ManagedConversation,ConversationLifecycleView,DeleteConversationInput
+from .project_lifecycle import ManagedProject,ProjectLifecycleView,ProjectActionInput,DeleteProjectInput
 from .codex_auth import CodexAuth
 from . import contracts as c
 from .context import ContextView,HandoffBundle
@@ -272,9 +273,19 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.29-p5-manuscript-review'}
-@app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
-async def projects():return service().store.projects()
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.30-p5-manuscript-review'}
+@app.get('/api/v1/research-projects',response_model=list[ManagedProject])
+async def projects(include_archived:bool=False):return service().projects.list(include_archived)
+@app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)
+async def project_lifecycle(pid:str):return service().projects.view(pid)
+@app.post('/api/v1/research-projects/{pid}/archive',response_model=ProjectLifecycleView)
+async def archive_project(pid:str,body:ProjectActionInput):return await service().projects.archive(pid,body)
+@app.post('/api/v1/research-projects/{pid}/restore',response_model=ProjectLifecycleView)
+async def restore_project(pid:str,body:ProjectActionInput):return await service().projects.archive(pid,body,restore=True)
+@app.delete('/api/v1/research-projects/{pid}',response_model=ProjectLifecycleView)
+async def delete_project(pid:str,body:DeleteProjectInput):return await service().projects.delete(pid,body)
+@app.post('/api/v1/research-projects/{pid}/deletion/reconcile',response_model=ProjectLifecycleView)
+async def reconcile_project_deletion(pid:str,body:DeleteProjectInput):return await service().projects.delete(pid,body)
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
 async def create_project(body:ProjectInput):return service().store.create_project(body.title,body.objective)
 @app.get('/api/v1/research-projects/{pid}/conversations',response_model=list[ManagedConversation])
@@ -465,7 +476,8 @@ async def publish_study_artifact(body:PublishInput,request:Request):
     expected='Bearer '+service().business.token()
     if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'business_bridge_auth_required')
     from .study_io import publish_artifact
-    return await asyncio.to_thread(publish_artifact,service(),body.project_id,body.relative_path,body.title)
+    async with service().lock:
+        return await asyncio.to_thread(publish_artifact,service(),body.project_id,body.relative_path,body.title)
 
 static=ROOT/'apps/web/dist'
 if static.exists():

@@ -835,17 +835,39 @@
       "get": {
         "summary": "Projects",
         "operationId": "projects_api_v1_research_projects_get",
+        "parameters": [
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/ResearchProject"
-                  },
                   "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ManagedProject"
+                  },
                   "title": "Response Projects Api V1 Research Projects Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -856,14 +878,14 @@
         "summary": "Create Project",
         "operationId": "create_project_api_v1_research_projects_post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ProjectInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -872,6 +894,241 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ResearchProject"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research-projects/{pid}/lifecycle": {
+      "get": {
+        "summary": "Project Lifecycle",
+        "operationId": "project_lifecycle_api_v1_research_projects__pid__lifecycle_get",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research-projects/{pid}/archive": {
+      "post": {
+        "summary": "Archive Project",
+        "operationId": "archive_project_api_v1_research_projects__pid__archive_post",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectActionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research-projects/{pid}/restore": {
+      "post": {
+        "summary": "Restore Project",
+        "operationId": "restore_project_api_v1_research_projects__pid__restore_post",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectActionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research-projects/{pid}": {
+      "delete": {
+        "summary": "Delete Project",
+        "operationId": "delete_project_api_v1_research_projects__pid__delete",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteProjectInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/research-projects/{pid}/deletion/reconcile": {
+      "post": {
+        "summary": "Reconcile Project Deletion",
+        "operationId": "reconcile_project_deletion_api_v1_research_projects__pid__deletion_reconcile_post",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteProjectInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectLifecycleView"
                 }
               }
             }
@@ -4517,6 +4774,37 @@
         ],
         "title": "DeleteConversationInput"
       },
+      "DeleteProjectInput": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "title": "Confirm"
+          },
+          "confirmation_title": {
+            "type": "string",
+            "title": "Confirmation Title"
+          },
+          "delete_assets": {
+            "type": "boolean",
+            "title": "Delete Assets"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision",
+          "confirm",
+          "confirmation_title",
+          "delete_assets"
+        ],
+        "title": "DeleteProjectInput"
+      },
       "EntryStatus": {
         "properties": {
           "environment": {
@@ -5999,6 +6287,95 @@
         ],
         "title": "ManagedConversation"
       },
+      "ManagedProject": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "pathoreason/1",
+            "title": "Schema Version",
+            "default": "pathoreason/1"
+          },
+          "id": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "objective": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Objective"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ],
+            "title": "Status"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/LegacyResourceRef"
+            },
+            "type": "array",
+            "title": "Resources"
+          },
+          "deletion_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "deleting",
+                  "failed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletion State"
+          },
+          "open_conversations": {
+            "type": "integer",
+            "title": "Open Conversations",
+            "default": 0
+          },
+          "archived_conversations": {
+            "type": "integer",
+            "title": "Archived Conversations",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "objective",
+          "revision",
+          "created_at",
+          "status",
+          "resources"
+        ],
+        "title": "ManagedProject"
+      },
       "MetricView": {
         "properties": {
           "name": {
@@ -6451,6 +6828,21 @@
         ],
         "title": "PlanRevision"
       },
+      "ProjectActionInput": {
+        "properties": {
+          "expected_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_revision"
+        ],
+        "title": "ProjectActionInput"
+      },
       "ProjectBudgetChange": {
         "properties": {
           "expected_revision": {
@@ -6557,6 +6949,96 @@
           "objective"
         ],
         "title": "ProjectInput"
+      },
+      "ProjectLifecycleView": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleting",
+              "failed",
+              "deleted"
+            ],
+            "title": "State"
+          },
+          "conversation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Conversation Ids"
+          },
+          "conversations_deleted": {
+            "type": "integer",
+            "title": "Conversations Deleted",
+            "default": 0
+          },
+          "delete_assets": {
+            "type": "boolean",
+            "title": "Delete Assets",
+            "default": false
+          },
+          "assets_removed": {
+            "type": "boolean",
+            "title": "Assets Removed",
+            "default": false
+          },
+          "budget_preserved": {
+            "type": "boolean",
+            "title": "Budget Preserved",
+            "default": true
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "revision",
+          "state"
+        ],
+        "title": "ProjectLifecycleView"
       },
       "ProvenanceHop": {
         "properties": {

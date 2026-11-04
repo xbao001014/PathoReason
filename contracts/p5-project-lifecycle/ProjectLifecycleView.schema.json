@@ -1,0 +1,93 @@
+{
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "state": {
+      "enum": [
+        "active",
+        "archived",
+        "deleting",
+        "failed",
+        "deleted"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "conversation_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Conversation Ids",
+      "type": "array"
+    },
+    "conversations_deleted": {
+      "default": 0,
+      "title": "Conversations Deleted",
+      "type": "integer"
+    },
+    "delete_assets": {
+      "default": false,
+      "title": "Delete Assets",
+      "type": "boolean"
+    },
+    "assets_removed": {
+      "default": false,
+      "title": "Assets Removed",
+      "type": "boolean"
+    },
+    "budget_preserved": {
+      "default": true,
+      "title": "Budget Preserved",
+      "type": "boolean"
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Code"
+    },
+    "requested_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Requested At"
+    },
+    "completed_at": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completed At"
+    }
+  },
+  "required": [
+    "project_id",
+    "revision",
+    "state"
+  ],
+  "title": "ProjectLifecycleView",
+  "type": "object"
+}
