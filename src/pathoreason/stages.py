@@ -45,6 +45,7 @@ class ResearchStageView(BaseModel):
     incoming_handoff:dict|None=None
     scientific_approval:Literal[False]=False
     manuscript_review:dict|None=None
+    can_open_conversation:bool=False
 
 class Stages:
     def __init__(self,s):
@@ -52,6 +53,7 @@ class Stages:
         with s.store.connect() as db:
             db.executescript('''CREATE TABLE IF NOT EXISTS research_workflows(project_id TEXT PRIMARY KEY,document TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS research_stage_events(id INTEGER PRIMARY KEY AUTOINCREMENT,project_id TEXT NOT NULL,document TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS research_stage_relocations(source_conversation TEXT NOT NULL,revision INTEGER NOT NULL,project_id TEXT NOT NULL,destination TEXT NOT NULL,document TEXT NOT NULL,PRIMARY KEY(source_conversation,revision));
 CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT NULL,revision INTEGER NOT NULL,destination TEXT NOT NULL,document TEXT NOT NULL,PRIMARY KEY(source_conversation,revision));''')
     def get(self,db,pid):
         row=db.execute('SELECT document FROM research_workflows WHERE project_id=?',(pid,)).fetchone()
@@ -71,11 +73,14 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
             if not w:return None
             incoming=db.execute('SELECT document FROM research_stage_transfers WHERE destination=? ORDER BY rowid DESC LIMIT 1',(cid,)).fetchone()
             goal=self.s.goals._latest(db,cid)
+            relocation=db.execute('SELECT document FROM research_stage_relocations WHERE destination=? ORDER BY rowid DESC LIMIT 1',(cid,)).fetchone()
+            if relocation:incoming=relocation
+            can_open=w['conversation_id']==cid and w['status']!='ready' and bool(goal and goal['state'] in ('completed','cancelled')) and not self.s.manuscripts.get(db,conv['project_id'])['pending']
             package=json.loads(incoming[0])['package'] if incoming else ((goal or {}).get('context_transfer') or {}).get('stage_handoff')
         idx=[k for k,_ in STAGES].index(w['stage_id'])
         return ResearchStageView(**{k:v for k,v in w.items() if k in ResearchStageView.model_fields and k!='history'},history=[{k:v for k,v in x.items() if k!='handoff'} for x in w['history']],stage_label=STAGES[idx][1],
             next_stage_id=STAGES[idx+1][0] if idx<4 else None,next_stage_label=STAGES[idx+1][1] if idx<4 else None,
-            incoming_handoff=package,manuscript_review=self.s.manuscripts.view(cid) if w['stage_id']=='manuscript' and w['conversation_id']==cid else None)
+            incoming_handoff=package,can_open_conversation=can_open,manuscript_review=self.s.manuscripts.view(cid) if w['stage_id']=='manuscript' and w['conversation_id']==cid else None)
     async def assign(self,cid,body):
         async with self.s.lock:
             conv=self.s.formal.mode(cid);self.s.store.conversation(cid,writable=True)
@@ -185,6 +190,57 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
                 self.save(db,w,'stage_switched')
         self.s.goals.start()
         return self.view(dest.id)
+    async def open_conversation(self,cid,body):
+        """Explicit same-stage entry after an idle/finished task; never launch a model."""
+        async with self.s.lock:
+            conv=self.s.formal.mode(cid);self.s.store.conversation(cid,writable=True)
+            with self.s.store.connect() as db:
+                prior=db.execute('SELECT destination FROM research_stage_relocations WHERE source_conversation=? AND revision=?',(cid,body.expected_revision)).fetchone()
+                if prior:return self.view(prior[0])
+                w=self.get(db,conv['project_id']);goal=self.s.goals._latest(db,cid)
+                if not w or w['conversation_id']!=cid or w['revision']!=body.expected_revision:raise Conflict('stage_changed')
+                if w['status']=='ready':raise Conflict('stage_use_next_transition')
+                if not goal or goal['state'] not in ('completed','cancelled'):raise Conflict('stage_goal_not_finished')
+                if self.s.manuscripts.get(db,conv['project_id'])['pending']:raise Conflict('manuscript_review_pending')
+                self.idle_training(db,conv['project_id'])
+            if self.s.store.active():raise Conflict('stage_active_turn')
+            await self.s.context.ensure_other_operations_idle()
+            if conv['native_session']:
+                if (await self.s.runtime.status(conv['directory'])).get(conv['native_session'],{}).get('type','idle')!='idle':raise Conflict('runtime_busy')
+                if await self.s.formal.pending(cid):raise Conflict('permission_settings_turn_active')
+            from .goals import GoalEvidence
+            previous=w.get('handoff')
+            # A previously delivered packet is evidence, never proof of author/scientific approval.
+            if previous and canonical_digest({k:v for k,v in previous.items() if k!='digest'})!=previous['digest']:raise Conflict('stage_evidence_changed')
+            evidence=(previous or {}).get('verified_evidence') or (goal or {}).get('evidence',[])
+            claims=GoalEvidence(artifact_ids=[e['id'] for e in evidence if e['kind']=='artifact'],files=[e['path'] for e in evidence if e['kind']=='file'],task_check_ids=[e['id'] for e in evidence if e['kind']=='task_check'])
+            try:verified=self.s.goals.evidence(conv['project_id'],claims)
+            except (ValueError,OSError,Conflict,Missing) as exc:raise Conflict('stage_evidence_changed') from exc
+            if verified!=evidence:raise Conflict('stage_evidence_changed')
+            package={'schema':'research-stage-entry/1','project_id':conv['project_id'],'source_conversation':cid,'source_stage':w['stage_id'],
+                'source_goal_id':(goal or {}).get('id'),'verified_evidence':evidence,
+                'agent_report':(previous or {}).get('agent_report') or {'summary':(goal or {}).get('summary','尚无阶段交付；请根据已有项目资料准备。'),'decisions':[],'limitations':['未取得独立科学批准或稿件作者批准。'],'open_questions':[],'next_action':(goal or {}).get('next_action','等待用户给定本阶段任务。')},
+                'prior_delivery_digest':(previous or {}).get('digest'),'source_objective':(goal or {}).get('objective'),
+                'authority':'Same project, same stage, existing artifacts and accounting. Historical summaries are claims, not approvals. No model or training is started by this operation.',
+                'scientific_approval':False,'created_at':now()}
+            package['digest']=canonical_digest(package)
+            idx=[x[0] for x in STAGES].index(w['stage_id'])
+            dest=Conversation(id=uid('conv'),project_id=conv['project_id'],title=f'{idx+1}/5 · {STAGES[idx][1]}',status='open',active_runtime_binding_id=uid('bind'),created_at=now())
+            with self.s.store.connect(True) as db:
+                self.s.store.check_conversation(db,cid,writable=True)
+                current=self.get(db,conv['project_id']);latest=self.s.goals._latest(db,cid)
+                if current['revision']!=body.expected_revision or latest!=goal:raise Conflict('stage_changed')
+                self.idle_training(db,conv['project_id'])
+                db.execute('INSERT INTO conversations VALUES(?,?,?,?,?)',(dest.id,dest.project_id,encoded(dest),None,conv['directory']))
+                for table in ('conversation_permission_settings','conversation_gpu_settings'):
+                    setting=db.execute('SELECT revision,document FROM '+table+' WHERE conversation_id=? ORDER BY revision DESC LIMIT 1',(cid,)).fetchone()
+                    if setting:db.execute('INSERT INTO '+table+' VALUES(?,?,?,?)',(dest.id,setting['revision'],setting['document'],now()))
+                record={'package':package,'conversation_id':dest.id,'source_goal_id':(goal or {}).get('id')}
+                db.execute('INSERT INTO research_stage_relocations VALUES(?,?,?,?,?)',(cid,body.expected_revision,conv['project_id'],dest.id,encoded(record)))
+                w['history'].append({'kind':'conversation_relocated','stage_id':w['stage_id'],'conversation_id':cid,'destination':dest.id,'handoff':previous,'at':now()})
+                w.update(conversation_id=dest.id,status='active',handoff=None);self.save(db,w,'stage_conversation_opened')
+        return self.view(dest.id)
+
     def prompt(self,cid):
         v=self.view(cid)
         if not v or v.conversation_id!=cid:return ''

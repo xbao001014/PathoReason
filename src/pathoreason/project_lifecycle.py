@@ -157,7 +157,7 @@ class ProjectLifecycle:
                 db.execute('UPDATE training_attempts SET document=? WHERE id=?',(encoded(keep),a['id']))
             for table in ('training_events','training_plan_revisions'):
                 db.execute('DELETE FROM '+table+' WHERE experiment_id=?',(eid,))
-        for table in ('manuscript_workflows','manuscript_review_events','manuscript_review_commands','training_requests','training_environments','training_input_registry','training_exposure','task_code_actions','task_code_events','budget_changes'):
+        for table in ('research_stage_relocations','manuscript_workflows','manuscript_review_events','manuscript_review_commands','training_requests','training_environments','training_input_registry','training_exposure','task_code_actions','task_code_events','budget_changes'):
             db.execute('DELETE FROM '+table+' WHERE project_id=?',(pid,))
         for table in ('task_code_revisions','task_code_checks','task_code_snapshots'):
             db.execute('DELETE FROM '+table+' WHERE task_id IN (SELECT id FROM task_code_tasks WHERE project_id=?)',(pid,))

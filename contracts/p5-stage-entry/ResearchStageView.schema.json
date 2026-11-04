@@ -1,0 +1,139 @@
+{
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "stage_id": {
+      "enum": [
+        "data",
+        "baseline",
+        "innovation",
+        "analysis",
+        "manuscript"
+      ],
+      "title": "Stage Id",
+      "type": "string"
+    },
+    "stage_label": {
+      "title": "Stage Label",
+      "type": "string"
+    },
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "ready",
+        "completed"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "next_stage_id": {
+      "anyOf": [
+        {
+          "enum": [
+            "data",
+            "baseline",
+            "innovation",
+            "analysis",
+            "manuscript"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Stage Id"
+    },
+    "next_stage_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Stage Label"
+    },
+    "handoff": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Handoff"
+    },
+    "history": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "History",
+      "type": "array"
+    },
+    "incoming_handoff": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Incoming Handoff"
+    },
+    "scientific_approval": {
+      "const": false,
+      "default": false,
+      "title": "Scientific Approval",
+      "type": "boolean"
+    },
+    "manuscript_review": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Manuscript Review"
+    },
+    "can_open_conversation": {
+      "default": false,
+      "title": "Can Open Conversation",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "project_id",
+    "revision",
+    "stage_id",
+    "stage_label",
+    "conversation_id",
+    "status"
+  ],
+  "title": "ResearchStageView",
+  "type": "object"
+}

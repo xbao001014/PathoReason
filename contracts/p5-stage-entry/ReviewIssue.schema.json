@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "finding": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Finding",
+      "type": "string"
+    },
+    "location": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Location",
+      "type": "string"
+    },
+    "blocking": {
+      "default": false,
+      "title": "Blocking",
+      "type": "boolean"
+    },
+    "resolved": {
+      "default": false,
+      "title": "Resolved",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "finding"
+  ],
+  "title": "ReviewIssue",
+  "type": "object"
+}

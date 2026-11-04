@@ -6,7 +6,7 @@ import {ComposerSelect} from './ComposerSelect';
 import './stages.css';
 import {statusTone} from './status';
 const stages=[['data','数据准备'],['baseline','基线方案确定与基线实验'],['innovation','创新方案确认与创新实验'],['analysis','结果分析与科学审核'],['manuscript','稿件部分']] as const;
-const errors:Record<string,string>={stage_changed:'阶段已更新，请查看最新交接。',stage_goal_changed:'目标已调整，请先完成当前交接。',stage_active_turn:'当前回合尚未结束，请稍后切换。',stage_training_not_terminal:'训练仍在运行或结果待核对，暂不能切换阶段。',stage_evidence_changed:'交接成果已变化，请先在原阶段更新交接。',stage_workflow_already_registered:'项目已关联阶段，请打开当前阶段对话。'};
+const errors:Record<string,string>={stage_goal_not_finished:'当前目标尚未结束，请先完成任务；上下文阻塞请使用目标栏换窗。',stage_use_next_transition:'本阶段已交付，请使用“切换并继续”进入下一阶段。',manuscript_review_pending:'当前有待处理的作者审核，请先完成审核。',stage_changed:'阶段已更新，请查看最新交接。',stage_goal_changed:'目标已调整，请先完成当前交接。',stage_active_turn:'当前回合尚未结束，请稍后切换。',stage_training_not_terminal:'训练仍在运行或结果待核对，暂不能切换阶段。',stage_evidence_changed:'交接成果已变化，请先在原阶段更新交接。',stage_workflow_already_registered:'项目已关联阶段，请打开当前阶段对话。'};
 type Package={agent_report?:{summary?:string;decisions?:string[];limitations?:string[];open_questions?:string[];next_action?:string};verified_evidence?:{kind:string;id?:string;path?:string}[];digest?:string};
 export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{cid:string;readOnly:boolean;running:boolean;onNavigate:(id:string)=>void;onChange:()=>void;onError:(e:unknown)=>void}){
  const [value,setValue]=useState<ResearchStageView|null>(null),[loaded,setLoaded]=useState(false),[busy,setBusy]=useState(false),[expanded,setExpanded]=useState(false),[stage,setStage]=useState<StageAssign['stage_id']>('data');
@@ -14,9 +14,9 @@ export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{c
  useEffect(()=>{if(!expanded)return;const outside=(e:PointerEvent)=>{if(!container.current?.contains(e.target as Node)&&!(e.target as Element)?.closest?.('[role="listbox"]'))setExpanded(false);};const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){setExpanded(false);trigger.current?.focus();}};document.addEventListener('pointerdown',outside);document.addEventListener('keydown',key);return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',key);};},[expanded]);
  useEffect(()=>{let alive=true,timer:ReturnType<typeof setTimeout>;async function refresh(){try{const v=await formalApi<ResearchStageView|null>('/conversations/'+cid+'/stage');if(alive){setValue(v);setLoaded(true);}}catch{}finally{if(alive)timer=setTimeout(()=>{if(document.visibilityState==='visible')void refresh();else timer=setTimeout(refresh,15000);},running?5000:10000);}}void refresh();return()=>{alive=false;clearTimeout(timer);};},[cid,running]);
  useEffect(()=>{if(value?.status==='ready')setExpanded(true);},[value?.revision,value?.status]);
- async function act(kind:'assign'|'switch'){
+ async function act(kind:'assign'|'switch'|'new-conversation'){
   if(inFlight.current)return;inFlight.current=true;setBusy(true);
-  try{const next=await formalApi<ResearchStageView>('/conversations/'+cid+'/stage'+(kind==='switch'?'/switch':''),{method:'POST',body:JSON.stringify(kind==='switch'?{expected_revision:value!.revision}:{stage_id:stage})});setValue(next);onChange();if(next.conversation_id!==cid)onNavigate(next.conversation_id);}
+  try{const next=await formalApi<ResearchStageView>('/conversations/'+cid+'/stage'+(kind==='assign'?'':'/'+kind),{method:'POST',body:JSON.stringify(kind==='assign'?{stage_id:stage}:{expected_revision:value!.revision})});setValue(next);onChange();if(next.conversation_id!==cid)onNavigate(next.conversation_id);}
   catch(e){const message=e instanceof Error?e.message:String(e);onError(new Error(errors[message]||message));try{setValue(await formalApi<ResearchStageView|null>('/conversations/'+cid+'/stage'));}catch{}}
   finally{setBusy(false);inFlight.current=false;}
  }
@@ -31,6 +31,7 @@ export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{c
   {expanded&&<div className="stage-content" id={contentId}>
    {ready&&<p className="stage-next">本阶段已交付 · 下一阶段：{value!.next_stage_label}</p>}
    {!value?<><p>选择当前所处环节。历史环节不会被自动标为完成。</p>{!readOnly&&<div className="stage-setup"><ComposerSelect label="当前研究阶段" variant="form" value={stage||'data'} options={stages.map(([value,label])=>({value,label}))} onChange={v=>setStage(v as StageAssign['stage_id'])}/><button className="primary-button" disabled={busy||running} onClick={()=>act('assign')}>关联当前会话</button></div>}</>:<>
+    {owner&&!readOnly&&value.can_open_conversation&&<div className="stage-entry"><button className="primary-button" disabled={busy||running} onClick={()=>act('new-conversation')}>{busy?'正在交接…':value.stage_id==='manuscript'?'新建稿件对话并交接':'新建本阶段对话并交接'}</button><p>带入已有成果与交接摘要，保留原会话和额度；新建时不启动 Agent。</p></div>}
     {owner&&value.manuscript_review&&<ManuscriptReview cid={cid} value={value.manuscript_review as unknown as ManuscriptView} readOnly={readOnly} running={running} onError={onError} onUpdate={v=>{setValue(old=>old?{...old,manuscript_review:v as unknown as Record<string,unknown>}:old);onChange();}}/>}
     <details open={value.stage_id!=='manuscript'}><summary>研究五阶段</summary><ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span>{label}{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol></details>
     {!owner&&<button onClick={()=>onNavigate(value.conversation_id)}>打开当前阶段会话</button>}

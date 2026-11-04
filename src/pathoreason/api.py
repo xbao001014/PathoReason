@@ -256,6 +256,9 @@ async def stage_assign(cid:str,body:StageAssign):return await service().stages.a
 @app.post('/api/v2/conversations/{cid}/stage/switch',response_model=ResearchStageView)
 async def stage_switch(cid:str,body:StageSwitch):return await service().stages.switch(cid,body)
 
+@app.post('/api/v2/conversations/{cid}/stage/new-conversation',response_model=ResearchStageView)
+async def open_stage_conversation(cid:str,body:StageSwitch):return await service().stages.open_conversation(cid,body)
+
 @app.get('/api/v2/conversations/{cid}/manuscript-review')
 async def manuscript_review(cid:str,response:Response):
     response.headers['Cache-Control']='no-store'
@@ -273,7 +276,7 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.30-p5-manuscript-review'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.31-p5-stage-entry'}
 @app.get('/api/v1/research-projects',response_model=list[ManagedProject])
 async def projects(include_archived:bool=False):return service().projects.list(include_archived)
 @app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)
