@@ -1,5 +1,7 @@
 # PathoReason 执行计划
 
+2026-11-04 最新状态：受限修订路由已由真实 Flash 跑通；研究 Agent 修复执行记录与摘要披露后提交 v13，scientific revision23待审。无新增作者批准、实验或额度；约余5分钟Agent时间。真实过程含开发复核反馈，不能算独立科学审核。详见 [执行记录](docs/p5/MANUSCRIPT_REVISION_ROUTING.md#真实模型执行与最终状态)。
+
 2026-11-04 更新：修复明确重写请求滞留交付节点的问题，新增绑定用户指令的 Agent 修订路由和模糊意图选项指导；保留作者复审及预算边界。见 [实施与验收](docs/p5/MANUSCRIPT_REVISION_ROUTING.md)。
 
 2026-11-04 更新：v11 科学内容已获用户批准，最终交付待审；防御型写作语义报告缺失。新增可调用 `anti-defensive-writing` 入口并接入阶段依赖与主机提示；当前稿件只读诊断，未代改/代批，真实 Agent 后续执行待验证。见 [实施记录](docs/p5/ANTI_DEFENSIVE_EXECUTION.md)。
