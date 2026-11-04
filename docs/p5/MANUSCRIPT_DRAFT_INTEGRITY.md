@@ -1,6 +1,6 @@
 # 初稿审核的信息与完整性门禁
 
-2026-11-04，版本 `0.6.33-p5-manuscript-integrity`。
+2026-11-04，版本 `0.6.34-p5-figure-audit`。
 
 ## 真实失败与责任层
 
@@ -14,6 +14,7 @@
 - draft、review、scientific、delivery 均要求明确 `audit_status`。不适用状态不能进入这些节点；阻塞问题仍禁止批准。
 - blueprint 之后的审核请求必须给出非空 `changes`、`key_findings`、`key_limitations`。输入框上方审核栏直接显示“本版变化 / 关键结论与限制”，仍保留材料、问题、问题记录和自由输入。
 - 非空 figure manifest 除 artifact ID 集合一致外，还必须逐图给出唯一编号、文件和图注。实际图件仍随同一审核包冻结。
+- 非空图件包还必须有 `figure_audit` 材料。`scripts/setup_image_ocr.py` 按 SHA-256 锁定的 Debian 包安装用户态 Tesseract 到仓库 `.tools/`，不修改主机；`scripts/inspect_figure_text.py` 只接受当前正式项目的 `figures/` 或 `manuscript/` 栅格图，输出带图件哈希的 JSON。OCR 是跨材料检查证据而非科学结论；关键文字无法识别时必须阻塞审计。
 - Agent 提示要求在 draft 前比较正文、文献库、引用报告、作者待办、figure manifest、图内标签/图注及分块定义。机械不一致由 Agent 自主修正；无法解决的事实冲突作为阻塞 issue 暴露。
 - 新审核请求把目标提示更新为输入框上方“稿件审核”栏。历史目标和历史回执不回写。
 
@@ -29,4 +30,4 @@
 - TypeScript/Vite 构建通过；保留既有 bundle size 提示。
 - 契约新增 `api-p5-manuscript-integrity.openapi.json` 与 `p5-manuscript-integrity/`，不覆盖历史快照。
 
-真实 Agent 修稿、线上只读状态和发布连续性在完成后补记；工程通过不代表稿件科学正确或作者已批准。
+首轮真实 Agent 修稿已把五项只获得摘要核验的参考文献降为准确的证据标签，并修复 AGE-MIL 待办，但因运行时没有视觉能力，未识别 Figure 2 的 A–E 与稿件 A–D 冲突。该失败直接促成上述公共图件审计机制；最终 Agent 修稿、线上只读状态和发布连续性在完成后补记。工程通过不代表稿件科学正确或作者已批准。

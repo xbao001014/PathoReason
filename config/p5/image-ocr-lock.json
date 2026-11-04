@@ -1,0 +1,14 @@
+{
+  "schema_version": "pathoreason.image-ocr-lock/1",
+  "engine": "tesseract 4.1.1",
+  "packages": [
+    {"name": "libgif7", "version": "5.1.9-2ubuntu0.3", "sha256": "506682225d0080ad508a1609c93626c8d689046a4fef9cb9739993cf47d2704d"},
+    {"name": "liblept5", "version": "1.82.0-3build1", "sha256": "936cf3ce4f192bd33e1ac45921f5f530e7681cfc78d67048f0acd6c2d39f894d"},
+    {"name": "libopenjp2-7", "version": "2.4.0-6ubuntu0.5", "sha256": "8efb91572f5f02dcb2bd7ccee580411f9065656523210ac9dfdd5b4c5f07c0b3"},
+    {"name": "libtesseract4", "version": "4.1.1-2.1build1", "sha256": "1c428586aa9d0b5ef5a8a107f958d7eac99d734b6cb98338488c3aae9e8bd702"},
+    {"name": "libwebpmux3", "version": "1.2.2-2ubuntu0.22.04.2", "sha256": "9c1cbe1c06be96e91f104d48ac37058ecbc5503bea3e51bd0eb0e6da6462f140"},
+    {"name": "tesseract-ocr-eng", "version": "1:4.00~git30-7274cfa-1.1", "sha256": "a4709bd43f71c83f9171071dddaf87a125f467d5258bd323048d49b054ef5eb8"},
+    {"name": "tesseract-ocr-osd", "version": "1:4.00~git30-7274cfa-1.1", "sha256": "7dba7b3dfa1a5b4fcb2542faa9d8fdad94fbb7070a5e9d931083c61dcc5cb172"},
+    {"name": "tesseract-ocr", "version": "4.1.1-2.1build1", "sha256": "5d33a2cc1484aa5032d07f51a4375d414d6868347691239874f0cfc03280a18f"}
+  ]
+}

@@ -246,8 +246,30 @@ def test_nonempty_figure_manifest_requires_bound_entries_and_captions(fixture):
         manifest=publish_artifact(s,v.project_id,'outputs/figure-manifest-incomplete.json','Incomplete figure manifest')
         item=next(m for m in body.manuscript_review.materials if m.role=='figure_manifest');item.artifact_id=manifest.id
         body.manuscript_review.materials.append(ReviewMaterial(role='figure',label='Figure',artifact_id=image.id))
+        audit_path=Path(v.workspace)/'outputs/figure-audit.json';audit_path.write_text(json.dumps({'figure_sha256':image.sha256,'text':'Figure'}))
+        audit=publish_artifact(s,v.project_id,'outputs/figure-audit.json','Figure audit')
+        body.manuscript_review.materials.append(ReviewMaterial(role='figure_audit',label='Figure audit',artifact_id=audit.id))
         body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
         with pytest.raises(ValueError,match='figure_manifest_invalid'):s.goals.checkpoint(body)
+        await s.close()
+    asyncio.run(case())
+
+
+def test_nonempty_figure_manifest_requires_figure_audit(fixture):
+    async def case():
+        s,r,v,cid,tid,body=await setup(fixture)
+        request_review(s,v,cid,tid);await finish(s,r,tid);await s.manuscripts.decide(cid,decision(s,cid));await s.goals.tick();tid=s.store.turns(cid)[-1]['id'];await accepted(s,tid)
+        original=s.goals.checkpoint;s.goals.checkpoint=lambda b:None
+        body=request_review(s,v,cid,tid);s.goals.checkpoint=original
+        image_path=Path(v.workspace)/'outputs/figure-audit-required.png';image_path.write_bytes(b'fixture image')
+        image=publish_artifact(s,v.project_id,'outputs/figure-audit-required.png','Figure')
+        manifest_path=Path(v.workspace)/'outputs/figure-manifest-valid.json'
+        manifest_path.write_text(json.dumps({'artifact_ids':[image.id],'figures':[{'artifact_id':image.id,'figure_number':1,'file':'figure-audit-required.png','caption':'Synthetic figure'}]}))
+        manifest=publish_artifact(s,v.project_id,'outputs/figure-manifest-valid.json','Figure manifest')
+        item=next(m for m in body.manuscript_review.materials if m.role=='figure_manifest');item.artifact_id=manifest.id
+        body.manuscript_review.materials.append(ReviewMaterial(role='figure',label='Figure',artifact_id=image.id))
+        body.evidence.artifact_ids=[m.artifact_id for m in body.manuscript_review.materials]
+        with pytest.raises(ValueError,match='figure_audit_required'):s.goals.checkpoint(body)
         await s.close()
     asyncio.run(case())
 
