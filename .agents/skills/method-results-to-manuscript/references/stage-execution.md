@@ -22,6 +22,14 @@ success. Read relevant companion files completely; discovery listings are not
 file reads. Reuse still-present instructions within a turn; after context loss,
 read them again. Do not treat an old failure as present unavailability.
 
+Complete the applicable loads and companion reads BEFORE the dependent search,
+draft or paid image request. Loading a skill after producing its output does not
+retroactively demonstrate execution: apply its checks and revise as needed.
+Do not skip required dependencies merely to finish a packet quickly. If a
+required dependency remains incomplete, identify it as an unresolved blocking
+issue in the CURRENT draft review and set audit_status=blocked. Another skill
+covering a similar topic is not an unrecorded substitute.
+
 Publish a versioned `skill_usage` report with work item, skill, load route,
 actual tool-call identifier when available, companion paths and hashes, and
 output paths/artifact IDs. Missing call IDs are unknown, never invented.
@@ -59,6 +67,13 @@ unavailable, narrow/remove the claim or state the evidence gap. Preserve negativ
 results, the actual prediction target and all test-use limitations. Publish
 `literature` (search/evidence matrix) and `argument` (paragraph/rationale coverage)
 with the draft packet; integrity review checks their agreement with the manuscript.
+Evidence gaps affecting claims already asserted in the current draft belong to
+the current integrity review, not a generic "before submission" checklist. Resolve
+them by checking the source or narrowing/removing the unsupported assertion;
+otherwise mark the affected claim as a blocking issue. Map paragraph locators to
+the actual manuscript, not an aspirational outline. Replacing "preregistered"
+with "prespecified" still requires dated plans preceding the relevant analyses;
+without that evidence use an accurate descriptive account, not a global synonym.
 
 ## Seedream during draft
 
@@ -83,3 +98,9 @@ pending check. Do not assert renderer geometry for an API-generated raster.
 Register the image, receipt and audit, link the actual image in the draft, and
 keep it pending the existing author gate. A failed required figure is a declared
 blocker, never a silently substituted box chart.
+For targeted edits, record requested changes separately from observed results.
+A successful provider response does not establish that a requested classifier,
+label or connection was actually corrected. Without visual evidence, summaries
+must say "requested; verification pending", not "fixed". Existing blocking issues
+require a corrected and freshly audited packet before author approval; visual
+review or an author comment alone cannot waive a recorded integrity blocker.

@@ -1,6 +1,6 @@
 # PathoReason 开发交接
 
-2026-11-04 稿件依赖修复：0.6.36 已显式要求子 Skill、配套文件正文读取和 literature/argument/skill_usage 材料。真实 Agent 已生成 Seedream 病理概念候选及 v5，但预算触顶且 checkpoint 材料证据不齐，未替换 revision 6 旧待审包；不要把旧包或候选成功当作本次验收通过。继续前读 [执行证据与未完成项](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，不擅自增加额度。
+2026-11-04 稿件依赖修复：0.6.36 已显式要求子 Skill、配套文件正文读取和 literature/argument/skill_usage 材料；checkpoint 证据容量已对齐24项。用户追加1200秒后，真实 Agent 已提交正文v6/Seedream v2/13项材料，当前 draft revision 8、audit blocked，目标8/8。仍缺部分必需依赖、中央论断全文支持和图中分类头；不得建议直接批准。继续前读 [执行证据与未完成项](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，不擅自增加额度或绕过目标回合上限。
 
 ## 通用开发规则（长期适用）
 

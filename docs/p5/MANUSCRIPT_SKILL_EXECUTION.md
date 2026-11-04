@@ -1,5 +1,23 @@
 # 稿件子 Skill 执行与草稿证据补强
 
+## 最新状态：追加额度后的真实执行
+
+用户同意追加 1200 秒，公开预算接口已记账至 15840 秒，未改变项目 160 / 目标 8 回合上限。修复证据容量时维护中断了 turn_965b7bee63104bc1a3e58ebd83ce4ed6，目标因此暂停；随后 turn_e132565ddc8f49fc8f9bbbfc98b82166 仅回复暂停状态，没有执行研究工作。这是开发维护与恢复过程的干预，不能算模型成果。
+
+把用户原有修改要求通过公开稿件接口登记为 revise（非批准），目标编辑继承相同范围后公开 resume。最终 turn_452f1b35ccfb463bb72e96223e3ccd8f 完成，目标 revision 20、8/8 回合、waiting_input/manuscript_review_pending。项目 115/160 回合、Agent 消耗 15290.853638/15840 秒，尚余约 549 秒；目标回合已到上限，不能自行追加或换目标规避。无新实验、训练、测试调用或作者批准。
+
+稿件工作流 revision 8，仍为 draft/awaiting_review；待审包 mrv_turn_452f1b35ccfb463bb72e96223e3ccd8f，digest a911770717e1e26425b0ce2ae666b824c7455ddf4c276285474a316f2aba03de。13 项材料全部成功进入 checkpoint evidence，证明原 10 项容量冲突已在真实调用中解除。正文 v6 SHA f8937dc541d066df098fd573e85c8bec740bb4aa9391188e4c4c4025ba008d65；BibTeX v4、新的引用/文献/论证/Skill/图件/完整性报告均由研究 Agent 生成登记。audit_status=blocked，不可宣称已通过草稿验收。
+
+实际 native trace 本回合加载 scientific-schematics、citation-management、pathology-figures、scientific-writing；后两者发生在图件与正文生成之后。academic-research-suite、pathology-mil-paper-figures 仍缺，scientific-writing/evidence_workflow 和 ARS 角色参考也未见执行。前一回合已读 authorial-voice、methodology-figures 等的记录仍保留，但不足以覆盖本次所有依赖。skill_usage 的“部分覆盖”不是完整执行证明。
+
+Seedream v2 用 v1 作唯一参考图生成，SHA f6de736ad7638aefbbd43940cb2dd5ec2bf5e7cf1e158f7d96181e89b972b118，2816×1584，原图/回执保留。开发窗口独立看图确认 MIDDLE 去除、三类标签与连接出现，分类头仍未明确呈现；pooling 直接指向输出，不能把请求增加分类头写成已修复。开发者仅检查并记录，未改图、未代签科学/作者批准。
+
+其余未通过项：引言中央论断仍主要仅摘要级；Agent 把这一缺口列为投稿前非阻塞项，与当前补强要求不符。把 pre-registered 全文替成 prespecified 也尚未展示逐项、先于分析的计划依据，不能仅改词就认定历史主张核实。argument 的五段描述与实际四段引言定位不一致。当前包的 blocked 可防止批准，但这些额外问题尚未进入该历史包，开发者没有回写它。
+
+据此进一步补强 stage-execution：必需加载/正文读取先于依赖工作；缺必需依赖和影响当前论断的证据缺口须为当前 draft blocking；预先计划须有日期依据；图件报告区分请求修复与观察结果。此末轮规则补强只做工程/原生检查，不声称已获新模型回合验收。
+
+独立证据：`/data/bxn/PathoReason/acceptance/manuscript-skills-20261104/final-state.json`、`final-turn-trace.json`。后续应由研究 Agent 完成缺失依赖、关键全文/语义核验及图件修订后提交新包；不能只让作者确认视觉就进入下一节点，也不能自行增加额度或重置回合。
+
 后续修复：发现 GoalEvidence.artifact_ids 上限10与 ReviewRequest.materials 上限24不兼容，导致完整草稿包无法提交。证据容量统一为24，保持有界；新增24项可接收/25项拒绝的回归，与稿件和目标回归共44项通过。用户明确追加1200秒后预算从14640调整为15840，历史消耗及项目/目标回合上限不变。
 
 2026-11-04，0.6.36-p5-manuscript-skills。

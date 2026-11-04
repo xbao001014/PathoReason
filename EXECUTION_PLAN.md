@@ -1,6 +1,6 @@
 # PathoReason 执行计划
 
-2026-11-04 更新：稿件子 Skill 执行、Introduction 证据链与 Seedream 草稿路由已修复，29 项相关回归通过；真实 Agent 产出 v5 和 Seedream 候选，剩余验收因既有预算耗尽而未完成。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)。
+2026-11-04 更新：子 Skill 显式依赖、Introduction证据材料、Seedream草稿路由和24项checkpoint容量已修复，容量/稿件/目标44项回归通过。用户追加1200秒后真实Agent提交v6、Seedream v2和13项材料，当前draft revision 8/audit blocked，目标8/8；图件分类头、必需依赖执行和中央论断全文支持仍未完整通过。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，保留失败与预算，不能直接批准。
 
 版本：v0.8  
 日期：2026-10-30  
