@@ -1,3 +1,4 @@
+import {StagePanel} from './StagePanel';
 import {OutputRecovery} from './OutputRecovery';
 import {useEffect,useId,useRef,useState,type KeyboardEvent} from 'react';
 import type {GoalView,ContextView,GoalControl} from './generated';
@@ -11,7 +12,7 @@ const moduleLabels:Record<PanelModule,[string,string]>={goal:['任务进度','�
 
 const labels:Record<string,string>={active:'持续推进',paused:'已暂停',blocked:'遇到阻塞',waiting_input:'需要选择',waiting:'等待作业',completed:'Agent 已报告完成',budget_exhausted:'额度已用完',cancelled:'目标已取消'};
 const contextReasons=new Set(['context_window_requires_compaction_or_handoff','context_operation_unresolved','context_budget_exhausted','context_usage_unverified','context_recovery_failed','context_recovery_running']);
-const reasons:Record<string,string>={runtime_output_limit:'模型达到单次输出上限。已保留已有成果和消耗，自动接续已停止；可调整输出上限或思考强度后恢复。',training_budget_exhausted:'训练预算或单元尝试次数已达到上限，请在训练设置中核对并调整；已有消耗保留。',training_stopped:'训练已停止，可在训练设置中查看记录并决定是否恢复。',training_needs_reconciliation:'训练控制进程已退出，需在训练设置中核对日志和产物；未知尝试的预留消耗保留。',training_cancelled:'实验已取消，已有结果和消耗保留。',goal_permissions_updated:'工具权限已更新。旧权限阻塞需按新设置重新核对，点击“核对权限并继续”推进。',budget_updated:'额度已更新，可以继续推进。',context_window_requires_compaction_or_handoff:'上下文不足以容纳下一轮，目标和已完成进展已保留。请压缩后继续，或在同一项目换窗接续。',context_operation_unresolved:'上次压缩结果尚未确认。先核对原生结果；不会重复提交压缩。',context_usage_unverified:'摘要已返回，但压缩后的上下文尚未核验。可重新核对或同项目换窗。',context_budget_exhausted:'本项目压缩次数已用完，可在同项目换窗接续；原消耗保持不变。',context_recovery_failed:'压缩未完成，可在剩余额度内重试，或同项目换窗接续。',context_recovery_running:'正在压缩并核验上下文，目标推进已暂缓。',goal_continued_elsewhere:'本目标已在同项目的新对话接续，历史和已用额度保留。',goal_turn_limit:'达到本目标的回合上限，可调整目标额度后继续；项目总预算保持有效。',acceptance_budget_exhausted:'项目预算已耗尽，自动推进已停止。',goal_scope_blocked:'本轮范围仅允许对话，检查点未能保存，自动接续已停止。',goal_no_progress:'连续两轮没有可核验的新进展，自动推进已停止。',goal_evidence_changed:'已记录的成果发生变化，需要核对版本。',goal_turn_failed:'上一轮未成功结束，请先核对执行状态。',goal_wait_run_changed:'等待中的作业绑定发生变化，需要核对。',goal_wait_timeout:'等待作业超时，已停止自动接续。',single_turn_selected:'已切换为单步执行。'};
+const reasons:Record<string,string>={stage_handoff_ready:'本阶段已交付，请在研究阶段栏切换并进入下一阶段会话。',stage_workflow_completed:'五阶段交付完成；科学审核与作者批准仍独立记录。',stage_changed:'阶段状态已更新，请核对当前阶段后重新提交交接。',stage_training_not_terminal:'后台训练仍需完成或核对，暂不能结束当前阶段。',runtime_output_limit:'模型达到单次输出上限。已保留已有成果和消耗，自动接续已停止；可调整输出上限或思考强度后恢复。',training_budget_exhausted:'训练预算或单元尝试次数已达到上限，请在训练设置中核对并调整；已有消耗保留。',training_stopped:'训练已停止，可在训练设置中查看记录并决定是否恢复。',training_needs_reconciliation:'训练控制进程已退出，需在训练设置中核对日志和产物；未知尝试的预留消耗保留。',training_cancelled:'实验已取消，已有结果和消耗保留。',goal_permissions_updated:'工具权限已更新。旧权限阻塞需按新设置重新核对，点击“核对权限并继续”推进。',budget_updated:'额度已更新，可以继续推进。',context_window_requires_compaction_or_handoff:'上下文不足以容纳下一轮，目标和已完成进展已保留。请压缩后继续，或在同一项目换窗接续。',context_operation_unresolved:'上次压缩结果尚未确认。先核对原生结果；不会重复提交压缩。',context_usage_unverified:'摘要已返回，但压缩后的上下文尚未核验。可重新核对或同项目换窗。',context_budget_exhausted:'本项目压缩次数已用完，可在同项目换窗接续；原消耗保持不变。',context_recovery_failed:'压缩未完成，可在剩余额度内重试，或同项目换窗接续。',context_recovery_running:'正在压缩并核验上下文，目标推进已暂缓。',goal_continued_elsewhere:'本目标已在同项目的新对话接续，历史和已用额度保留。',goal_turn_limit:'达到本目标的回合上限，可调整目标额度后继续；项目总预算保持有效。',acceptance_budget_exhausted:'项目预算已耗尽，自动推进已停止。',goal_scope_blocked:'本轮范围仅允许对话，检查点未能保存，自动接续已停止。',goal_no_progress:'连续两轮没有可核验的新进展，自动推进已停止。',goal_evidence_changed:'已记录的成果发生变化，需要核对版本。',goal_turn_failed:'上一轮未成功结束，请先核对执行状态。',goal_wait_run_changed:'等待中的作业绑定发生变化，需要核对。',goal_wait_timeout:'等待作业超时，已停止自动接续。',single_turn_selected:'已切换为单步执行。'};
 
 export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBudget,budgetRefresh,onOutputSettings}:{cid:string;readOnly:boolean;running:boolean;onChange:()=>void;onError:(e:unknown)=>void;onNavigate:(cid:string)=>void;onBudget:()=>void;budgetRefresh:number;onOutputSettings:(model:string,effort:ReasoningEffort,limit:number)=>void}){
  const controlInFlight=useRef(false);
@@ -58,7 +59,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
  const modules:PanelModule[]=[...(goal?['goal' as const]:[]),...(trainingStatus?['plan' as const,'budget' as const,'history' as const]:[])];
  const selectedModule=modules.includes(module)?module:modules[0]||'goal';
  const summary=goal?.scope_recovery?'此前选项将本轮限制为仅对话，文件操作未开放；工具自动批准设置仍然有效。':goal?(reasons[goal.reason||'']||goal.summary||goal.objective):'';
- return <section className="goal-panel" aria-label="任务进度与训练" data-expanded={expanded} hidden={!goal&&!trainingStatus}>
+ return <><StagePanel cid={cid} readOnly={readOnly} running={running} onNavigate={onNavigate} onChange={onChange} onError={onError}/><section className="goal-panel" aria-label="任务进度与训练" data-expanded={expanded} hidden={!goal&&!trainingStatus}>
   <div className="goal-body" id={bodyId} hidden={!expanded}>
    <div className="goal-module-tabs" role="tablist" aria-label="任务与训练分类" onKeyDown={navigateModules} style={{gridTemplateColumns:`repeat(${Math.max(1,modules.length)},minmax(0,1fr))`}}>{modules.map(value=><button key={value} id={bodyId+'-tab-'+value} type="button" role="tab" aria-label={moduleLabels[value][0]} aria-selected={selectedModule===value} aria-controls={bodyId+(value==='goal'?'-goal':'-training')} tabIndex={selectedModule===value?0:-1} onClick={()=>chooseModule(value)}><span className="goal-tab-full">{moduleLabels[value][0]}</span><span className="goal-tab-short" aria-hidden="true">{moduleLabels[value][1]}</span></button>)}</div>
    <div className="goal-module-panel" role="tabpanel" id={bodyId+'-goal'} aria-labelledby={bodyId+'-tab-goal'} hidden={selectedModule!=='goal'}>
@@ -85,5 +86,5 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
     <svg className="goal-heading-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
    </button>
   </div>
- </section>;
+ </section></>;
 }

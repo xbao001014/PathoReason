@@ -176,6 +176,7 @@ class Formal:
                 db.execute('INSERT INTO projects VALUES(?,?)',(pid,encoded(p)))
                 db.execute('INSERT INTO conversations VALUES(?,?,?,?,?)',(conv.id,pid,encoded(conv),None,str(workspace)))
                 db.execute('INSERT INTO formal_studies VALUES(?,?,?,?)',(pid,body.request_key,digest,encoded(record)))
+                s.stages.initialize(db,pid,conv.id)
         except BaseException:
             shutil.rmtree(workspace,ignore_errors=True);shutil.rmtree(artifact_dir,ignore_errors=True);shutil.rmtree(s.data/'studies'/pid,ignore_errors=True);raise
         return self.view(pid)

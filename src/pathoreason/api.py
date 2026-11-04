@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse,Response,StreamingResponse,FileRespon
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,ConfigDict,Field
 from .settings import ROOT,settings,credential
+from .stages import ResearchStageView,StageAssign,StageSwitch
 from .service import Service,NotReady
 from .persistence import Conflict,Missing,Gone,encoded
 from .conversation_lifecycle import ManagedConversation,ConversationLifecycleView,DeleteConversationInput
@@ -242,8 +243,19 @@ async def training_tool(body:TrainingToolInput,request:Request):
     # lock while a user may need to stop a different background experiment.
     return await asyncio.to_thread(service().training.call,body)
 
+@app.get('/api/v2/conversations/{cid}/stage',response_model=ResearchStageView|None)
+async def stage_view(cid:str,response:Response):
+    response.headers['Cache-Control']='no-store'
+    return service().stages.view(cid)
+
+@app.post('/api/v2/conversations/{cid}/stage',response_model=ResearchStageView)
+async def stage_assign(cid:str,body:StageAssign):return await service().stages.assign(cid,body)
+
+@app.post('/api/v2/conversations/{cid}/stage/switch',response_model=ResearchStageView)
+async def stage_switch(cid:str,body:StageSwitch):return await service().stages.switch(cid,body)
+
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.27-p5-execution-evidence'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.28-p5-stage-handoff'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

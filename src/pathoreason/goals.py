@@ -14,6 +14,7 @@ from .contracts import Identifier, canonical_digest
 from .persistence import ACTIVE, Conflict, Missing, Gone, encoded, now, uid
 from .settings import ROOT
 from .reasoning import ReasoningEffort
+from .stages import StageHandoff
 
 CONTEXT_BLOCKERS={'context_window_requires_compaction_or_handoff','context_operation_unresolved',
     'context_budget_exhausted','context_usage_unverified','context_recovery_failed','context_recovery_running'}
@@ -62,6 +63,7 @@ class GoalCheckpoint(BaseModel):
     completion_criteria: list[str] = Field(default_factory=list, max_length=8)
     evidence: GoalEvidence = Field(default_factory=GoalEvidence)
     answer_only: bool = False
+    stage_handoff: StageHandoff | None = None
     wait_for: GoalWait | None = None
     blocker: GoalBlocker | None = None
 
@@ -179,6 +181,8 @@ class Goals:
         self.s.store.conversation(cid)
         with self.s.store.connect() as db:
             goal = self._latest(db, cid)
+            stage_moved=self.s.stages.moved_goal(db,cid)
+            if stage_moved and (goal is None or stage_moved['created_at']>goal['created_at']):goal=stage_moved
             moved=db.execute("SELECT document FROM goal_context_recoveries WHERE source_conversation=? AND action='new_conversation' ORDER BY rowid DESC LIMIT 1",(cid,)).fetchone()
             if moved:
                 move=json.loads(moved[0])
@@ -273,6 +277,8 @@ class Goals:
                         setting=db.execute('SELECT revision,document FROM '+table+' WHERE conversation_id=? ORDER BY revision DESC LIMIT 1',(cid,)).fetchone()
                         if setting:db.execute('INSERT INTO '+table+' VALUES(?,?,?,?)',(dest.id,setting['revision'],setting['document'],now()))
                     receipt={'conversation_id':dest.id,'source_goal':dict(goal)}
+                    if goal.get('context_transfer',{}).get('stage_handoff'):transfer['stage_handoff']=goal['context_transfer']['stage_handoff']
+                    self.s.stages.rebind_context(db,conv['project_id'],cid,dest.id)
                     goal.update(conversation_id=dest.id,continued_from=cid,state='active',reason='context_new_conversation',context_transfer=transfer)
                     db.execute('UPDATE research_goals SET conversation_id=? WHERE id=?',(dest.id,goal['id']))
                     self._save(db,goal,'context_new_conversation')
@@ -361,6 +367,7 @@ class Goals:
             raise Conflict('goal_changed')
         current.update(state='active', reason=None, last_turn_id=turn.id, turns_used=current['turns_used']+1)
         if not automatic:
+            self.s.stages.user_turn(db,turn.conversation_id)
             current['user_instructions'] = [*current.get('user_instructions',[]), {'turn_id':turn.id,'text':request['text']}][-12:]
             current['request_template'] = {k:request.get(k) for k in ('model','reasoning_effort','output_limit_tokens','skill_id','execution_mode')}
             current['stagnant_turns'] = 0
@@ -414,6 +421,7 @@ class Goals:
         if not hmac.compare_digest(body.grant,self.s.guidance.grant(body.turn_id)):
             raise Conflict('goal_grant_invalid')
         payload = body.model_dump(mode='json', exclude={'grant'})
+        if payload.get('stage_handoff') is None:payload.pop('stage_handoff',None)
         # Check authority before touching evidence, then recheck in the transaction.
         with self.s.store.connect() as db:
             self._check_checkpoint(db, row, body)
@@ -430,7 +438,7 @@ class Goals:
                 if json.loads(link['checkpoint'])!=payload:raise Conflict('goal_checkpoint_already_recorded')
             else:db.execute('UPDATE goal_turns SET checkpoint=? WHERE turn_id=?',(encoded(payload),body.turn_id))
         return {'status':'recorded','outcome':body.outcome,'evidence':verified,
-                'next':'Finish this turn briefly. The controller will verify and continue within the original scope and budget; do not ask the user to say continue.'}
+                'next':('Finish this turn briefly. After successful settlement, the UI will show the stage delivery and explicit conversation switch; do not start the next stage or offer a duplicate choice.' if body.stage_handoff else 'Finish this turn briefly. The controller will verify and continue within the original scope and budget; do not ask the user to say continue.')}
 
     def _check_checkpoint(self, db, row, body, check_scope=True):
         self.s.store.check_conversation(db,row['conversation_id'],writable=True)
@@ -450,6 +458,7 @@ class Goals:
         if canonical_digest(frozen)!=turn['config_digest']:raise Conflict('runtime_configuration_changed')
         if check_scope and frozen.get('execution_scope')=='dialogue' and (body.evidence.files or body.evidence.task_check_ids or body.wait_for):
             raise Conflict('goal_outside_turn_scope')
+        self.s.stages.validate(db,row,body)
         return link
 
     def prompt(self, tid):
@@ -548,6 +557,7 @@ class Goals:
                     goal['reason'] = None if outcome in ('continue','completed') else 'agent_'+outcome
                     if outcome=='completed':goal['completion_scope']='answer_only' if checkpoint['answer_only'] else 'evidence_bytes_verified'
                     if outcome=='waiting':goal.update(wait_for=checkpoint['wait_for'],wait_started_at=now())
+                    if outcome=='completed':self.s.stages.settled(db,row,goal,checkpoint)
                 if goal['state']=='active' and goal['stagnant_turns']>=2:
                     goal.update(state='blocked',reason='goal_no_progress',summary='连续两轮未形成可核验的新进展，已停止自动接续。')
                 if goal['state']=='active' and goal['turns_used']>=goal['max_turns']:
