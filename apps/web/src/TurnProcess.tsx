@@ -1,4 +1,4 @@
-import {useEffect,useId,useState} from 'react';
+import {memo,useEffect,useId,useState} from 'react';
 import type {ToolSummary,TurnView} from './generated';
 import {statusTone} from './status';
 import './turnProcess.css';
@@ -56,7 +56,7 @@ function ToolObjects({tool}:{tool:ToolSummary}){
  return <details className="process-objects"><summary aria-label={'查看 '+tool.name+' 的调用对象'}><ObjectPreview tool={tool}/><svg className="process-object-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m7 5 5 5-5 5"/></svg></summary><ObjectDetails tool={tool}/></details>;
 }
 
-export function TurnProcess({view}:{view:TurnView}){
+export const TurnProcess=memo(function TurnProcess({view}:{view:TurnView}){
  const status=view.turn.status,active=liveStatuses.includes(status),responding=view.usage.activity_phase==='responding'||(!view.usage.activity_phase&&Boolean(view.text));
  const [expanded,setExpanded]=useState(active&&!responding),[showHelp,setShowHelp]=useState(false),[clock,setClock]=useState(Date.now),id=useId();
  useEffect(()=>{if(responding||!active)setExpanded(false);},[responding,active]);
@@ -90,4 +90,4 @@ export function TurnProcess({view}:{view:TurnView}){
    </div>}
   </div>
  </section>;
-}
+});

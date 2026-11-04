@@ -1,4 +1,5 @@
-import {useEffect,useRef,useState} from 'react';
+import {createRefreshScheduler} from './refreshScheduler';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {formalApi} from './FormalStudy';
 import type {TrainingView,TrainingBudget,TrainingDecision} from './generated';
 import './training.css';
@@ -14,8 +15,13 @@ export function TrainingPanel({cid,readOnly,onStatus,section,onSectionChange}:{c
  const [items,setItems]=useState<TrainingView[]>([]),[selected,setSelected]=useState(''),[draft,setDraft]=useState<TrainingView|null>(null);
  const [wall,setWall]=useState(''),[gpu,setGpu]=useState(''),[unit,setUnit]=useState(''),[retries,setRetries]=useState('0'),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const generation=useRef(0);
- async function load(){const epoch=generation.current;const v=await formalApi<TrainingView[]>('/conversations/'+cid+'/training');if(epoch===generation.current)setItems(v);return v;}
- useEffect(()=>{generation.current++;setItems([]);setDraft(null);setSelected('');let live=true;void load().catch(()=>{});const timer=setInterval(()=>{if(live)void load().catch(()=>{});},4000);return()=>{live=false;generation.current++;clearInterval(timer);};},[cid]);
+ const latestItems=useRef(items),latestCid=useRef(cid);latestItems.current=items;latestCid.current=cid;
+ const loader=useMemo(()=>createRefreshScheduler(async()=>{if(latestCid.current!==cid)return;const epoch=generation.current;const v=await formalApi<TrainingView[]>('/conversations/'+cid+'/training');if(epoch===generation.current&&latestCid.current===cid)setItems(old=>JSON.stringify(old)===JSON.stringify(v)?old:v);}),[cid]);
+ const load=()=>loader.request();
+ useEffect(()=>{generation.current++;setItems([]);setDraft(null);setSelected('');let live=true;void load().catch(()=>{});let lastPoll=Date.now();const refresh=()=>{lastPoll=Date.now();void loader.poll().catch(()=>{});};
+ const timer=setInterval(()=>{const active=!latestItems.current.length||latestItems.current.some(v=>!['completed','cancelled'].includes(v.status));if(live&&document.visibilityState==='visible'&&(active||Date.now()-lastPoll>=30000))refresh();},4000);
+ const visible=()=>{if(document.visibilityState==='visible')refresh();};document.addEventListener('visibilitychange',visible);
+ return()=>{live=false;generation.current++;clearInterval(timer);document.removeEventListener('visibilitychange',visible);};},[cid,loader]);
  useEffect(()=>{if(items.length&&!items.some(v=>v.id===selected))choose(items.find(v=>v.status==='draft')||items[0]);},[items,selected]);
  const display=items.find(v=>v.id===selected)||items.find(v=>v.status==='draft')||items[0];
  useEffect(()=>{onStatus(display?.status||'');},[display?.status,onStatus]);
