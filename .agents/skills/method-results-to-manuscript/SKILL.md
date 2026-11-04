@@ -91,6 +91,8 @@ Use `scripts/bootstrap_project.py <project-path>` when a durable inventory and f
 - `full`: run the staged workflow in [references/workflow.md](references/workflow.md), pausing at its author and integrity gates.
 
 Read [references/prompt-recipes.md](references/prompt-recipes.md) when the user wants a reusable invocation or stage-specific prompt. Read [references/artifact-contract.md](references/artifact-contract.md) when creating or validating pipeline files.
+Explicitly load `anti-defensive-writing` before drafting prose and again for
+the author-adjudicated M6 narrative pass; at M7 verify its exact-byte reports.
 Use the evidence-centered anti-defensive narrative and policy-2 semantic review in
 [references/authorial-voice.md](references/authorial-voice.md); a lexical lint pass alone is not style approval.
 Read [references/authorial-voice.md](references/authorial-voice.md) whenever
@@ -207,6 +209,8 @@ reference is mandatory for draft and substantive revision:
 - `paper-lookup`: reproducible scholarly discovery and full-text retrieval.
 - `citation-management`: metadata, DOI/PMID, BibTeX, deduplication, and citation-existence checks.
 - `scientific-writing`: evidence-grounded drafting and consistency auditing.
+- `anti-defensive-writing`: evidence-led authorial narrative and whole-manuscript
+  semantic review; publish the style and voice reports, not just a read receipt.
 - `statistical-analysis`: analysis-plan or reported-statistics review; it does not authorize rerunning experiments.
 - `scientific-visualization`: data-derived figures after data and captions are stable.
 - `manuscript-to-latex` raster-generation reference: conceptual method figures during M4; final packaging only after scientific freeze.

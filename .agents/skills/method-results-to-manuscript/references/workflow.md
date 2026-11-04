@@ -84,7 +84,9 @@ Write from the study authors' perspective rather than as an auditor describing
 files supplied to the pipeline. At this working stage, machine claim/evidence
 markers may remain long enough to support M5 integrity review, but missing-file
 commentary and workflow narration belong in sidecars. Follow
-[authorial-voice.md](authorial-voice.md).
+[authorial-voice.md](authorial-voice.md) through an explicit
+`anti-defensive-writing` skill load. Save draft semantic/voice records; a temporary
+M4 lint finding must be identified and resolved before the M6 clean revision.
 
 **Deliverables:** dated Markdown draft, actual method figure originals and captions,
 tables, change log, unresolved-author-input list. Generate the method-centered
@@ -130,18 +132,22 @@ Use journal-fit, domain, methodology/statistics, reproducibility/ethics, and dev
 
 The author adjudicates every material recommendation as accept, modify, reject, or defer with rationale. Apply only authorized changes, preserve the prior manuscript, and produce a revision matrix plus change log.
 
-After scientific changes are adjudicated, perform a distinct reader-facing
+After scientific changes are adjudicated, explicitly load `anti-defensive-writing`
+and perform a distinct reader-facing
 narrative pass before the M6 manuscript is approved. Remove internal banners,
 claim/evidence markers, gate labels, file-oriented commentary, and outsider
 phrasing from the manuscript while retaining their mappings in the audit
 artifacts. Preserve every material limitation and evidence boundary in natural
-scientific language. Run `scripts/check_reader_facing_voice.py` and save the
+scientific language. Write `reader_facing_style_review.json` using the policy-2
+semantic contract in authorial-voice.md. Run
+`scripts/check_reader_facing_voice.py --semantic-review <reader_facing_style_review.json>` and save the
 result as `05_review_revision/reader_facing_voice_report.json`; a failed result
-blocks freezing.
+blocks freezing. Require both `status: passed` and `style_status: passed` bound
+to the exact revised manuscript SHA-256; lexical status alone is insufficient.
 
 **Deliverables:** review package, editorial synthesis, author-adjudication
 record, revision matrix, clean reader-facing revised manuscript,
-`reader_facing_voice_report.json`, change log, and response document when
+`reader_facing_style_review.json`, `reader_facing_voice_report.json`, change log, and response document when
 needed.
 
 ## Stage M7 — Final integrity and submission preparation
@@ -151,7 +157,8 @@ needed.
 Actions:
 
 1. Perform a fresh integrity pass; do not only recheck known issues.
-2. Confirm that the clean reader-facing manuscript has a passing M6 voice
+2. Explicitly load `anti-defensive-writing` in verification mode. Confirm that
+   the clean reader-facing manuscript has exact-byte passing M6 semantic and voice
    report and that every removed marker still maps to internal evidence. Do not
    rewrite scientific content merely to pass formatting.
 3. Confirm journal, article type, anonymization, word/figure/table limits, reference style, and required reporting guidance against current authoritative instructions.

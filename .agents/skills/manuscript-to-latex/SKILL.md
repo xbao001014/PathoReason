@@ -44,6 +44,16 @@ renewing downstream approval; preserve previous files, hashes and decisions.
 
 ## Required inputs
 
+Before converting frozen content, explicitly load `anti-defensive-writing` in
+verification mode. Locate its `reader_facing_style_review.json` and
+`reader_facing_voice_report.json`, check the approved manuscript SHA-256, and
+require both lexical `status` and semantic `style_status` to be passed. A prior
+integrity report or successful PDF compilation does not replace this check.
+Missing/stale/failed records remain an explicit unresolved delivery issue.
+Inspect frozen text read-only; prose corrections require renewed scientific
+review, never an unrecorded rewrite during typesetting. Preserve existing
+previews and author decisions; do not manufacture retroactive approvals.
+
 Before submission mode, locate or obtain:
 
 - the frozen manuscript source (`.md` or `.tex`);

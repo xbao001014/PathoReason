@@ -263,6 +263,10 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
         return data,m['media_type']
     def prompt(self,cid):
         v=self.view(cid)
+        if v['gate'] in ('draft','scientific'):
+            v['next_work']+=' 显式调用 anti-defensive-writing Skill 并完整读取其 authorial-voice 配套规范。起草时使用；作者裁定后的科学修订在请求冻结前完成全文语义检查，输出与确切稿件 SHA 绑定的 reader_facing_style_review.json 和 reader_facing_voice_report.json，作为 style_review/voice_report 材料登记并纳入 checkpoint evidence。科学冻结前须同时 status=passed、style_status=passed；只读过规范、关键词扫描、一般完整性报告均不等于通过。保留阴性结果、不确定性与实质限制，不把反复自我否定当审慎。'
+        elif v['gate'] in ('review','delivery'):
+            v['next_work']+=' 显式调用 anti-defensive-writing Skill 核对对应稿件的语义及 voice 报告、SHA 和双 passed 状态；缺失/过期/失败须列明为未解决问题，不能用完整性或 PDF QA 通过替代。交付时只读核查已批准正文；需要文字修改则提出退回 scientific 审核，不自行改写冻结稿或伪造通过记录。'
         if v['gate']=='draft':
             v['next_work']+=' 实际加载 method-results-to-manuscript 并完整读取 references/stage-execution.md，按其任务依赖加载子 Skill 和配套文件；目录清单不是已读证据。背景/引用/研究动机补强必须重走 paper-lookup、citation-management、文献综合及 scientific-writing，不能只审计旧稿。读取 authorial-voice.md；病理概念图读取 methodology-figures.md 和 raster-generation.md，获授权后用配置的 Seedream 链路生成真实候选，不以实验框图代替。文学证据和 argument 覆盖临床/病理背景、已有工作、具体缺口、研究问题与设计理由；不以引用数量代替语义支持。'
         # Keep original author statements across phases and context recovery; never replace them with a model paraphrase.
