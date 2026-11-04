@@ -9,3 +9,4 @@
 .stage-steps{list-style:none;padding:0;margin:0 0 20px;display:grid;gap:12px;}.stage-steps li{display:flex;align-items:center;gap:10px;}.stage-steps li>span{border:1px solid var(--line);border-radius:50%;min-width:26px;height:26px;display:grid;place-items:center;font-size:12px;}.stage-steps li[aria-current]{font-weight:600;}.stage-steps strong{font-size:12px;}
 .stage-setup{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}.stage-setup>*:first-child{flex:1;min-width:180px;}
 @media(max-width:600px){.stage-content{padding:16px;}.stage-toggle{padding:12px 16px;gap:8px;flex-wrap:wrap;}.stage-toggle .status-text{max-width:100%;}.stage-reminder{padding:12px 16px 16px;}.stage-reminder button{width:100%;}}
+@media(max-width:760px){.chat-layout:has(.stage-content) .conversation-timeline{overflow:clip;}}
