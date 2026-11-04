@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,ConfigDict,Field
 from .settings import ROOT,settings,credential
 from .stages import ResearchStageView,StageAssign,StageSwitch
-from .manuscript import ReviewDecision
+from .manuscript import ReviewDecision,RevisionRoute
 from .service import Service,NotReady
 from .persistence import Conflict,Missing,Gone,encoded
 from .conversation_lifecycle import ManagedConversation,ConversationLifecycleView,DeleteConversationInput
@@ -218,6 +218,12 @@ async def goal_checkpoint(body:GoalCheckpoint,request:Request):
     if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'goal_bridge_auth_required')
     async with service().lock:return service().goals.checkpoint(body)
 
+@app.post('/internal/manuscript-revision-route',include_in_schema=False)
+async def manuscript_revision_route(body:RevisionRoute,request:Request):
+    expected='Bearer '+service().guidance.token()
+    if not hmac.compare_digest(request.headers.get('authorization',''),expected):raise HTTPException(403,'goal_bridge_auth_required')
+    async with service().lock:return service().manuscripts.route_revision(body)
+
 
 @app.get('/api/v2/conversations/{cid}/training',response_model=list[TrainingView])
 async def training_list(cid:str):
@@ -276,7 +282,7 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.38-p5-writing-voice'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.39-p5-revision-routing'}
 @app.get('/api/v1/research-projects',response_model=list[ManagedProject])
 async def projects(include_archived:bool=False):return service().projects.list(include_archived)
 @app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)

@@ -26,10 +26,16 @@ performing this work; it is the canonical policy and semantic-record contract.
 - **Review / M5:** inspect the draft's records; missing or stale records are an
   explicit review finding, not proof that the manuscript is well written.
 - **Delivery / M7:** verify the passing records against the approved scientific
-  manuscript before conversion. If missing, inspect the frozen text read-only
-  and report the gap. Do not edit an approved manuscript or fabricate a passing
-  report. Necessary prose changes require reopening scientific review through
-  the existing author workflow. A PDF build/QA pass is not a style pass.
+  manuscript before conversion. Preserve that version. When the user has already
+  requested a rewrite or prose revision, follow the host's manuscript revision
+  routing capability to return to scientific preparation, then create a new
+  version in the same turn. This applies an existing revision instruction; it
+  neither approves the new version nor requires a second user confirmation.
+  Without revision authority, inspect read-only and report the concrete gap.
+  If the requested scope is ambiguous, offer a concise choice between revising
+  prose with renewed scientific review and layout-only changes; keep free text
+  available. Do not route on a skill name alone, a negated/quoted instruction or
+  a vague acceptance of several alternatives. A PDF QA pass is not a style pass.
 
 ## Execute and record
 

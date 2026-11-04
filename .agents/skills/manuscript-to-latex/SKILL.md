@@ -50,9 +50,14 @@ verification mode. Locate its `reader_facing_style_review.json` and
 require both lexical `status` and semantic `style_status` to be passed. A prior
 integrity report or successful PDF compilation does not replace this check.
 Missing/stale/failed records remain an explicit unresolved delivery issue.
-Inspect frozen text read-only; prose corrections require renewed scientific
-review, never an unrecorded rewrite during typesetting. Preserve existing
-previews and author decisions; do not manufacture retroactive approvals.
+Preserve frozen originals. When an actual user instruction already requests
+prose revision, use the host's manuscript revision routing capability, then
+prepare a new version for scientific review without asking for duplicate
+permission. Layout-only changes stay in delivery. Ambiguous requests need a
+short scope choice (revise prose and return to scientific review / layout only),
+not an unexplained internal `reopen` instruction. Without revision authority,
+inspect read-only and report the gap. Preserve previews and author decisions;
+never manufacture retroactive approvals or overwrite the approved version.
 
 Before submission mode, locate or obtain:
 

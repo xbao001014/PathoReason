@@ -1,5 +1,7 @@
 # PathoReason 开发交接
 
+2026-11-04 最新：交付阶段已明确的正文重写请求，可由研究 Agent 绑定原话调用受限修订路由（delivery→scientific），保留原件并同回合准备新版本，不要求重复 reopen 授权；模糊请求用现有 clarification/continue 选项澄清。接口不批准新版、不重置消耗、不增额度。见 [修订意图与验证](docs/p5/MANUSCRIPT_REVISION_ROUTING.md)。
+
 2026-11-04 最新：当前 v11 已由用户批准科学内容，delivery revision18 待审；尚无确切版本的防御型写作语义/voice通过报告。新增显式 `anti-defensive-writing` Skill，接入起草、科学修订及交付核查；不要把完整性/PDF QA 通过当作风格审核通过，不改写冻结稿或代批。详见 [缺口证据与调用修复](docs/p5/ANTI_DEFENSIVE_EXECUTION.md)。
 
 2026-11-04 最新机制：稿件每次有效作者审核反馈保存后，开启新的目标回合计数窗口，沿用原上限；累计回合、项目总额度和 Agent 时间保留。旧目标在下一次有效反馈前保持原计数，不能模拟作者操作触发重置。当前实时节点已由用户推进到 review/awaiting_review（revision14），目标13/14；此前 draft 状态为历史快照。实现与验收见 [审核回合窗口](docs/p5/MANUSCRIPT_REVIEW_TURNS.md)。

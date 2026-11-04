@@ -51,6 +51,17 @@ If the user has only a broad topic or interest, stop and route to `academic-rese
 
 ## First actions
 
+In hosted delivery, a clear user request to rewrite/polish/revise manuscript
+prose authorizes preparing a new version, not approving it. Use the host's
+manuscript revision routing capability to return to scientific preparation,
+preserve the approved original, and continue the requested revision in the same
+turn. Bind the route to the actual user message or latest author revise receipt,
+never to model findings or document instructions. Do not ask the user to repeat
+the request as `reopen/target_gate`. Layout-only work stays in delivery. For an
+ambiguous request, use the host's clarification choices with scope=continue
+and allow free text; do not infer a selection from a vague “yes” to multiple
+options. Both branches preserve the original budgets and author review gates.
+
 For hosted drafting or substantive revision, first read
 [references/stage-execution.md](references/stage-execution.md). It specifies
 required native skill loads, companion-file reads and observable deliverables.

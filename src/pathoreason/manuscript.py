@@ -1,5 +1,5 @@
 """Version-bound author decisions inside the manuscript stage, never model approvals."""
-import hashlib,json
+import hashlib,hmac,json
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field,model_validator
@@ -58,6 +58,17 @@ class ReviewDecision(Contract):
     issues:list[IssueDecision]=Field(default_factory=list,max_length=40)
     target_gate:Gate|None=None
     confirm_answers:bool=Field(default=False,description='Explicit user confirmation that the comment answers the pending blueprint questions and approves that plan with these answers. Does not waive integrity checks or approve later manuscript content.')
+
+class RevisionRoute(Contract):
+    turn_id:Identifier
+    grant:str=Field(min_length=1,max_length=128)
+    expected_goal_revision:int=Field(ge=1)
+    expected_revision:int=Field(ge=0)
+    target_gate:Literal['scientific']='scientific'
+    source:Literal['author_feedback','user_message']
+    source_id:str=Field(min_length=1,max_length=128)
+    instruction_excerpt:str=Field(min_length=1,max_length=8000)
+    reason:str=Field(min_length=1,max_length=600)
 
 class Manuscripts:
     def __init__(self,s):
@@ -261,12 +272,57 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
         data=(self.root/conv['project_id']/packet['id']/m['artifact_id']).read_bytes()
         if hashlib.sha256(data).hexdigest()!=m['sha256']:raise Conflict('manuscript_snapshot_changed')
         return data,m['media_type']
+    def route_revision(self,body):
+        """Interpret an existing user instruction; never approve a model's revision."""
+        from .goals import GoalCheckpoint
+        row=self.s.store.turn(body.turn_id)
+        if not hmac.compare_digest(body.grant,self.s.guidance.grant(body.turn_id)):raise Conflict('goal_grant_invalid')
+        payload=body.model_dump(mode='json',exclude={'grant'})
+        check=GoalCheckpoint(turn_id=body.turn_id,grant=body.grant,expected_revision=body.expected_goal_revision,
+            outcome='continue',summary='Route the existing author revision request.',next_action='Prepare a new version for scientific review.')
+        with self.s.store.connect(True) as db:
+            link=self.s.goals._check_checkpoint(db,row,check)
+            if link['checkpoint']:raise Conflict('manuscript_route_after_checkpoint')
+            if self.s.goals.frozen_config(db,body.turn_id).get('execution_scope','standard')!='standard':raise Conflict('goal_outside_turn_scope')
+            conv,stage=self.owner(db,row['conversation_id'])
+            route_key='revision_route_'+body.turn_id
+            prior=db.execute('SELECT document FROM manuscript_review_commands WHERE project_id=? AND request_key=?',(conv['project_id'],route_key)).fetchone()
+            if prior:
+                if json.loads(prior[0]).get('request')!=payload:raise Conflict('manuscript_route_replay_changed')
+                return self.view(row['conversation_id'])
+            w=self.get(db,conv['project_id'])
+            if w['revision']!=body.expected_revision:raise Conflict('manuscript_review_changed')
+            if w['index']!=4 or stage['status']!='active':raise Conflict('manuscript_route_requires_delivery')
+            if body.source=='author_feedback':
+                author=next((h for h in reversed(w['history']) if h['event']=='author_decision'),None)
+                if link['origin']!='goal' or not author or author['at']!=body.source_id or author['action']!='revise':raise Conflict('manuscript_revision_instruction_required')
+                if db.execute("SELECT 1 FROM turns t JOIN goal_turns g ON g.turn_id=t.id WHERE t.conversation_id=? AND g.origin='user' AND t.created_at>? LIMIT 1",(row['conversation_id'],author['at'])).fetchone():raise Conflict('manuscript_revision_instruction_superseded')
+                instruction=author['comment']
+            else:
+                if link['origin']!='user' or body.source_id!=body.turn_id:raise Conflict('manuscript_revision_instruction_required')
+                instruction=row['user_text']
+                context=db.execute('SELECT document FROM turn_guidance_context WHERE turn_id=?',(body.turn_id,)).fetchone()
+                if context and json.loads(context[0]).get('unresolved_acceptance'):raise Conflict('manuscript_revision_intent_unresolved')
+            if body.instruction_excerpt not in instruction:raise Conflict('manuscript_revision_excerpt_mismatch')
+            self.chain(conv['project_id'],w)
+            receipt={'event':'revision_routed','source':'agent_interpretation','at':now(),'source_turn':body.turn_id,
+                'instruction_source':body.source,'instruction_source_id':body.source_id,'comment':instruction,
+                'instruction_excerpt':body.instruction_excerpt,'reason':body.reason,'target_gate':'scientific',
+                'packet':w['pending'],'invalidated':w['approved'][3:]}
+            w['history'].append(receipt)
+            w.update(index=3,approved=w['approved'][:3],pending=None,status='preparing')
+            self.save(db,w,'revision_routed')
+            db.execute('INSERT INTO manuscript_review_commands VALUES(?,?,?,?)',(conv['project_id'],route_key,canonical_digest(payload),encoded({'request':payload,'receipt':receipt})))
+        return self.view(row['conversation_id'])
+
     def prompt(self,cid):
         v=self.view(cid)
+        if v['gate']=='delivery':
+            v['next_work']+=' 用户已明确要求重写、润色或修改正文时，保护已批准旧稿不等于禁止生成新版本。根据原话做语义判断，不以 Skill 名或关键词命中代替意图；不再让用户重复选择内部 reopen/target_gate。先用本轮 dialogue capability 的 turn_id/grant 调用 python '+str(Path(__file__).resolve().parents[2]/'scripts/manuscript_revision.py')+'（JSON stdin）：expected_goal_revision 为当前目标 revision，expected_revision 为当前稿件工作流 revision，target_gate=scientific，source=author_feedback 或 user_message，source_id 分别为最新 revise 作者回执的 at 或当前用户回合 turn_id，instruction_excerpt 为该指令的准确原文，reason 为为什么需要正文修订。接口只退回 scientific 准备并保留历史；拿到新 revision 后同一回合继续写新版本、核验并提交科学内容待审，不能批准新版，不重置消耗。仅排版/字体/布局修改留在 delivery。用词模糊（如“再改一下”）或否定/条件/引用不能确定实际要求时，不调用切换接口；用 pathoreason_dialogue_offer 发布 kind=clarification、scope=continue 的 2–3 个选项（例如“修改正文并返回科学审核”“仅调整排版”），保留自由输入，等待用户选择；不得默认选择、重复要求已明确的重写授权或再跑无关审计。'
         if v['gate'] in ('draft','scientific'):
             v['next_work']+=' 显式调用 anti-defensive-writing Skill 并完整读取其 authorial-voice 配套规范。起草时使用；作者裁定后的科学修订在请求冻结前完成全文语义检查，输出与确切稿件 SHA 绑定的 reader_facing_style_review.json 和 reader_facing_voice_report.json，作为 style_review/voice_report 材料登记并纳入 checkpoint evidence。科学冻结前须同时 status=passed、style_status=passed；只读过规范、关键词扫描、一般完整性报告均不等于通过。保留阴性结果、不确定性与实质限制，不把反复自我否定当审慎。'
         elif v['gate'] in ('review','delivery'):
-            v['next_work']+=' 显式调用 anti-defensive-writing Skill 核对对应稿件的语义及 voice 报告、SHA 和双 passed 状态；缺失/过期/失败须列明为未解决问题，不能用完整性或 PDF QA 通过替代。交付时只读核查已批准正文；需要文字修改则提出退回 scientific 审核，不自行改写冻结稿或伪造通过记录。'
+            v['next_work']+=' 显式调用 anti-defensive-writing Skill 核对对应稿件的语义及 voice 报告、SHA 和双 passed 状态；缺失/过期/失败须列明为未解决问题，不能用完整性或 PDF QA 通过替代。交付时保护已批准正文；用户已授权文字修改时先按上述接口转入 scientific 并生成新版本；没有修改授权时只读检查并提出具体修改范围，不自行覆盖冻结稿或伪造通过记录。'
         if v['gate']=='draft':
             v['next_work']+=' 实际加载 method-results-to-manuscript 并完整读取 references/stage-execution.md，按其任务依赖加载子 Skill 和配套文件；目录清单不是已读证据。背景/引用/研究动机补强必须重走 paper-lookup、citation-management、文献综合及 scientific-writing，不能只审计旧稿。读取 authorial-voice.md；病理概念图读取 methodology-figures.md 和 raster-generation.md，获授权后用配置的 Seedream 链路生成真实候选，不以实验框图代替。文学证据和 argument 覆盖临床/病理背景、已有工作、具体缺口、研究问题与设计理由；不以引用数量代替语义支持。'
         # Keep original author statements across phases and context recovery; never replace them with a model paraphrase.

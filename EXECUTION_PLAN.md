@@ -1,5 +1,7 @@
 # PathoReason 执行计划
 
+2026-11-04 更新：修复明确重写请求滞留交付节点的问题，新增绑定用户指令的 Agent 修订路由和模糊意图选项指导；保留作者复审及预算边界。见 [实施与验收](docs/p5/MANUSCRIPT_REVISION_ROUTING.md)。
+
 2026-11-04 更新：v11 科学内容已获用户批准，最终交付待审；防御型写作语义报告缺失。新增可调用 `anti-defensive-writing` 入口并接入阶段依赖与主机提示；当前稿件只读诊断，未代改/代批，真实 Agent 后续执行待验证。见 [实施记录](docs/p5/ANTI_DEFENSIVE_EXECUTION.md)。
 
 2026-11-04 最新更新：按用户要求，稿件审核反馈成功保存后重新计算本节点回合；目标累计、项目回合与 Agent 时间仍累计，暂停状态保留。兼容旧目标，不回写历史反馈。当前真实节点 review revision14/awaiting_review、目标13/14；详见 [审核回合窗口与验证边界](docs/p5/MANUSCRIPT_REVIEW_TURNS.md)。
