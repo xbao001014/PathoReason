@@ -1,3 +1,4 @@
+import {StageDisclosure} from './StageDisclosure';
 import {ManuscriptReview,type ManuscriptView} from './ManuscriptReview';
 import {useEffect,useId,useRef,useState} from 'react';
 import type {ResearchStageView,StageAssign} from './generated';
@@ -30,15 +31,22 @@ export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{c
   {ready&&<div className="stage-reminder" role="status"><span>本阶段已交付 · 下一阶段：{value!.next_stage_label}</span>{!readOnly&&<button type="button" className="primary-button" disabled={busy||running} onClick={()=>act('switch')}>{busy?'正在交接…':'切换并继续'}</button>}</div>}
   {expanded&&<div className="stage-content" id={contentId}>
    {ready&&<p className="stage-next">本阶段已交付 · 下一阶段：{value!.next_stage_label}</p>}
-   {!value?<><p>选择当前所处环节。历史环节不会被自动标为完成。</p>{!readOnly&&<div className="stage-setup"><ComposerSelect label="当前研究阶段" variant="form" value={stage||'data'} options={stages.map(([value,label])=>({value,label}))} onChange={v=>setStage(v as StageAssign['stage_id'])}/><button className="primary-button" disabled={busy||running} onClick={()=>act('assign')}>关联当前会话</button></div>}</>:<>
-    {owner&&!readOnly&&value.can_open_conversation&&<div className="stage-entry"><button className="primary-button" disabled={busy||running} onClick={()=>act('new-conversation')}>{busy?'正在交接…':value.stage_id==='manuscript'?'新建稿件对话并交接':'新建本阶段对话并交接'}</button><p>带入已有成果与交接摘要，保留原会话和额度；新建时不启动 Agent。</p></div>}
+   {!value?<div className="stage-empty"><p>选择当前所处环节。历史环节不会被自动标为完成。</p>{!readOnly&&<div className="stage-setup"><ComposerSelect label="当前研究阶段" variant="form" value={stage||'data'} options={stages.map(([value,label])=>({value,label}))} onChange={v=>setStage(v as StageAssign['stage_id'])}/><button className="primary-button" disabled={busy||running} onClick={()=>act('assign')}>关联当前会话</button></div>}</div>:<>
+    {owner&&!readOnly&&value.can_open_conversation&&<div className="stage-entry"><button className="primary-button" disabled={busy||running} onClick={()=>act('new-conversation')}>{busy?'正在交接…':value.stage_id==='manuscript'?'新建稿件对话并交接':'新建本阶段对话并交接'}</button><p>带入已有成果与摘要，保留原会话和额度。新建时不启动 Agent。</p></div>}
     {owner&&value.manuscript_review&&<ManuscriptReview cid={cid} value={value.manuscript_review as unknown as ManuscriptView} readOnly={readOnly} running={running} onError={onError} onUpdate={v=>{setValue(old=>old?{...old,manuscript_review:v as unknown as Record<string,unknown>}:old);onChange();}}/>}
-    <details open={value.stage_id!=='manuscript'}><summary>研究五阶段</summary><ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span>{label}{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol></details>
-    {!owner&&<button onClick={()=>onNavigate(value.conversation_id)}>打开当前阶段会话</button>}
-    {pack&&<details open={ready}><summary>{ready||done?'交接内容':'本会话接收的上下文'}</summary><p>{pack.agent_report?.summary}</p>{[['已确认决定',pack.agent_report?.decisions],['局限与审核边界',pack.agent_report?.limitations],['待解决问题',pack.agent_report?.open_questions]].map(([title,items])=>Array.isArray(items)&&items.length>0?<div key={String(title)}><strong>{String(title)}</strong><ul>{items.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></div>:null)}{pack.agent_report?.next_action&&<p>下一步：{pack.agent_report.next_action}</p>}<p>已绑定 {pack.verified_evidence?.length||0} 项成果引用。保留原目标、授权边界和已用额度。</p></details>}
-    {legacyDraft&&<p>历史初稿已交付；作者审核尚未完成。</p>}
-    {done&&<p>五阶段交付已完成；科学审核、作者确认及对外发布权限仍分别记录。</p>}
-    {(value.history||[]).length>0&&<details><summary>阶段交接记录（{(value.history||[]).length}）</summary><ul>{(value.history||[]).map((h,i)=><li key={i}><button className="text-link" onClick={()=>onNavigate(String(h.conversation_id))}>{stages.find(s=>s[0]===h.stage_id)?.[1]||String(h.stage_id)} · {h.kind==='revision_requested'?'补充修订':'历史会话'}</button></li>)}</ul></details>}
+    {!owner&&<button className="outline-button" onClick={()=>onNavigate(value.conversation_id)}>打开当前阶段会话</button>}
+    {legacyDraft&&<p className="stage-status-note">历史初稿已交付；作者审核尚未完成。</p>}
+    {done&&<p className="stage-status-note">五阶段交付已完成；科学审核、作者确认及对外发布权限仍分别记录。</p>}
+    <div className="stage-support">
+     {pack&&<StageDisclosure title={legacyDraft?'历史初稿交接':ready||done?'交接内容':'本会话接收的上下文'} meta={`${pack.verified_evidence?.length||0} 项成果`} defaultOpen={ready}>
+      {pack.agent_report?.summary&&<p className="stage-handoff-summary">{pack.agent_report.summary}</p>}
+      <div className="stage-handoff-sections">{[['已确认决定',pack.agent_report?.decisions],['局限与审核边界',pack.agent_report?.limitations],['待解决问题',pack.agent_report?.open_questions]].map(([title,items])=>Array.isArray(items)&&items.length>0?<section className="stage-handoff-section" key={String(title)}><h4>{String(title)}</h4><ul>{items.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></section>:null)}</div>
+      {pack.agent_report?.next_action&&<section className="stage-handoff-next"><h4>下一步</h4><p>{pack.agent_report.next_action}</p></section>}
+      <p className="stage-footnote">保留原目标、授权边界和已用额度。</p>
+     </StageDisclosure>}
+     <StageDisclosure title="研究五阶段" meta={`${stages.findIndex(s=>s[0]===value.stage_id)+1}/5`} defaultOpen={value.stage_id!=='manuscript'}><ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span><span className="stage-step-label">{label}</span>{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol></StageDisclosure>
+     {(value.history||[]).length>0&&<StageDisclosure title="阶段交接记录" meta={`${(value.history||[]).length} 条`}><ul className="stage-history-list">{(value.history||[]).map((h,i)=><li key={i}><button className="text-link" onClick={()=>onNavigate(String(h.conversation_id))}>{stages.find(s=>s[0]===h.stage_id)?.[1]||String(h.stage_id)} · {h.kind==='revision_requested'?'补充修订':'历史会话'}</button></li>)}</ul></StageDisclosure>}
+    </div>
    </>}
   </div>}
  </section>;
