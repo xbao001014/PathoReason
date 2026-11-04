@@ -29,6 +29,8 @@ The matrix runs serially on CPU or the single selected GPU UUID. Evaluation foll
 
 ## Monitor, repair and finish
 
+When diagnosing results or actual configuration, use the read-only `audit` operation and [execution evidence](references/execution-evidence.md). It binds the historical run to frozen source, input manifests and platform launch specifications when available. Source options and current stored shapes do not by themselves prove runtime activation or upstream production history. Missing old evidence remains unknown.
+
 After launch, checkpoint `waiting` with `wait_for:{kind:training_run,run_id:<actual receipt>}`. Do not poll in a model loop. The detached controller continues across browser disconnects, model-budget exhaustion and application restart. The goal engine resumes after terminal status when Agent budget permits. Pause/cancel of the Agent is separate from stopping training; use the Training panel or `stop` to stop the experiment.
 
 On a failed run, inspect the attempt's raw log, isolation receipt, outputs and immutable plan. Diagnose the cause, repair only your task repository, register/check/freeze a new revision, and `prepare` it on the SAME experiment. Repairs within the approved matrix/protocol/data/resource scope reuse approval and budget; `retry` uses a new key and current revision. Do not overwrite old attempts. User-stopped, cancelled, budget-exhausted or unknown runs require the corresponding user action/inspection; never silently restart them. Unknown attempts conservatively retain the reservation and cannot be blindly replayed.

@@ -94,6 +94,18 @@ CREATE TABLE IF NOT EXISTS training_exposure(project_id TEXT NOT NULL,subject_id
             a={'id':'attempt_'+uuid.uuid4().hex,'experiment_id':eid,'unit_id':unit['id'],'phase':unit['phase'],'run_id':run_id,'status':'running','allowance':remaining,'gpu':bool(d['plan']['gpu_uuid']),'started_at':time.time(),'started_monotonic':time.monotonic(),'boot_id':boot_id(),'charged_seconds':None,'observed_seconds':0.,'plan_digest':d['plan_digest'],'scope_digest':d['scope_digest'],'output':output,'error':None}
             db.execute('INSERT INTO training_attempts VALUES(?,?,?,?)',(a['id'],eid,unit['id'],json.dumps(a)));self.event(db,eid,'attempt_started',attempt_id=a['id'],unit_id=unit['id'],allowance=remaining)
             return a
+    def record_launch(self,eid,aid,value):
+        """Trusted pre-dispatch specification; a sandboxed task cannot write it."""
+        from .training_files import digest
+        with self.db() as db:
+            row=db.execute('SELECT document FROM training_attempts WHERE id=? AND experiment_id=?',(aid,eid)).fetchone()
+            if not row:raise ValueError('training_attempt_not_found')
+            a=json.loads(row[0]);d=self.get(db,eid)
+            if a['status']!='running' or d['status']!='running' or d['run_id']!=a['run_id']:raise InterruptedError('training_stop_requested')
+            if 'launch_spec' in a:raise ValueError('training_launch_spec_already_recorded')
+            a['launch_spec']=value
+            db.execute('UPDATE training_attempts SET document=? WHERE id=?',(json.dumps(a),aid))
+            self.event(db,eid,'launch_spec_recorded',attempt_id=aid,digest=digest(value))
     def finish(self,eid,aid,elapsed,status,error=None,files=None):
         with self.db() as db:
             row=db.execute('SELECT document FROM training_attempts WHERE id=? AND experiment_id=?',(aid,eid)).fetchone()

@@ -72,7 +72,7 @@ def main(root):
                             dependencies.append({'unit_id':dependency,'name':name,'path':path,'sha256':sha})
                     atomic(inputs/'manifest.json',{'files':files,'dependencies':dependencies,'parameters':unit['parameters'],'phase':unit['phase']})
                     args=[arg.replace('{inputs}',str(inputs/'manifest.json')).replace('{output}',str(output)).replace('{device}','cuda:0' if gpu else 'cpu') for arg in unit['args']]
-                    run_unit(environment=env,code=code,inputs=inputs,output=output,entrypoint=unit['entrypoint'],args=args,shared_files=[f['path'] for f in [*files,*dependencies]],gpu=gpu,allowance=a['allowance'],check_limits=lambda:account.limits(eid,a['id']),memory_gib=plan['memory_gib'])
+                    run_unit(environment=env,code=code,inputs=inputs,output=output,entrypoint=unit['entrypoint'],args=args,shared_files=[f['path'] for f in [*files,*dependencies]],gpu=gpu,allowance=a['allowance'],check_limits=lambda:account.limits(eid,a['id']),memory_gib=plan['memory_gib'],record_launch=lambda value:account.record_launch(eid,a['id'],value))
                     for f in files:
                         if file_digest(f['path'],check)!=f['sha256']:raise ValueError('training_input_changed_after_execution')
                     for f in dependencies:

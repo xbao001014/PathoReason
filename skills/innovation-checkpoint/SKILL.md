@@ -15,6 +15,8 @@ description: Review innovation strategy, evidence, experiment state and separate
 
 ## 四项检查
 
+解释异常结果或数据/实现瓶颈时，先按 [执行证据核验](../training-execution/references/execution-evidence.md) 区分源码能力、启动配置、任务运行观察、存储输入与上游处理。使用公共 training audit 获取冻结引用；不要以 request.json 缺字段或源码存在某分支直接断言生效。同一预处理下的可比结果，不等于排除了方法与预处理的交互。核对人/切片、划分、特征版本和统计分母后，再提出因果假设及下一步。
+
 | 检查 | 需要核对的证据 | 导向的动作 |
 |---|---|---|
 | 科学方向 | 当前改动对应什么假设？是否只剩学习率/种子扫描？文献最接近方法与实质差异是否查证？ | 有判别价值则继续；已证伪或没有增量信息则收敛/换候选。常规优化保留其真实类别，不包装创新。 |

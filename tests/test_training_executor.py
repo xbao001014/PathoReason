@@ -152,6 +152,12 @@ def test_failure_repair_reuses_budget_and_plan_scope_but_keeps_original(fixture,
     done=wait(s,p.id,v.project_id);assert done.status=='completed',done.model_dump()
     assert done.attempts[0]==old and done.used_wall_seconds>failed.used_wall_seconds
     with s.training.account.db() as db:assert db.execute('SELECT count(*) FROM training_plan_revisions WHERE experiment_id=?',(p.id,)).fetchone()[0]==2
+    from pathoreason.training_contracts import TrainingAuditQuery
+    old_audit=s.training.audit(v.project_id,p.id,TrainingAuditQuery(run_id=old['run_id']))
+    assert old_audit['attempts'][0]['status']=='failed'
+    assert old_audit['source']['snapshot_id']==p.plan.snapshot_id
+    new_audit=s.training.audit(v.project_id,p.id,TrainingAuditQuery())
+    assert new_audit['source']['snapshot_id']==snap['id']
 
 
 def test_agent_exhaustion_does_not_spend_or_stop_training(fixture,environment):
@@ -238,6 +244,9 @@ if spec['phase']=='evaluate':
     approve(s,cid,p);done=wait(s,p.id,v.project_id)
     assert done.status=='completed',done.model_dump()
     assert [a['phase'] for a in done.attempts]==['fit','fit','evaluate']
+    from pathoreason.training_contracts import TrainingAuditQuery
+    audited=s.training.audit(v.project_id,p.id,TrainingAuditQuery(unit_id='evaluation'))
+    assert audited['attempts'][0]['input_manifest']['status']=='matches_frozen_plan'
     raw['units'][1]['depends_on']=['evaluation']
     with pytest.raises(ValidationError,match='dependency'):TrainingPlan.model_validate(raw)
 

@@ -33,6 +33,9 @@ class Training:
         for v in self.list(pid):
             if v.run_id==run_id:return v
         raise Missing('training_run_not_found')
+    def audit(self,pid,eid,query):
+        from .training_audit import audit
+        return audit(self,pid,eid,query)
     def _authority(self,body):
         row=self.s.store.turn(body.turn_id);self.s.store.conversation(row['conversation_id'],writable=True)
         if row['status']!='running' or not hmac.compare_digest(body.grant,self.s.guidance.grant(body.turn_id)):raise Conflict('training_turn_authority_required')
@@ -40,13 +43,13 @@ class Training:
         turn=json.loads(row['document'])
         with self.s.store.connect() as db:frozen=json.loads(db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['config_digest'],)).fetchone()[0])
         if canonical_digest(frozen)!=turn['config_digest']:raise Conflict('runtime_configuration_changed')
-        if frozen.get('execution_scope')=='dialogue' or (frozen.get('execution_scope')=='inspection' and body.operation not in ('list','inspect')):raise Conflict('training_outside_turn_scope')
+        if frozen.get('execution_scope')=='dialogue' or (frozen.get('execution_scope')=='inspection' and body.operation not in ('list','inspect','audit')):raise Conflict('training_outside_turn_scope')
         with self.s.store.connect() as db:
             context=db.execute('SELECT document FROM turn_guidance_context WHERE turn_id=?',(body.turn_id,)).fetchone()
         if context:
             context=json.loads(context[0]);option=next((x for x in context['proposal']['options'] if x['id']==context.get('selected_option_id')),None)
             scope=option['scope'] if option else None
-            if scope=='clarify' or (scope=='inspect' and body.operation not in ('list','inspect')):raise Conflict('training_outside_turn_scope')
+            if scope=='clarify' or (scope=='inspect' and body.operation not in ('list','inspect','audit')):raise Conflict('training_outside_turn_scope')
         return row
     def receipt(self,view,full=False):
         value=view.model_dump()
@@ -62,7 +65,7 @@ class Training:
         plan=value.pop('plan');attempts=value.pop('attempts');events=value.pop('events')
         value.update(plan_summary={k:plan[k] for k in ('title','task_id','snapshot_id','environment_id','protocol','evaluation','gpu_uuid','memory_gib','proposed_budget')},
             input_count=len(plan['inputs']),fit_units=sum(u['phase']=='fit' for u in plan['units']),evaluation_units=sum(u['phase']=='evaluate' for u in plan['units']),
-            unit_count=len(plan['units']),attempt_count=len(attempts),recent_attempts=[{**{k:v for k,v in a.items() if k!='files'},'output_count':len(a.get('files',{}))} for a in attempts[-3:]],recent_events=events[:3],
+            unit_count=len(plan['units']),attempt_count=len(attempts),recent_attempts=[{**{k:v for k,v in a.items() if k not in ('files','launch_spec')},'output_count':len(a.get('files',{}))} for a in attempts[-3:]],recent_events=events[:3],
             detail_hint='inspect with include_plan=true returns the full registered plan; prepare accepts a project-local plan_path without embedding the plan or saving a grant in that file.')
         return value
     def load_plan(self,pid,body):
@@ -84,9 +87,10 @@ class Training:
         if body.operation=='list':
             with self.account.db() as db:envs=[{'id':x[0],'runtime':json.loads(x[1])['binding']['runtime']} for x in db.execute('SELECT id,document FROM training_environments WHERE project_id=?',(pid,))]
             return {'experiments':[self.receipt(v,body.include_plan) for v in self.list(pid)],'environments':envs,'runtime_catalog':self.python_catalog(),'readiness':self.readiness()}
+        if body.operation=='audit':return self.audit(pid,body.experiment_id,body)
         if body.operation=='inspect':return self.receipt(self.view(body.experiment_id,pid),body.include_plan)
         if not body.idempotency_key:raise ValueError('training_idempotency_key_required')
-        key='agent:'+body.idempotency_key;signature=digest(body.model_dump(exclude={'grant','turn_id','plan_path','include_plan'}))
+        key='agent:'+body.idempotency_key;signature=digest(body.model_dump(exclude={'grant','turn_id','plan_path','include_plan','run_id','unit_id','source_file','audit_offset','audit_limit'}))
         with self.account.db() as db:
             old=db.execute('SELECT digest,result FROM training_requests WHERE project_id=? AND key=?',(pid,key)).fetchone()
             if old:
@@ -268,4 +272,4 @@ class Training:
         return self.view(eid,pid)
     def prompt(self,pid):
         rows=[{'id':v.id,'title':v.plan.title,'status':v.status,'revision':v.revision,'run_id':v.run_id,'authorized':v.authorized,'budget':v.budget.model_dump() if v.budget else None,'used_wall_seconds':v.used_wall_seconds,'used_gpu_seconds':v.used_gpu_seconds,'error':v.error} for v in self.list(pid)]
-        return '\nTraining experiments (independent of Agent allowance): '+json.dumps(rows,ensure_ascii=False)+'\nUse scripts/training.py and skills/training-execution/SKILL.md for the public executor. Prepare internally; the user reviews one concrete plan plus training budget in the Training panel. Never treat permission auto-approval or compute.json as training authority. A background run continues without model calls; checkpoint waiting with kind=training_run and the registered run_id, then stop polling.\n'
+        return '\nTraining experiments (independent of Agent allowance): '+json.dumps(rows,ensure_ascii=False)+'\nUse scripts/training.py and skills/training-execution/SKILL.md for the public executor. For explanations of completed behavior, use training operation=audit with experiment_id; distinguish frozen declarations, platform launch specifications, task runtime observations and stored/upstream input provenance. Missing historical receipts remain unknown; source options alone do not prove activation. Prepare internally; the user reviews one concrete plan plus training budget in the Training panel. Never treat permission auto-approval or compute.json as training authority. A background run continues without model calls; checkpoint waiting with kind=training_run and the registered run_id, then stop polling.\n'

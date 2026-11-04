@@ -3,7 +3,7 @@ import asyncio,json,fcntl,os,hmac
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
-from fastapi import FastAPI,HTTPException,Request
+from fastapi import FastAPI,HTTPException,Request,Depends
 from fastapi.responses import JSONResponse,Response,StreamingResponse,FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,ConfigDict,Field
@@ -26,7 +26,7 @@ from .guidance import GuidanceView,Selection,OfferInput
 from .task_workspaces import TaskCodeRequest
 from .goals import GoalCheckpoint,GoalControl,GoalView,GoalRecoveryInput
 from .budget_settings import BudgetSettingsUpdate,BudgetSettingsView
-from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision
+from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision,TrainingAuditQuery
 from .research_workbench import ResearchWorkbenchView, project_snapshot
 from .training_progress import TrainingProgressView,TrainingTelemetryView,project_progress,telemetry
 
@@ -221,6 +221,12 @@ async def training_list(cid:str):
     conv=service().formal.mode(cid)
     return await asyncio.to_thread(service().training.list,conv['project_id'])
 
+@app.get('/api/v2/conversations/{cid}/training/{eid}/audit')
+async def training_audit(cid:str,eid:str,response:Response,query:TrainingAuditQuery=Depends()):
+    conv=service().formal.mode(cid)
+    response.headers['Cache-Control']='no-store'
+    return await asyncio.to_thread(service().training.audit,conv['project_id'],eid,query)
+
 @app.post('/api/v2/conversations/{cid}/training/{eid}',response_model=TrainingView)
 async def training_decision(cid:str,eid:str,body:TrainingDecision):
     async with service().lock:
@@ -237,7 +243,7 @@ async def training_tool(body:TrainingToolInput,request:Request):
     return await asyncio.to_thread(service().training.call,body)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.26-p5-goal-scope'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.27-p5-execution-evidence'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)

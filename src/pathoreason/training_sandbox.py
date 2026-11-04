@@ -14,7 +14,7 @@ def availability():
     except (OSError,RuntimeError) as exc:return {'capability':'training_execution','available':False,'owner':'platform','reason':str(exc)}
 
 
-def run_unit(*,environment,code,inputs,output,entrypoint,args,shared_files,gpu,allowance,check_limits,memory_gib=16):
+def run_unit(*,environment,code,inputs,output,entrypoint,args,shared_files,gpu,allowance,check_limits,memory_gib=16,record_launch=None):
     running,remaining=check_limits()
     if not running:raise InterruptedError('training_stop_requested')
     if remaining<=0:raise TimeoutError('training_budget_or_unit_deadline')
@@ -47,6 +47,15 @@ def run_unit(*,environment,code,inputs,output,entrypoint,args,shared_files,gpu,a
         if not unshare:raise ValueError('training_gpu_namespace_unavailable')
         command=[unshare,'--user','--map-root-user','--net',*command]
     command=['systemd-run','--user','--scope','--quiet','--unit=pr-unit-'+str(os.getpid())+'-'+str(time.time_ns()),'-p','MemoryMax='+str(memory_gib)+'G','-p','TasksMax=128','-p','RuntimeMaxSec='+str(allowance)+'s',*command]
+    if record_launch:
+        record_launch({'schema':'training-launch-spec/1','stage':'before_subprocess_dispatch',
+            'environment_id':environment['id'],'python':str(python),'python_flags':['-I','-S','-B'],
+            'cwd':str(code),'argv':[str(code/entrypoint),*args],
+            'environment':env,'inherits_parent_environment':False,
+            'entrypoint_sha256':file_digest(code/entrypoint),'controller_sha256':file_digest(Path(__file__)),
+            'input_manifest':{'path':str(inputs/'manifest.json'),'sha256':file_digest(inputs/'manifest.json')},
+            'limits':{'memory_gib':memory_gib,'allowance_seconds':allowance,'gpu':gpu},
+            'task_runtime_observed':False})
     with open(output/'worker.log','xb') as log:
         p=subprocess.Popen(command,cwd=code,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=subprocess.STDOUT,close_fds=True,start_new_session=True)
         started=time.monotonic()

@@ -68,10 +68,17 @@ class TrainingPlan(Strict):
             if f.role=='sealed' and self.evaluation=='independent_holdout' and f.prior_test_exposures!=0:raise ValueError('independent_holdout_requires_known_zero_exposure')
         return self
 
-class TrainingToolInput(Strict):
+class TrainingAuditQuery(Strict):
+    run_id:Identifier|None=None
+    unit_id:Identifier|None=None
+    source_file:str|None=Field(default=None,max_length=300)
+    audit_offset:int=Field(default=0,ge=0)
+    audit_limit:int=Field(default=10,ge=1,le=25)
+
+class TrainingToolInput(TrainingAuditQuery):
     turn_id:Identifier
     grant:str=Field(min_length=1,max_length=128)
-    operation:Literal['list','inspect','environment','prepare','launch','stop','retry']
+    operation:Literal['list','inspect','audit','environment','prepare','launch','stop','retry']
     idempotency_key:Identifier|None=None
     experiment_id:Identifier|None=None
     expected_revision:int|None=Field(default=None,ge=1)
