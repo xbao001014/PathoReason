@@ -1,6 +1,6 @@
 # 初稿审核的信息与完整性门禁
 
-2026-11-04，版本 `0.6.34-p5-figure-audit`。
+2026-11-04，版本 `0.6.35-p5-figure-layout`。
 
 ## 真实失败与责任层
 
@@ -15,6 +15,7 @@
 - blueprint 之后的审核请求必须给出非空 `changes`、`key_findings`、`key_limitations`。输入框上方审核栏直接显示“本版变化 / 关键结论与限制”，仍保留材料、问题、问题记录和自由输入。
 - 非空 figure manifest 除 artifact ID 集合一致外，还必须逐图给出唯一编号、文件和图注。实际图件仍随同一审核包冻结。
 - 非空图件包还必须有 `figure_audit` 材料。`scripts/setup_image_ocr.py` 按 SHA-256 锁定的 Debian 包安装用户态 Tesseract 到仓库 `.tools/`，不修改主机；`scripts/inspect_figure_text.py` 只接受当前正式项目的 `figures/` 或 `manuscript/` 栅格图，输出带图件哈希的 JSON。OCR 是跨材料检查证据而非科学结论；关键文字无法识别时必须阻塞审计。
+- OCR 可读不代表版面合格。确定性生成图必须在渲染后用 renderer 边界验证文字完全位于所属面板内、面板互不重叠，并把图件 SHA、目标尺寸和几何结果写入 `figure_audit`。返工必须另存新版本，不能覆盖已登记图件的工作区源文件；历史 artifact 与审核快照始终保持不可变。
 - Agent 提示要求在 draft 前比较正文、文献库、引用报告、作者待办、figure manifest、图内标签/图注及分块定义。机械不一致由 Agent 自主修正；无法解决的事实冲突作为阻塞 issue 暴露。
 - 新审核请求把目标提示更新为输入框上方“稿件审核”栏。历史目标和历史回执不回写。
 
