@@ -1,3 +1,4 @@
+import {ManuscriptReview,type ManuscriptView} from './ManuscriptReview';
 import {useEffect,useId,useRef,useState} from 'react';
 import type {ResearchStageView,StageAssign} from './generated';
 import {formalApi} from './FormalStudy';
@@ -19,16 +20,19 @@ export function StagePanel({cid,readOnly,running,onNavigate,onChange,onError}:{c
   catch(e){const message=e instanceof Error?e.message:String(e);onError(new Error(errors[message]||message));try{setValue(await formalApi<ResearchStageView|null>('/conversations/'+cid+'/stage'));}catch{}}
   finally{setBusy(false);inFlight.current=false;}
  }
+ useEffect(()=>{if(value?.manuscript_review?.status==='awaiting_review')setExpanded(true);},[value?.manuscript_review?.revision]);
+ useEffect(()=>{const open=(e:Event)=>{if((e as CustomEvent).detail===cid)setExpanded(true);};window.addEventListener('pathoreason:open-manuscript-review',open);return()=>window.removeEventListener('pathoreason:open-manuscript-review',open);},[cid]);
  if(!loaded)return null;
- const owner=value?.conversation_id===cid,ready=owner&&value?.status==='ready',done=owner&&value?.status==='completed';
+ const owner=value?.conversation_id===cid,reviewPending=owner&&value?.manuscript_review?.status==='awaiting_review',ready=owner&&value?.status==='ready',done=owner&&value?.status==='completed';
  const pack=(owner?(value?.handoff||value?.incoming_handoff):value?.incoming_handoff) as Package|undefined;
  return <section className={'stage-panel'+(ready?' stage-ready':'')} aria-label="研究阶段与会话交接" ref={container}>
-  <button type="button" className={'stage-toggle status-'+statusTone(!value?'unknown':ready?'pending':done?'completed':'running')} ref={trigger} aria-controls={contentId} aria-expanded={expanded} onClick={()=>setExpanded(x=>!x)}><span title={value?.stage_label}>{value?`${stages.findIndex(s=>s[0]===value.stage_id)+1}/5 · ${value.stage_label}`:'关联研究阶段'}</span><span className={'stage-state'+(!ready&&!done&&owner?' stage-state-current':'')+' status-text status-'+statusTone(ready?'pending':done?'completed':'running')}>{value?(ready?'待切换会话':done?'阶段交付完成':owner?'当前阶段':'其他会话正在推进'):''}</span><svg className="stage-chevron" data-expanded={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+  <button type="button" className={'stage-toggle status-'+statusTone(!value?'unknown':ready||reviewPending?'pending':done?'completed':'running')} ref={trigger} aria-controls={contentId} aria-expanded={expanded} onClick={()=>setExpanded(x=>!x)}><span title={value?.stage_label}>{value?`${stages.findIndex(s=>s[0]===value.stage_id)+1}/5 · ${value.stage_label}`:'关联研究阶段'}</span><span className={'stage-state'+(!ready&&!reviewPending&&!done&&owner?' stage-state-current':'')+' status-text status-'+statusTone(ready||reviewPending?'pending':done?'completed':'running')}>{value?(ready?'待切换会话':reviewPending?'待作者审核':done?'阶段交付完成':owner?'当前阶段':'其他会话正在推进'):''}</span><svg className="stage-chevron" data-expanded={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
   {ready&&<div className="stage-reminder" role="status"><span>本阶段已交付 · 下一阶段：{value!.next_stage_label}</span>{!readOnly&&<button type="button" className="primary-button" disabled={busy||running} onClick={()=>act('switch')}>{busy?'正在交接…':'切换并继续'}</button>}</div>}
   {expanded&&<div className="stage-content" id={contentId}>
    {ready&&<p className="stage-next">本阶段已交付 · 下一阶段：{value!.next_stage_label}</p>}
    {!value?<><p>选择当前所处环节。历史环节不会被自动标为完成。</p>{!readOnly&&<div className="stage-setup"><ComposerSelect label="当前研究阶段" variant="form" value={stage||'data'} options={stages.map(([value,label])=>({value,label}))} onChange={v=>setStage(v as StageAssign['stage_id'])}/><button className="primary-button" disabled={busy||running} onClick={()=>act('assign')}>关联当前会话</button></div>}</>:<>
-    <ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span>{label}{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol>
+    {owner&&value.manuscript_review&&<ManuscriptReview cid={cid} value={value.manuscript_review as unknown as ManuscriptView} readOnly={readOnly} running={running} onError={onError} onUpdate={v=>{setValue(old=>old?{...old,manuscript_review:v as unknown as Record<string,unknown>}:old);onChange();}}/>}
+    <details open={value.stage_id!=='manuscript'}><summary>研究五阶段</summary><ol className="stage-steps">{stages.map(([id,label],i)=><li key={id} aria-current={value.stage_id===id?'step':undefined}><span>{i+1}</span>{label}{value.stage_id===id&&<strong>当前</strong>}</li>)}</ol></details>
     {!owner&&<button onClick={()=>onNavigate(value.conversation_id)}>打开当前阶段会话</button>}
     {pack&&<details open={ready}><summary>{ready||done?'交接内容':'本会话接收的上下文'}</summary><p>{pack.agent_report?.summary}</p>{[['已确认决定',pack.agent_report?.decisions],['局限与审核边界',pack.agent_report?.limitations],['待解决问题',pack.agent_report?.open_questions]].map(([title,items])=>Array.isArray(items)&&items.length>0?<div key={String(title)}><strong>{String(title)}</strong><ul>{items.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul></div>:null)}{pack.agent_report?.next_action&&<p>下一步：{pack.agent_report.next_action}</p>}<p>已绑定 {pack.verified_evidence?.length||0} 项成果引用。保留原目标、授权边界和已用额度。</p></details>}
     {done&&<p>五阶段交付已完成；科学审核、作者确认及对外发布权限仍分别记录。</p>}

@@ -30,6 +30,10 @@ def test_five_stages_switch_explicitly_preserving_goal_budget_and_evidence(fixtu
         initial_limits=s.formal.view(v.project_id).budget.model_dump();counts=[]
         for index,(stage,label) in enumerate(STAGES):
             assert s.stages.view(current).stage_id==stage
+            if index==4:
+                with pytest.raises(Conflict,match='manuscript_author_review_required'):deliver(s,current,tid,v.workspace,done.run_id)
+                assert s.stages.view(current).status=='active'
+                break
             deliver(s,current,tid,v.workspace,done.run_id);await finish(s,r,tid)
             view=s.stages.view(current);goal=s.goals.view(current)
             assert not view.scientific_approval and not goal.scientific_approval

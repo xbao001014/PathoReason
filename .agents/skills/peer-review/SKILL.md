@@ -15,6 +15,41 @@ metadata:
 
 Support an accountable human reviewer with a rigorous, fair, actionable assessment. Treat every unpublished submission and review as confidential.
 
+## PathoReason hosted manuscript review
+
+When the host provides `MANUSCRIPT AUTHOR WORKFLOW`, use its five gates inside
+research stage 5: blueprint → draft → review → scientific → delivery. This host
+binding replaces legacy per-phase author-gate storage and duplicate confirmation
+prompts, while retaining this skill's substantive evidence and quality checks.
+Prepare routine work autonomously within the user's scope; register actual
+artifacts and request the current gate through `checkpoint.manuscript_review`
+with `outcome=needs_input`. Only the user's public review action advances a gate.
+Never call review-decision endpoints, write author signatures/approval receipts,
+or interpret tool auto-approval, ordinary “continue”, or a model-generated report
+as author approval. Local `gate_status.json` files, if a helper requires them,
+are work notes and confer no approval. Do not run the old experiment/workflow
+store or modify its data. Use versioned pipeline subdirectories beneath
+`<workspace>/manuscript/` (an allowed publication area).
+
+The blueprint bundles inventory, test-use history, writing subject and claim
+boundaries, including exploratory or negative results; no positive-result or
+novel-method promotion is required to test the downstream writing path. Draft
+review includes actual figures and a figure manifest, not image placeholders.
+A blocked pre-review integrity check returns to the draft; a clean check can
+proceed automatically to model-assisted review, explicitly labeled as such.
+Review findings require the author's per-issue decisions and rationale. Freeze
+requires a fresh integrity report tied to the exact revised manuscript; earlier
+audit results are not reusable approval. Final delivery binds the approved
+scientific packet plus PDF, source package, actual page QA and open-items list.
+Publication/submission and independent scientific approval remain separate.
+
+Carry original author statements forward, check them before asking again, and
+make new versions for changes. Only missing facts necessary for the CURRENT
+review go in `author_questions`; submission-only gaps remain explicit in the
+checklist and permit an internal preview. Unresolved integrity blockers cannot
+be waived. Approved material changes require reopening the affected node and
+renewing downstream approval; preserve previous files, hashes and decisions.
+
 ## Mandatory safety boundary
 
 Before reading or analyzing unpublished content:

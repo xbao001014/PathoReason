@@ -15,6 +15,7 @@ from .persistence import ACTIVE, Conflict, Missing, Gone, encoded, now, uid
 from .settings import ROOT
 from .reasoning import ReasoningEffort
 from .stages import StageHandoff
+from .manuscript import ReviewRequest
 
 CONTEXT_BLOCKERS={'context_window_requires_compaction_or_handoff','context_operation_unresolved',
     'context_budget_exhausted','context_usage_unverified','context_recovery_failed','context_recovery_running'}
@@ -64,6 +65,7 @@ class GoalCheckpoint(BaseModel):
     evidence: GoalEvidence = Field(default_factory=GoalEvidence)
     answer_only: bool = False
     stage_handoff: StageHandoff | None = None
+    manuscript_review: ReviewRequest | None = None
     wait_for: GoalWait | None = None
     blocker: GoalBlocker | None = None
 
@@ -422,6 +424,7 @@ class Goals:
             raise Conflict('goal_grant_invalid')
         payload = body.model_dump(mode='json', exclude={'grant'})
         if payload.get('stage_handoff') is None:payload.pop('stage_handoff',None)
+        if payload.get('manuscript_review') is None:payload.pop('manuscript_review',None)
         # Check authority before touching evidence, then recheck in the transaction.
         with self.s.store.connect() as db:
             self._check_checkpoint(db, row, body)
@@ -438,7 +441,7 @@ class Goals:
                 if json.loads(link['checkpoint'])!=payload:raise Conflict('goal_checkpoint_already_recorded')
             else:db.execute('UPDATE goal_turns SET checkpoint=? WHERE turn_id=?',(encoded(payload),body.turn_id))
         return {'status':'recorded','outcome':body.outcome,'evidence':verified,
-                'next':('Finish this turn briefly. After successful settlement, the UI will show the stage delivery and explicit conversation switch; do not start the next stage or offer a duplicate choice.' if body.stage_handoff else 'Finish this turn briefly. The controller will verify and continue within the original scope and budget; do not ask the user to say continue.')}
+                'next':('Finish briefly. After successful settlement the UI requests author review of this exact version; do not approve or start the next manuscript node.' if body.manuscript_review else 'Finish this turn briefly. After successful settlement, the UI will show the stage delivery and explicit conversation switch; do not start the next stage or offer a duplicate choice.' if body.stage_handoff else 'Finish this turn briefly. The controller will verify and continue within the original scope and budget; do not ask the user to say continue.')}
 
     def _check_checkpoint(self, db, row, body, check_scope=True):
         self.s.store.check_conversation(db,row['conversation_id'],writable=True)
@@ -459,6 +462,7 @@ class Goals:
         if check_scope and frozen.get('execution_scope')=='dialogue' and (body.evidence.files or body.evidence.task_check_ids or body.wait_for):
             raise Conflict('goal_outside_turn_scope')
         self.s.stages.validate(db,row,body)
+        self.s.manuscripts.validate(db,row,body)
         return link
 
     def prompt(self, tid):
@@ -534,7 +538,7 @@ class Goals:
                 goal.update(state='blocked',reason=evidence_error)
             else:
                 guide = db.execute('SELECT payload FROM conversation_guidance WHERE source_turn_id=?',(tid,)).fetchone()
-                if guide and not (json.loads(guide[0])['kind']=='next_step' and checkpoint and checkpoint['outcome']=='completed'):
+                if guide and not (checkpoint and checkpoint.get('manuscript_review')) and not (json.loads(guide[0])['kind']=='next_step' and checkpoint and checkpoint['outcome']=='completed'):
                     goal.update(state='waiting_input',reason='goal_user_choice',summary=json.loads(guide[0])['question'])
                 elif not checkpoint and (db.execute('SELECT 1 FROM goal_checkpoint_rejections WHERE turn_id=?',(tid,)).fetchone() or self.frozen_config(db,tid).get('execution_scope')=='dialogue'):
                     goal.update(state='blocked',reason='goal_scope_blocked',
@@ -558,10 +562,12 @@ class Goals:
                     if outcome=='completed':goal['completion_scope']='answer_only' if checkpoint['answer_only'] else 'evidence_bytes_verified'
                     if outcome=='waiting':goal.update(wait_for=checkpoint['wait_for'],wait_started_at=now())
                     if outcome=='completed':self.s.stages.settled(db,row,goal,checkpoint)
+                    self.s.manuscripts.settled(db,row,goal,checkpoint)
                 if goal['state']=='active' and goal['stagnant_turns']>=2:
                     goal.update(state='blocked',reason='goal_no_progress',summary='连续两轮未形成可核验的新进展，已停止自动接续。')
                 if goal['state']=='active' and goal['turns_used']>=goal['max_turns']:
                     goal.update(state='budget_exhausted',reason='goal_turn_limit')
+            self.s.manuscripts.hold(db,row,goal)
             self._save(db,goal,'turn_settled')
 
     def _set_state(self, goal, state, reason, summary=None):
@@ -634,6 +640,8 @@ class Goals:
                     raise Conflict('goal_already_terminal')
                 active = db.execute('SELECT id,status FROM turns WHERE id=?',(goal['last_turn_id'],)).fetchone()
                 if body.action=='resume':
+                    manuscript=self.s.manuscripts.get(db,goal['project_id'])
+                    if manuscript['pending']:raise Conflict('manuscript_review_pending')
                     if (goal.get('blocker') or {}).get('capability')=='training_execution' and not self.s.task_code.execution_readiness()['available']:
                         raise Conflict('goal_training_backend_not_ready')
                     if goal.get('reason') in CONTEXT_BLOCKERS:raise Conflict('goal_context_recovery_required')

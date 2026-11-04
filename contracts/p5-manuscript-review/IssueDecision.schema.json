@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "issue_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Issue Id",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "modify",
+        "reject",
+        "defer"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "rationale": {
+      "maxLength": 1200,
+      "minLength": 1,
+      "title": "Rationale",
+      "type": "string"
+    }
+  },
+  "required": [
+    "issue_id",
+    "decision",
+    "rationale"
+  ],
+  "title": "IssueDecision",
+  "type": "object"
+}

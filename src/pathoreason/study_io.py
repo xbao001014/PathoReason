@@ -83,7 +83,8 @@ def publish_artifact(service,project_id,relative,title):
     import mimetypes
     media=mimetypes.guess_type(path.name)[0] or 'application/octet-stream'
     if path.suffix=='.md':media='text/markdown'
-    if media not in {'application/pdf','application/json','text/markdown','text/plain','text/csv','image/png','image/jpeg','image/svg+xml'}:raise ValueError('unsupported_artifact_media')
+    if path.suffix in ('.tex','.bib'):media='text/plain'
+    if media not in {'application/pdf','application/json','text/markdown','text/plain','text/csv','application/zip','image/png','image/jpeg','image/svg+xml'}:raise ValueError('unsupported_artifact_media')
     aid='art_'+canonical_digest([project_id,relative,sha])[:32];target=service.data/'artifacts'/project_id/(aid+path.suffix)
     target.parent.mkdir(exist_ok=True)
     if target.is_symlink() or target.exists() and hashlib.sha256(target.read_bytes()).hexdigest()!=sha:raise Conflict('artifact_collision')

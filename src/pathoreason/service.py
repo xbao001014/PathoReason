@@ -46,6 +46,8 @@ class Service:
         self.goals=Goals(self)
         from .stages import Stages
         self.stages=Stages(self)
+        from .manuscript import Manuscripts
+        self.manuscripts=Manuscripts(self)
         from .budget_settings import BudgetSettings
         self.budgets=BudgetSettings(self)
     def seed(self):

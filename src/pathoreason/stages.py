@@ -44,6 +44,7 @@ class ResearchStageView(BaseModel):
     history:list[dict]=Field(default_factory=list)
     incoming_handoff:dict|None=None
     scientific_approval:Literal[False]=False
+    manuscript_review:dict|None=None
 
 class Stages:
     def __init__(self,s):
@@ -74,7 +75,7 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
         idx=[k for k,_ in STAGES].index(w['stage_id'])
         return ResearchStageView(**{k:v for k,v in w.items() if k in ResearchStageView.model_fields and k!='history'},history=[{k:v for k,v in x.items() if k!='handoff'} for x in w['history']],stage_label=STAGES[idx][1],
             next_stage_id=STAGES[idx+1][0] if idx<4 else None,next_stage_label=STAGES[idx+1][1] if idx<4 else None,
-            incoming_handoff=package)
+            incoming_handoff=package,manuscript_review=self.s.manuscripts.view(cid) if w['stage_id']=='manuscript' and w['conversation_id']==cid else None)
     async def assign(self,cid,body):
         async with self.s.lock:
             conv=self.s.formal.mode(cid);self.s.store.conversation(cid,writable=True)
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
         if not h:return
         w=self.get(db,row['project_id'])
         if not w or w['conversation_id']!=row['conversation_id'] or w['stage_id']!=h.stage_id or w['revision']!=h.workflow_revision or w['status']!='active':raise Conflict('stage_changed')
+        if h.stage_id=='manuscript':self.s.manuscripts.assert_complete(db,row['project_id'])
         if body.outcome!='completed' or body.answer_only:raise ValueError('stage_completion_requires_evidence')
         if not body.evidence.artifact_ids and not body.evidence.files:raise ValueError('stage_deliverable_required')
         self.idle_training(db,row['project_id'])
@@ -104,6 +106,10 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
         w=self.get(db,row['project_id'])
         if not w or w['revision']!=raw['workflow_revision'] or w['conversation_id']!=row['conversation_id']:
             goal.update(state='blocked',reason='stage_changed');return
+        if w['stage_id']=='manuscript':
+            try:self.s.manuscripts.assert_complete(db,row['project_id'])
+            except (ValueError,OSError,Conflict,Missing):
+                goal.update(state='blocked',reason='manuscript_evidence_changed');return
         try:self.idle_training(db,row['project_id'])
         except Conflict:
             goal.update(state='blocked',reason='stage_training_not_terminal');return
@@ -182,4 +188,4 @@ CREATE TABLE IF NOT EXISTS research_stage_transfers(source_conversation TEXT NOT
     def prompt(self,cid):
         v=self.view(cid)
         if not v or v.conversation_id!=cid:return ''
-        return '\nFIVE-STAGE WORKFLOW: '+encoded({'stage_id':v.stage_id,'stage_label':v.stage_label,'workflow_revision':v.revision,'status':v.status,'incoming_handoff':v.incoming_handoff,'relevant_skills':{'data':['pathology-data-api'],'baseline':['benchmark-design','training-execution'],'innovation':['baseline-innovation','innovation-experiments','innovation-checkpoint','training-execution'],'analysis':['results-explanation','peer-review','pathology-mil-paper-figures'],'manuscript':['method-results-to-manuscript','manuscript-to-latex']}[v.stage_id]})+'\nLoad the relevant stage skills using the native skill tool before substantive stage work; distinguish discovery from actual invocation. Work only on the current research stage within the user objective. The stages are data, baseline, innovation, analysis, manuscript. When the ENTIRE current stage is delivered, use the existing checkpoint with outcome=completed, verified file/artifact evidence and stage_handoff={stage_id,workflow_revision,summary,decisions,limitations,open_questions,next_action,training_run_ids}. Include at least one limitation; training stages need completed public run references. Routine subtask completion is not stage completion. Do not offer a duplicate transition choice: the UI shows Switch and continue after the turn settles. Stop at that boundary; the next stage starts in a fresh conversation only after the user switches. Preserve negative results; positive findings are not required. Stage completion is not scientific or author approval. Manuscript handoff delivers a draft, never publication authority. Summaries are claims; verify referenced evidence when needed, do not carry forward unsupported causal claims. Do not import full transcripts or reset consumed budgets.\n'
+        return (self.s.manuscripts.prompt(cid) if v.stage_id=='manuscript' else '')+'\nFIVE-STAGE WORKFLOW: '+encoded({'stage_id':v.stage_id,'stage_label':v.stage_label,'workflow_revision':v.revision,'status':v.status,'incoming_handoff':v.incoming_handoff,'relevant_skills':{'data':['pathology-data-api'],'baseline':['benchmark-design','training-execution'],'innovation':['baseline-innovation','innovation-experiments','innovation-checkpoint','training-execution'],'analysis':['results-explanation','peer-review','pathology-mil-paper-figures'],'manuscript':['method-results-to-manuscript','manuscript-to-latex']}[v.stage_id]})+'\nLoad the relevant stage skills using the native skill tool before substantive stage work; distinguish discovery from actual invocation. Work only on the current research stage within the user objective. The stages are data, baseline, innovation, analysis, manuscript. When the ENTIRE current stage is delivered, use the existing checkpoint with outcome=completed, verified file/artifact evidence and stage_handoff={stage_id,workflow_revision,summary,decisions,limitations,open_questions,next_action,training_run_ids}. Include at least one limitation; training stages need completed public run references. Routine subtask completion is not stage completion. Do not offer a duplicate transition choice: the UI shows Switch and continue after the turn settles. Stop at that boundary; the next stage starts in a fresh conversation only after the user switches. Preserve negative results; positive findings are not required. Stage completion is not scientific or author approval. Manuscript handoff delivers a draft, never publication authority. Summaries are claims; verify referenced evidence when needed, do not carry forward unsupported causal claims. Do not import full transcripts or reset consumed budgets.\n'

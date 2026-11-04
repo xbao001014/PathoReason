@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "PermissionSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "semantics_version": {
+          "const": 2,
+          "default": 2,
+          "title": "Semantics Version",
+          "type": "integer"
+        },
+        "mode": {
+          "default": "ask",
+          "enum": [
+            "ask",
+            "auto",
+            "custom"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "bash": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Bash",
+          "type": "string"
+        },
+        "edit": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Edit",
+          "type": "string"
+        },
+        "webfetch": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Webfetch",
+          "type": "string"
+        },
+        "external_directory": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "External Directory",
+          "type": "string"
+        }
+      },
+      "title": "PermissionSettings",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "settings": {
+      "$ref": "#/$defs/PermissionSettings"
+    },
+    "effective_actions": {
+      "additionalProperties": {
+        "enum": [
+          "allow",
+          "ask",
+          "deny"
+        ],
+        "type": "string"
+      },
+      "title": "Effective Actions",
+      "type": "object"
+    },
+    "applies_to": {
+      "const": "next_turn",
+      "default": "next_turn",
+      "title": "Applies To",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "revision",
+    "settings"
+  ],
+  "title": "PermissionSettingsView",
+  "type": "object"
+}

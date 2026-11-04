@@ -140,7 +140,15 @@ export function App(){
   catch(e){flash(e);}
  }
  async function send(){if(!draft.trim()||!cid||!conversation||busy||running||readOnly)return;
- if(study&&/^(继续|下一阶段|进入下一阶段|继续下一阶段|切换会话|切换并继续)[。！!？?]?$/.test(draft.trim())){setBusy(true);try{const stage=await formalApi<import('./generated').ResearchStageView|null>('/conversations/'+cid+'/stage');if(stage?.status==='ready'&&stage.conversation_id===cid){const next=await formalApi<import('./generated').ResearchStageView>('/conversations/'+cid+'/stage/switch',{method:'POST',body:JSON.stringify({expected_revision:stage.revision})});remember('draft:'+cid,'');setDraft('');await navigateConversation(next.conversation_id);return;}}catch(e){flash(e);return;}finally{setBusy(false);}}
+ if(study){setBusy(true);try{const stage=await formalApi<import('./generated').ResearchStageView|null>('/conversations/'+cid+'/stage');const review=stage?.manuscript_review;
+ if(stage?.conversation_id===cid&&review?.status==='awaiting_review'){
+  if(/^(继续|下一步|好|好的|同意|通过|确认|开始)[。！!？?]?$/.test(draft.trim())){window.dispatchEvent(new CustomEvent('pathoreason:open-manuscript-review',{detail:cid}));flash('请先查看当前稿件版本，再选择通过、退回或补充事实。');return;}
+  const signature='manuscript_feedback:'+draft.trim();if(!pending.current||pending.current.cid!==cid||pending.current.signature!==signature)pending.current={cid,signature,key:crypto.randomUUID()};
+  await formalApi('/conversations/'+cid+'/manuscript-review',{method:'POST',body:JSON.stringify({request_key:pending.current.key,expected_revision:review.revision,action:'clarify',comment:draft.trim()})});pending.current=null;remember('draft:'+cid,'');setDraft('');await refreshConversation(cid);return;
+ }
+ if(/^(继续|下一阶段|进入下一阶段|继续下一阶段|切换会话|切换并继续)[。！!？?]?$/.test(draft.trim())&&stage?.status==='ready'&&stage.conversation_id===cid){const next=await formalApi<import('./generated').ResearchStageView>('/conversations/'+cid+'/stage/switch',{method:'POST',body:JSON.stringify({expected_revision:stage.revision})});remember('draft:'+cid,'');setDraft('');await navigateConversation(next.conversation_id);return;}
+ }catch(e){flash(e);return;}finally{setBusy(false);}}
+
 let message;try{message=resolveSkillMessage(draft,selectedSkill,commandSkills);}catch(e){flash(e);return;}setBusy(true);const id=cid,body={text:message.text,model,...(effectiveEffort?{reasoning_effort:effectiveEffort}:{}),...(outputLimit?{output_limit_tokens:outputLimit}:{}),skill_id:message.skillId,artifact_ids:selectedArtifacts,execution_mode:study?'research':executionMode,...(study?{goal_mode:goalMode}:{})};const signature=JSON.stringify(body);if(!pending.current||pending.current.cid!==id||pending.current.signature!==signature)pending.current={cid:id,signature,key:crypto.randomUUID()};try{await api<TurnView>('/conversations/'+id+'/turns',{method:'POST',body:JSON.stringify({...body,request_key:pending.current.key})});pending.current=null;remember('draft:'+id,'');remember('refs:'+id,'[]');remember('skill:'+id,'');if(cidRef.current===id){setDraft('');setSelectedArtifacts([]);setSelectedSkill(null);}await refreshConversation(id);}catch(e){flash(e);}finally{setBusy(false);}}
  async function chooseGuidance(guidance:GuidanceView,option:Choice){
   if(choiceLock.current||busy||running||readOnly||!cid||!conversation)return;

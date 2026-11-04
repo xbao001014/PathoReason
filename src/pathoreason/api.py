@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel,ConfigDict,Field
 from .settings import ROOT,settings,credential
 from .stages import ResearchStageView,StageAssign,StageSwitch
+from .manuscript import ReviewDecision
 from .service import Service,NotReady
 from .persistence import Conflict,Missing,Gone,encoded
 from .conversation_lifecycle import ManagedConversation,ConversationLifecycleView,DeleteConversationInput
@@ -254,8 +255,24 @@ async def stage_assign(cid:str,body:StageAssign):return await service().stages.a
 @app.post('/api/v2/conversations/{cid}/stage/switch',response_model=ResearchStageView)
 async def stage_switch(cid:str,body:StageSwitch):return await service().stages.switch(cid,body)
 
+@app.get('/api/v2/conversations/{cid}/manuscript-review')
+async def manuscript_review(cid:str,response:Response):
+    response.headers['Cache-Control']='no-store'
+    return service().manuscripts.view(cid)
+
+@app.post('/api/v2/conversations/{cid}/manuscript-review')
+async def manuscript_decision(cid:str,body:ReviewDecision):return await service().manuscripts.decide(cid,body)
+
+@app.get('/api/v2/conversations/{cid}/manuscript-review/{review_id}/materials/{artifact_id}')
+async def manuscript_material(cid:str,review_id:str,artifact_id:str):
+    raw,kind=service().manuscripts.archived_material(cid,review_id,artifact_id)
+    safe=kind if kind in ('application/pdf','image/png','image/jpeg','image/webp','application/zip') else 'text/plain'
+    headers={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}
+    if safe=='application/zip':headers['Content-Disposition']='attachment; filename="manuscript-source.zip"'
+    return Response(raw,media_type=safe,headers=headers)
+
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.28-p5-stage-handoff'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.29-p5-manuscript-review'}
 @app.get('/api/v1/research-projects',response_model=list[c.ResearchProject])
 async def projects():return service().store.projects()
 @app.post('/api/v1/research-projects',response_model=c.ResearchProject,status_code=201)
