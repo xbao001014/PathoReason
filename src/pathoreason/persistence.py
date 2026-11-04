@@ -37,6 +37,7 @@ class Store:
             CREATE TABLE IF NOT EXISTS context_snapshots(turn_id TEXT PRIMARY KEY REFERENCES turns(id),document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS runtime_configs(digest TEXT PRIMARY KEY,document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS skill_invocations(turn_id TEXT PRIMARY KEY REFERENCES turns(id),document TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS project_deletions(project_id TEXT PRIMARY KEY REFERENCES projects(id),state TEXT NOT NULL,document TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS conversation_deletions(conversation_id TEXT PRIMARY KEY REFERENCES conversations(id),state TEXT NOT NULL,document TEXT NOT NULL);
             """)
     @contextmanager
@@ -49,24 +50,35 @@ class Store:
             db.commit()
         except Exception:db.rollback();raise
         finally:db.close()
-    def project(self,pid):
-        with self.connect() as db:row=db.execute("SELECT document FROM projects WHERE id=?",(pid,)).fetchone()
-        if not row:raise Missing("project_not_found")
-        return json.loads(row[0])
-    def projects(self):
-        with self.connect() as db:return [json.loads(r[0]) for r in db.execute("SELECT document FROM projects ORDER BY rowid")]
+    def check_project(self,db,pid,*,writable=False,include_removed=False):
+        row=db.execute('SELECT document FROM projects WHERE id=?',(pid,)).fetchone()
+        if not row:raise Missing('project_not_found')
+        removed=db.execute('SELECT state FROM project_deletions WHERE project_id=?',(pid,)).fetchone()
+        if removed and not include_removed:
+            if removed[0]=='deleted':raise Gone('project_deleted')
+            raise Conflict('project_deletion_pending')
+        doc=json.loads(row[0])
+        if writable and doc['status']=='archived':raise Conflict('project_archived')
+        return doc
+    def project(self,pid,*,writable=False,include_removed=False):
+        with self.connect() as db:return self.check_project(db,pid,writable=writable,include_removed=include_removed)
+    def projects(self,include_removed=False):
+        with self.connect() as db:return [json.loads(r[0]) for r in db.execute("SELECT p.document FROM projects p LEFT JOIN project_deletions d ON d.project_id=p.id"+('' if include_removed else " WHERE d.state IS NULL")+' ORDER BY p.rowid')]
     def create_project(self,title,objective,resources=(),project_id=None):
         p=ResearchProject(id=project_id or uid("prj"),title=title,objective=objective,revision=1,created_at=now(),status="active",resources=list(resources))
         with self.connect(True) as db:db.execute("INSERT INTO projects VALUES(?,?)",(p.id,encoded(p)))
         return p.model_dump(mode="json")
     def create_conversation(self,pid,title,directory):
-        self.project(pid);cid=uid("conv")
+        self.project(pid,writable=True);cid=uid("conv")
         c=Conversation(id=cid,project_id=pid,title=title,status="open",active_runtime_binding_id=uid("bind"),created_at=now())
-        with self.connect(True) as db:db.execute("INSERT INTO conversations VALUES(?,?,?,?,?)",(cid,pid,encoded(c),None,str(directory)))
+        with self.connect(True) as db:
+            self.check_project(db,pid,writable=True)
+            db.execute("INSERT INTO conversations VALUES(?,?,?,?,?)",(cid,pid,encoded(c),None,str(directory)))
         return c.model_dump(mode="json")
     def check_conversation(self,db,cid,*,writable=False,include_removed=False):
         row=db.execute('SELECT * FROM conversations WHERE id=?',(cid,)).fetchone()
         if not row:raise Missing('conversation_not_found')
+        self.check_project(db,row['project_id'],writable=writable,include_removed=include_removed)
         removed=db.execute('SELECT state FROM conversation_deletions WHERE conversation_id=?',(cid,)).fetchone()
         if removed and not include_removed:
             if removed[0]=='deleted':raise Gone('conversation_deleted')
@@ -86,6 +98,7 @@ class Store:
         self.project(pid)
         with self.connect() as db:return [json.loads(r[0]) for r in db.execute("SELECT document FROM artifacts WHERE project_id=? ORDER BY rowid DESC",(pid,))]
     def artifact(self,aid,pid):
+        self.project(pid)
         with self.connect() as db:row=db.execute("SELECT document FROM artifacts WHERE id=? AND project_id=?",(aid,pid)).fetchone()
         if not row:raise Missing("artifact_not_found")
         return json.loads(row[0])

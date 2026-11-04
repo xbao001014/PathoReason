@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "stage_id": {
+      "default": "data",
+      "enum": [
+        "data",
+        "baseline",
+        "innovation",
+        "analysis",
+        "manuscript"
+      ],
+      "title": "Stage Id",
+      "type": "string"
+    }
+  },
+  "title": "StageAssign",
+  "type": "object"
+}

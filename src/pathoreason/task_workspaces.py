@@ -272,8 +272,9 @@ class TaskWorkspaces:
         intent={k:v for k,v in request.items() if k not in ('grant','turn_id')}
         digest=canonical_digest(intent)
         with self.lock(pid):
-            self.store.project(pid)
+            self.store.project(pid,writable=True)
             with self.store.connect(True) as db:
+                self.store.check_project(db,pid,writable=True)
                 previous=db.execute('SELECT * FROM task_code_actions WHERE project_id=? AND request_key=?',(pid,key)).fetchone()
                 if previous:
                     if previous['digest']!=digest:raise Conflict('idempotency_key_conflict')

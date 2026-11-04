@@ -74,6 +74,7 @@ def generate_image(project_id,request,relative,cfg=None):
 def publish_artifact(service,project_id,relative,title):
     from .formal_contracts import FormalArtifact,FormalRef
     from .contracts import canonical_digest
+    service.store.project(project_id,writable=True)
     cfg=service.config;root=workspace(project_id,cfg,service.store)
     # Only explicit result areas may be published. Dataset records and credentials are not public artifacts.
     if relative.split('/')[0] not in {'outputs','figures','manuscript'}:raise ValueError('publish_result_area_required')
