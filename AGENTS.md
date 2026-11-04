@@ -1,6 +1,6 @@
 # PathoReason 开发交接
 
-2026-11-04 稿件依赖修复：0.6.36 已显式要求子 Skill、配套文件正文读取和 literature/argument/skill_usage 材料；checkpoint 证据容量已对齐24项。用户追加1200秒后，真实 Agent 已提交正文v6/Seedream v2/13项材料，当前 draft revision 8、audit blocked，目标8/8。仍缺部分必需依赖、中央论断全文支持和图中分类头；不得建议直接批准。继续前读 [执行证据与未完成项](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，不擅自增加额度或绕过目标回合上限。
+2026-11-04 最新：用户调整额度并切到Flash后，实际图像附件读取与Seedream v3分类头修订已验证；研究Agent提交正文v10/Bib v7/13项材料，draft revision12、audit passed、awaiting_review，尚无作者批准。目标12/14，时间15959.964/17220秒；不得自行增额或推进作者门禁。已补子Skill正文读取、中央背景来源和论证，部分背景引用仍为摘要级。继续前读 [执行证据与边界](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，保留开发反馈与模型修改的区分。
 
 ## 通用开发规则（长期适用）
 

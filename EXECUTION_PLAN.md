@@ -1,6 +1,6 @@
 # PathoReason 执行计划
 
-2026-11-04 更新：子 Skill 显式依赖、Introduction证据材料、Seedream草稿路由和24项checkpoint容量已修复，容量/稿件/目标44项回归通过。用户追加1200秒后真实Agent提交v6、Seedream v2和13项材料，当前draft revision 8/audit blocked，目标8/8；图件分类头、必需依赖执行和中央论断全文支持仍未完整通过。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，保留失败与预算，不能直接批准。
+2026-11-04 更新：子Skill显式依赖、正文读取、Introduction证据材料、Seedream草稿路由和24项checkpoint容量已修复；容量/稿件/目标44项回归通过。用户改用Flash并调整额度后，真实Agent读图确认Seedream v3修正，提交v10/Bib v7/13项材料；draft revision12/audit passed，等待作者审阅。目标12/14，尚余约21分钟；未增实验或代批。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，部分背景引用仍摘要级，实际进展包含开发检查反馈，不能当作独立科学审核通过。
 
 版本：v0.8  
 日期：2026-10-30  

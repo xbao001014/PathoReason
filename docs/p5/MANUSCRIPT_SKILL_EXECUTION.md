@@ -1,6 +1,26 @@
 # 稿件子 Skill 执行与草稿证据补强
 
-## 最新状态：追加额度后的真实执行
+## 最新状态：Flash 看图与 v10 草稿待审
+
+用户自行把项目时间上限调至17220秒、目标上限14回合，并要求继续、改用Flash。开发侧未再变更额度。检查发现原目标request_template仍保存deepseek-v4-pro，故通过公开用户回合接口明确指定deepseek-flash/high/32768，后续接续模板已同步。原生/provider对deepseek-flash及32768输出配置均声明image input/attachment=true；实际模型能力以本次真实图片附件和行为为证，不能沿用Pro无图像输入的旧结论。
+
+四个研究回合依次为 turn_fe7ad2edbad740a2b29072d7323926b9、turn_c495528062eb40879b7a301d12ae1f34、turn_40a016f8dbcb4a618d2a108d21b1b597、turn_96e7ec634e3a4602acbfcb6e20f43357，冻结模型均为Flash。开发侧提供了独立检查反馈：被截断的Skill读取、背景语义缺口、过强领域概括及正文/Bib引用状态未同步；研究Agent完成所有稿件与图件修改。不是无人干预的端到端验收。
+
+Flash native read实际读取Seedream v2、v3，返回image/png附件，分别为prt_1a6483a96001H5rNOOkj0LXqsb、prt_1a64960af001NykJfzx4Y3mGFC。首轮Flash确认v2分类头缺失后，只作一次已授权Seedream定向修订；v3原图SHA 2fcfa28577f40090a9c9aec7340565331bca8b2ebc0b0e081436885bc2ece3da，2816×1584。模型读图与开发独立看图均确认mean pooling→classifier head→三类输出，MIDDLE不存在；明确示意、AI生成、非患者数据。后三轮无付费生成，旧原图与回执均保留。
+
+此前缺失的academic-research-suite、pathology-mil-paper-figures已实际native加载；authorial-voice、methodology-figures、raster-generation、evidence_workflow、ARS文献/起草角色及task-recipes均有正文读取。draft_writer_agent初次输出截于650/656行，开发检查发现后由Agent续读651–656行并更正自报；不能把初次哈希/行数检查记成完整读取。
+
+稿件现为v10：引言5段、18条相关引用；补入实际使用方法的Virchow2、CLAM、TransMIL来源。Fu、Bonetti取得正文并对照实际阅读章节核验中央论断，Campora全文数字限定到对应审计范围。稿件明确A–D比较分别能回答什么，删除无来源的领域usually/rarely概括，将Block D限定为slide weighting这一因素，整体不再宣称预注册。预先规则仅在有日期计划依据的范围保留。References导语/条目1–2、Bib note与引用报告已统一为full text accessed / specified sections read，不冒称每一章节和补充材料都已读。层级和若干背景方法文献仍为摘要或元数据级，公开列为限制；本轮不代表独立科学评审或可投稿。
+
+最终工作流revision12，draft/awaiting_review，audit_status=passed；包mrv_turn_96e7ec634e3a4602acbfcb6e20f43357，digest 19575daf89cd6aeb3b360c2ce56444c666813379101d91e3dd9b6c239b8d288f。正文v10 SHA 74e27d578d82e3f9f16699c2548be7de4791f46539b87b68af05ddd83e88f5f4；Bib v7 SHA 97ab3be343974cda2f3ad1195785c1801c37b20e5960c5e5f13a0f5ef9650524。13项审核存档通过公开材料接口逐项读回，SHA全部匹配，所有material ID均在checkpoint evidence；新完整性报告绑定新正文与Bib。图片相对链接已由Agent改为../figures/...并核对文件存在。
+
+目标revision28、waiting_input/manuscript_review_pending、12/14；项目119/160，计时15959.963718/17220，剩余1260.036秒（约21分钟）。无新训练、实验或测试调用，阴性结果/54次曝光保留，无作者批准、无review节点推进。下一步由作者审阅确切v10，批准仍走现有门禁，不由开发者代行。
+
+公共stage-execution进一步明确：截断正文续读、读取范围与全文取得的区别；模型切换后按当前图像能力实测；引用层级变化时同步正文/Bib/引用报告/证据矩阵。参考文件更新的工程检查与上述真实行为分别记录，不以提示词修订保证所有未来模型都会遵循。
+
+证据保存在`/data/bxn/PathoReason/acceptance/manuscript-skills-20261104/flash-turn-traces.json`、`flash-final-state.json`、`flash-packet-check.json`，保留前一阶段final-state/trace而未覆盖。
+
+## 前一阶段：追加额度后的真实执行
 
 用户同意追加 1200 秒，公开预算接口已记账至 15840 秒，未改变项目 160 / 目标 8 回合上限。修复证据容量时维护中断了 turn_965b7bee63104bc1a3e58ebd83ce4ed6，目标因此暂停；随后 turn_e132565ddc8f49fc8f9bbbfc98b82166 仅回复暂停状态，没有执行研究工作。这是开发维护与恢复过程的干预，不能算模型成果。
 

@@ -21,6 +21,10 @@ permitted direct read of its actual SKILL.md, recorded as a fallback, not native
 success. Read relevant companion files completely; discovery listings are not
 file reads. Reuse still-present instructions within a turn; after context loss,
 read them again. Do not treat an old failure as present unavailability.
+If a read is capped or paginated, continue from its reported offset through the
+end of the required text. A file hash, line count or successful fetch does not
+prove that omitted text was read. Record partial reads as partial; for long
+research sources, identify the sections actually examined and their locators.
 
 Complete the applicable loads and companion reads BEFORE the dependent search,
 draft or paid image request. Loading a skill after producing its output does not
@@ -67,6 +71,11 @@ unavailable, narrow/remove the claim or state the evidence gap. Preserve negativ
 results, the actual prediction target and all test-use limitations. Publish
 `literature` (search/evidence matrix) and `argument` (paragraph/rationale coverage)
 with the draft packet; integrity review checks their agreement with the manuscript.
+When a source's verification level changes, reconcile that source's status in
+the manuscript reference entry and introductory note, BibTeX notes, citation
+report and evidence matrix. An unchanged reference set does not make an old
+bibliography current. Distinguish abstract verification, full-text access and
+the sections actually read consistently across all submitted materials.
 Evidence gaps affecting claims already asserted in the current draft belong to
 the current integrity review, not a generic "before submission" checklist. Resolve
 them by checking the source or narrowing/removing the unsupported assertion;
@@ -92,6 +101,10 @@ matplotlib/SVG block diagram, another provider, or a textual promise.
 
 Issue one candidate request within the authorized scope, preserve candidate.json
 and original bytes in a new version directory, and inspect the image/caption.
+Use the current model/runtime image-input capability, not an earlier model's
+limitation. After a model change, if image input is advertised, attempt the native
+image read and record whether image content was delivered before declaring visual
+inspection unavailable. Keep model visual review distinct from author approval.
 No automatic paid retry. OCR supports label review but cannot certify morphology,
 topology or visual quality; unavailable visual inspection remains an explicit
 pending check. Do not assert renderer geometry for an API-generated raster.
