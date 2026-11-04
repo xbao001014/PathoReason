@@ -1,0 +1,100 @@
+{
+  "$defs": {
+    "GoalLimitChange": {
+      "additionalProperties": false,
+      "properties": {
+        "goal_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Goal Id",
+          "type": "string"
+        },
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "max_turns": {
+          "maximum": 40,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "goal_id",
+        "expected_revision",
+        "max_turns"
+      ],
+      "title": "GoalLimitChange",
+      "type": "object"
+    },
+    "ProjectBudgetChange": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "max_turns": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Max Turns",
+          "type": "integer"
+        },
+        "max_wall_seconds": {
+          "maximum": 86400,
+          "minimum": 60,
+          "title": "Max Wall Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "expected_revision",
+        "max_turns",
+        "max_wall_seconds"
+      ],
+      "title": "ProjectBudgetChange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "request_key": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Request Key",
+      "type": "string"
+    },
+    "project": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProjectBudgetChange"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "goal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalLimitChange"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "request_key"
+  ],
+  "title": "BudgetSettingsUpdate",
+  "type": "object"
+}

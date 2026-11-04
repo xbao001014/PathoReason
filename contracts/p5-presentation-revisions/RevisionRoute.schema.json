@@ -1,0 +1,84 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "turn_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Turn Id",
+      "type": "string"
+    },
+    "grant": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Grant",
+      "type": "string"
+    },
+    "expected_goal_revision": {
+      "minimum": 1,
+      "title": "Expected Goal Revision",
+      "type": "integer"
+    },
+    "expected_revision": {
+      "minimum": 0,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "target_gate": {
+      "default": "scientific",
+      "enum": [
+        "scientific",
+        "delivery"
+      ],
+      "title": "Target Gate",
+      "type": "string"
+    },
+    "revision_kind": {
+      "default": "content",
+      "enum": [
+        "content",
+        "presentation"
+      ],
+      "title": "Revision Kind",
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "author_feedback",
+        "user_message"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "source_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Source Id",
+      "type": "string"
+    },
+    "instruction_excerpt": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Instruction Excerpt",
+      "type": "string"
+    },
+    "reason": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Reason",
+      "type": "string"
+    }
+  },
+  "required": [
+    "turn_id",
+    "grant",
+    "expected_goal_revision",
+    "expected_revision",
+    "source",
+    "source_id",
+    "instruction_excerpt",
+    "reason"
+  ],
+  "title": "RevisionRoute",
+  "type": "object"
+}

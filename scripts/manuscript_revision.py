@@ -1,4 +1,4 @@
-"""Route an authorized manuscript rewrite without approving the revised version."""
+"""Route an authorized content or presentation revision without approving it."""
 import json
 from pathlib import Path
 import sys
@@ -20,7 +20,12 @@ def main():
         summary={k:result[k] for k in ('revision','gate','status','required_roles','next_work','author_content_approved','delivery_approved')}
         routed=next((h for h in reversed(result['history']) if h['event']=='revision_routed'),None)
         summary['preserved_manuscripts']=[m for p in (routed or {}).get('invalidated',[]) for m in p['materials'] if m['role']=='manuscript']
-        summary['next']='Continue the authorized revision in this turn using the returned workflow revision. Preserve original files; submit the new version for scientific review, never approve it.'
+        summary['revision_kind']=body['revision_kind']
+        summary['revision_context']=result.get('revision_context')
+        if result['author_content_approved']:
+            summary['scientific_basis_digest']=result['approved'][3]['digest']
+            summary['approved_scientific_materials']=result['approved'][3]['materials']
+        summary['next']='Continue the authorized revision in this turn using the returned workflow revision. Preserve original files; submit the new version for the returned review gate, never approve it.'
         print(json.dumps(summary,ensure_ascii=False));return 0
     except urllib.error.HTTPError as exc:
         print(json.dumps({'error':json.load(exc).get('detail','manuscript_revision_route_failed')},ensure_ascii=False));return 1

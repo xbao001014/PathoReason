@@ -6,6 +6,7 @@ from pydantic import BaseModel,ConfigDict,Field,model_validator
 from .contracts import Identifier,canonical_digest
 from .persistence import Conflict,Missing,encoded,now
 from .legacy import read_verified_file
+from .presentation_revision import PresentationChange,validate_presentation,instructions as presentation_instructions
 
 Gate=Literal['blueprint','draft','review','scientific','delivery']
 GATES=[
@@ -39,6 +40,8 @@ class ReviewRequest(Contract):
     # A report's claim, bound to actual bytes; not a scientific certification.
     audit_status:Literal['not_applicable','passed','blocked']='not_applicable'
     audited_manuscript_sha256:str|None=Field(default=None,pattern='^[0-9a-f]{64}$')
+    presentation_only:bool=False
+    presentation_changes:list[PresentationChange]=Field(default_factory=list,max_length=24)
     scientific_basis_digest:str|None=Field(default=None,pattern='^[0-9a-f]{64}$')
     @model_validator(mode='after')
     def unique(self):
@@ -64,11 +67,17 @@ class RevisionRoute(Contract):
     grant:str=Field(min_length=1,max_length=128)
     expected_goal_revision:int=Field(ge=1)
     expected_revision:int=Field(ge=0)
-    target_gate:Literal['scientific']='scientific'
+    target_gate:Literal['scientific','delivery']='scientific'
+    revision_kind:Literal['content','presentation']='content'
     source:Literal['author_feedback','user_message']
     source_id:str=Field(min_length=1,max_length=128)
     instruction_excerpt:str=Field(min_length=1,max_length=8000)
     reason:str=Field(min_length=1,max_length=600)
+
+    @model_validator(mode='after')
+    def matching_scope(self):
+        if (self.target_gate=='delivery')!=(self.revision_kind=='presentation'):raise ValueError('manuscript_revision_scope_mismatch')
+        return self
 
 class Manuscripts:
     def __init__(self,s):
@@ -92,7 +101,9 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
         with self.s.store.connect() as db:
             conv,stage=self.owner(db,cid);w=self.get(db,conv['project_id']);goal=self.s.goals._latest(db,cid)
         current=GATES[min(w['index'],4)]
-        return {**w,'goal_state':goal['state'] if goal else None,'gate':current[0],'label':current[1],'required_roles':current[2],'next_work':current[3],
+        required=[*current[2]]
+        if current[0]=='delivery' and (w.get('revision_context') or {}).get('kind')=='presentation':required.append('presentation_audit')
+        return {**w,'goal_state':goal['state'] if goal else None,'gate':current[0],'label':current[1],'required_roles':required,'next_work':current[3],
             'gates':[{'id':g[0],'label':g[1],'status':'approved' if i<w['index'] else w['status'] if i==w['index'] else 'not_started'} for i,g in enumerate(GATES)],
             'author_content_approved':w['index']>=4,'delivery_approved':w['index']==5,'submission_authorized':False,'independent_scientific_approval':False}
     def material_bytes(self,pid,item):
@@ -163,6 +174,7 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
             hashes={m['sha256'] for m in materials if m['role']=='manuscript'}
             if hashes!={req.audited_manuscript_sha256}:raise Conflict('manuscript_audit_version_mismatch')
         if req.gate=='delivery' and req.scientific_basis_digest!=w['approved'][3]['digest']:raise Conflict('manuscript_scientific_basis_changed')
+        validate_presentation(self,row['project_id'],w,req,materials)
     def settled(self,db,row,goal,checkpoint):
         req=checkpoint.get('manuscript_review')
         if not req:return
@@ -241,6 +253,7 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
             w['history'].append(receipt)
             if body.action=='approve':w['approved'].append(packet);w['index']+=1
             if body.action=='reopen' or target<w['index'] and body.action!='approve':w['approved']=w['approved'][:target];w['index']=target
+            if w['index']<4:w.pop('revision_context',None)
             w.update(status='approved' if w['index']==5 else 'preparing',pending=None)
             with self.s.store.connect(True) as db:
                 if self.get(db,conv['project_id'])['revision']!=body.expected_revision:raise Conflict('manuscript_review_changed')
@@ -284,7 +297,9 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
             link=self.s.goals._check_checkpoint(db,row,check)
             if link['checkpoint']:raise Conflict('manuscript_route_after_checkpoint')
             if self.s.goals.frozen_config(db,body.turn_id).get('execution_scope','standard')!='standard':raise Conflict('goal_outside_turn_scope')
-            conv,stage=self.owner(db,row['conversation_id'])
+            conv=self.s.store.conversation(row['conversation_id'],writable=True)
+            stage=self.s.stages.get(db,conv['project_id'])
+            if not stage or stage['stage_id']!='manuscript':raise Conflict('manuscript_stage_required')
             route_key='revision_route_'+body.turn_id
             prior=db.execute('SELECT document FROM manuscript_review_commands WHERE project_id=? AND request_key=?',(conv['project_id'],route_key)).fetchone()
             if prior:
@@ -292,7 +307,13 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
                 return self.view(row['conversation_id'])
             w=self.get(db,conv['project_id'])
             if w['revision']!=body.expected_revision:raise Conflict('manuscript_review_changed')
-            if w['index']!=4 or stage['status']!='active':raise Conflict('manuscript_route_requires_delivery')
+            if w['index'] not in (4,5):raise Conflict('manuscript_route_requires_delivery')
+            moving=stage['conversation_id']!=row['conversation_id']
+            if moving:
+                old_goal=self.s.goals._latest(db,stage['conversation_id'])
+                if w['index']!=5 or w.get('pending') or (old_goal and old_goal['state'] not in ('completed','cancelled')):raise Conflict('manuscript_revision_owner_busy')
+                self.s.store.conversation(stage['conversation_id'])
+            elif stage['status'] not in ('active','completed'):raise Conflict('manuscript_stage_required')
             if body.source=='author_feedback':
                 author=next((h for h in reversed(w['history']) if h['event']=='author_decision'),None)
                 if link['origin']!='goal' or not author or author['at']!=body.source_id or author['action']!='revise':raise Conflict('manuscript_revision_instruction_required')
@@ -305,20 +326,39 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
                 if context and json.loads(context[0]).get('unresolved_acceptance'):raise Conflict('manuscript_revision_intent_unresolved')
             if body.instruction_excerpt not in instruction:raise Conflict('manuscript_revision_excerpt_mismatch')
             self.chain(conv['project_id'],w)
+            target=4 if body.revision_kind=='presentation' else 3
             receipt={'event':'revision_routed','source':'agent_interpretation','at':now(),'source_turn':body.turn_id,
                 'instruction_source':body.source,'instruction_source_id':body.source_id,'comment':instruction,
-                'instruction_excerpt':body.instruction_excerpt,'reason':body.reason,'target_gate':'scientific',
-                'packet':w['pending'],'invalidated':w['approved'][3:]}
+                'instruction_excerpt':body.instruction_excerpt,'reason':body.reason,'target_gate':body.target_gate,'revision_kind':body.revision_kind,
+                'packet':w['pending'],'invalidated':w['approved'][target:]}
             w['history'].append(receipt)
-            w.update(index=3,approved=w['approved'][:3],pending=None,status='preparing')
+            if moving or stage['status']=='completed':
+                stage['history'].append({'kind':'revision_requested','stage_id':'manuscript','conversation_id':stage['conversation_id'],
+                    'destination':row['conversation_id'],'handoff':stage.get('handoff'),'source_turn':row['id'],'at':now()})
+                stage.update(conversation_id=row['conversation_id'],status='active',handoff=None)
+                self.s.stages.save(db,stage,'manuscript_revision_attached')
+            w.update(index=target,approved=w['approved'][:target],pending=None,status='preparing',
+                revision_context={'kind':body.revision_kind,'source_turn':row['id'],'scientific_basis_digest':w['approved'][3]['digest']})
             self.save(db,w,'revision_routed')
             db.execute('INSERT INTO manuscript_review_commands VALUES(?,?,?,?)',(conv['project_id'],route_key,canonical_digest(payload),encoded({'request':payload,'receipt':receipt})))
         return self.view(row['conversation_id'])
 
+    def revision_entry_prompt(self,cid):
+        conv=self.s.store.conversation(cid)
+        with self.s.store.connect() as db:
+            stage=self.s.stages.get(db,conv['project_id']);w=self.get(db,conv['project_id'])
+            if not stage or stage['stage_id']!='manuscript' or w['index']!=5:return ''
+            old=self.s.goals._latest(db,stage['conversation_id'])
+            available=not old or old['state'] in ('completed','cancelled')
+        return '\nPROJECT MANUSCRIPT REVISION ENTRY (read-only discovery, not ownership or permission): '+encoded({
+            'project_id':conv['project_id'],'current_owner':stage['conversation_id'],'revision':w['revision'],
+            'revision_entry_available':available,'approved_packets':[{k:p[k] for k in ('id','digest','materials')} for p in w['approved'][3:]],
+            'rule':'For a clear request to revise this existing manuscript, route the exact current user instruction before editing. Ordinary discussion does not reopen anything. If unavailable, return to the current stage conversation.'})+'\n'+presentation_instructions(str(Path(__file__).resolve().parents[2]/'scripts/manuscript_revision.py'))
+
     def prompt(self,cid):
         v=self.view(cid)
         if v['gate']=='delivery':
-            v['next_work']+=' 用户已明确要求重写、润色或修改正文时，保护已批准旧稿不等于禁止生成新版本。根据原话做语义判断，不以 Skill 名或关键词命中代替意图；不再让用户重复选择内部 reopen/target_gate。先用本轮 dialogue capability 的 turn_id/grant 调用 python '+str(Path(__file__).resolve().parents[2]/'scripts/manuscript_revision.py')+'（JSON stdin）：expected_goal_revision 为当前目标 revision，expected_revision 为当前稿件工作流 revision，target_gate=scientific，source=author_feedback 或 user_message，source_id 分别为最新 revise 作者回执的 at 或当前用户回合 turn_id，instruction_excerpt 为该指令的准确原文，reason 为为什么需要正文修订。接口只退回 scientific 准备并保留历史；拿到新 revision 后同一回合继续写新版本、核验并提交科学内容待审，不能批准新版，不重置消耗。仅排版/字体/布局修改留在 delivery。用词模糊（如“再改一下”）或否定/条件/引用不能确定实际要求时，不调用切换接口；用 pathoreason_dialogue_offer 发布 kind=clarification、scope=continue 的 2–3 个选项（例如“修改正文并返回科学审核”“仅调整排版”），保留自由输入，等待用户选择；不得默认选择、重复要求已明确的重写授权或再跑无关审计。'
+            v['next_work']+=presentation_instructions(str(Path(__file__).resolve().parents[2]/'scripts/manuscript_revision.py'))
         if v['gate'] in ('draft','scientific'):
             v['next_work']+=' 显式调用 anti-defensive-writing Skill 并完整读取其 authorial-voice 配套规范。起草时使用；作者裁定后的科学修订在请求冻结前完成全文语义检查，输出与确切稿件 SHA 绑定的 reader_facing_style_review.json 和 reader_facing_voice_report.json，作为 style_review/voice_report 材料登记并纳入 checkpoint evidence。科学冻结前须同时 status=passed、style_status=passed；只读过规范、关键词扫描、一般完整性报告均不等于通过。保留阴性结果、不确定性与实质限制，不把反复自我否定当审慎。'
         elif v['gate'] in ('review','delivery'):

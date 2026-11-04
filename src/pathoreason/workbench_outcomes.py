@@ -77,6 +77,7 @@ def project_outcomes(pid, artifacts, research=None, manuscript=None, visible_con
                 'status':status,'status_label':{'approved':'作者已批准','awaiting_review':'待作者审核',
                  'historical_approval':'历史批准 · 已替代','history':'历史审核包'}[status],
                 'created_at':p.get('created_at',''),'summary':text(req.get('summary')),
+                'presentation_only':req.get('presentation_only',False),
                 'key_findings':lines(req.get('key_findings')),'limitations':lines(req.get('key_limitations')),
                 'open_questions':lines(req.get('author_questions')),
                 'changes':lines(req.get('changes')),'materials':items,
@@ -120,6 +121,14 @@ def project_outcomes(pid, artifacts, research=None, manuscript=None, visible_con
     conclusion=next((h for h in reversed(projected) if h['stage_id']=='analysis'),latest)
     content=bundles.get(current_content['id']) if current_content else None
     delivery_view=bundles.get(delivery['id']) if delivery else None
+    figures=[dict(m) for m in (content or {}).get('materials',[]) if m['role']=='figure']
+    # A presentation variant belongs to its delivery decision, never silently
+    # inherits the scientific approval of the immutable original figure.
+    if delivery and delivery.get('request',{}).get('presentation_only') and current_content and delivery['request'].get('scientific_basis_digest')==current_content.get('digest'):
+        replacements={c.get('original_artifact_id'):c.get('revised_artifact_id') for c in delivery['request'].get('presentation_changes',[]) if isinstance(c,dict)}
+        available={m['id']:m for m in delivery_view['materials'] if m['role']=='figure'}
+        figures=[{**available[replacements[m['id']]],'status':delivery_view['status'],
+            'status_label':'展示调整 · '+delivery_view['status_label']} if replacements.get(m['id']) in available else m for m in figures]
     focus=bundles.get(pending['id']) if pending else delivery_view or content
     index=m.get('index',0)
     gate=GATES[index][1] if isinstance(index,int) and 0<=index<len(GATES) else '审核完成'
@@ -135,7 +144,7 @@ def project_outcomes(pid, artifacts, research=None, manuscript=None, visible_con
             'limitations':conclusion.get('limitations') or (content or {}).get('limitations',[]),
             'open_questions':(focus or {}).get('open_questions',[]) if pending else latest.get('open_questions',[]) if r.get('handoff') else [],
             'next_action':latest.get('next_action','') if r.get('handoff') else '',
-            'content':content,'delivery':delivery_view,'pending':bundles.get(pending['id']) if pending else None,
+            'figures':figures,'content':content,'delivery':delivery_view,'pending':bundles.get(pending['id']) if pending else None,
             'history':history,'handoffs':projected,
             'revision':{'research':r.get('revision'),'manuscript':m.get('revision')}},stages,notices
 
