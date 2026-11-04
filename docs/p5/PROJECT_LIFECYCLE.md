@@ -34,3 +34,11 @@
 - 删除仅使用隔离数据库、模拟原生运行时与自建文件夹具；真实项目未执行归档或删除。没有新增模型调用、研究训练或科学验收。
 
 证据目录：`/data/bxn/PathoReason/acceptance/project-lifecycle-20261104/`。契约新增 `contracts/api-p5-project-lifecycle.openapi.json` 与 `contracts/p5-project-lifecycle/`，既有快照保留。
+
+## 线上发布结果
+
+功能提交 `ad6557b` 已发布，健康检查为 `0.6.29-p5-project-lifecycle`。8 个已绑定原生工作目录检查空闲后，仅重启应用（PID 1829827→1980813）；OpenCode PID 3293916 与启动身份保持不变。发布前保存一致性 SQLite、源码及静态包，发布后 11,248 个研究文件 SHA256 与 15 类历史账表内容全部一致。
+
+真实页面 1440/390px 只读检查通过：10 个正常项目、归档分类仅显示 2 个有归档对话的项目；项目管理、默认资产清理、名称确认门禁、手机排版均正常，真实 API 写请求为 0。只读脚本第一次在生命周期响应返回前过早断言按钮已启用；改为等待加载完成后通过，应用无需修改。发布预检最初的原生读取未携带认证而返回 401；补上已有服务认证后 8 个目录检查通过，凭据未输出、未复制到证据包。
+
+证据包含 `release.json`、`data-preservation.json`、`before-state.json`、`after-state.json`、`browser-evidence.tar.gz`、完整回归/最终定向回归和配置复核日志。线上研究项目未归档、未删除；没有模型或训练调用。失败日志保留，原始数据库不回写。
