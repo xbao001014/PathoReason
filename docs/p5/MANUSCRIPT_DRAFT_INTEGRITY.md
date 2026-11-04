@@ -31,4 +31,10 @@
 - TypeScript/Vite 构建通过；保留既有 bundle size 提示。
 - 契约新增 `api-p5-manuscript-integrity.openapi.json` 与 `p5-manuscript-integrity/`，不覆盖历史快照。
 
-首轮真实 Agent 修稿已把五项只获得摘要核验的参考文献降为准确的证据标签，并修复 AGE-MIL 待办，但因运行时没有视觉能力，未识别 Figure 2 的 A–E 与稿件 A–D 冲突。该失败直接促成上述公共图件审计机制；最终 Agent 修稿、线上只读状态和发布连续性在完成后补记。工程通过不代表稿件科学正确或作者已批准。
+## 真实 Agent 闭环与线上状态
+
+首轮真实 Agent 修稿把五项只获得摘要核验的参考文献降为准确的证据标签，并修复 AGE-MIL 待办，但因运行时没有视觉能力，未识别 Figure 2 的 A–E 与稿件 A–D 冲突。公共 OCR 上线后，同一研究 Agent 读取两张图并按既有证据生成正文 v4 和四块 Figure 2 v2；独立视觉验收又发现 v2 的文字越框与面板重叠，证明 OCR 可读不能代替版面检查。Agent 随后把 renderer 文字边界和面板不相交断言写入确定性渲染脚本，另存 Figure 2 v3，并登记几何、OCR、综合 figure audit、manifest 与完整性报告。v3 的 34 段文字全部位于所属面板，面板重叠为空，目标尺寸 2480×1280；独立目视复核无重叠，四块 A–D 与正文一致。
+
+线上最终停在 `draft / 初稿与图件 / awaiting_review`，workflow revision 6，只批准 blueprint。待审包 `mrv_turn_2d4d1e56aa664f3694f00c63aae0e9ca` 的正文 SHA 为 `d6c60a2c…`，Figure 2 v3 SHA 为 `130aa6cf…`，audit status 为 passed；作者尚未批准。目标使用 5/8 回合，项目 111/160 回合，计费预算使用 14282.159/14640 秒；没有增加、重置或绕过额度，也没有新增训练、实验或测试评估。
+
+原生工具目录刷新与校验通过，OpenCode PID 未改变。Agent 的最终 checkpoint 仍选择了受保护内部端点校验的 `scripts/goal_control.py` CLI fallback，而没有使用原生 checkpoint 工具；它通过当前 Pydantic schema、grant、revision 与后端 gate 校验，但原生桥接调用路径仍需后续单独追踪。工程通过不代表稿件科学正确或作者已批准。
