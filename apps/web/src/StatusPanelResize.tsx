@@ -27,7 +27,7 @@ export function StatusPanelResize({expanded,bodyId}:{expanded:boolean;bodyId:str
    const bodyHeight=body.getBoundingClientRect().height;
    const overhang=Math.max(0,composer.getBoundingClientRect().bottom-Math.min(chat.getBoundingClientRect().bottom,viewportBottom));
    const compact=matchMedia('(max-width:760px)').matches;
-   const reserve=compact?32:Math.min(120,viewportHeight*.12);
+   const reserve=compact?32:Math.min(64,viewportHeight*.12);
    const max=Math.max(0,Math.floor(bodyHeight+timeline.getBoundingClientRect().height-reserve-overhang));
    const min=Math.min(144,max);
    const autoMax=Math.min(max,compact?Math.min(viewportHeight*.25,240):Math.min(viewportHeight*.42,480));
