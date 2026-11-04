@@ -25,7 +25,7 @@
 ## 验证与已发现的问题
 
 - 相关后端回归 64 项通过，覆盖旧投影、平台优先级、未审高版本、待审/返工/旧批准、缺失与跨项目身份、只读、快照损坏、下载与响应类型、原稿件/阶段/训练展示。
-- 全量测试结果见验收目录 `pytest-full.log`；前端 TypeScript/Vite 构建成功。已有大 chunk 提示保留，未引入新依赖。
+- 全量首次为 584 通过、5 失败、3 跳过（592 项）；5 个失败均为独立工作区缺少 local 配置，保留日志，补公共示例派生的隔离配置后全部 5 项重测通过。随后补充“历史问题不重新成为当前待办”回归，最终投影专项 28 项通过。详见 `validation.json`、`pytest-full.log`、`pytest-config-recheck.log` 和 `pytest-final-projection.log`，不把重叠专项重复加总。前端 TypeScript/Vite 构建成功。已有大 chunk 提示保留，未引入新依赖。
 - 真实项目只读投影：260 项产物；创新实验 22、分析验证 25、论文交付 103 项关联文件，20 个分析报告系列，15 个此前审核包。平台 research revision4/completed；manuscript revision26/index5/approved。
 - 当前科学内容包是 v13，正文 SHA `fb5154e2db99574b7363c883a82898957f1ca335929e0a733575fb053125f76f`；交付 PDF 为 9 页，SHA `928bb9617d87fc98cfe3da71567bd7720307ce556660941c413d424c2517caca`。这是已有作者决定的展示，不是本次开发新增批准。
 - 当前与历史审核包 150 次读取、88 个不同产物逐一 SHA 核对通过。
