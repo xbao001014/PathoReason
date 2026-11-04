@@ -30,7 +30,7 @@ class GoalRecoveryInput(BaseModel):
 
 class GoalEvidence(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    artifact_ids: list[Identifier] = Field(default_factory=list, max_length=10)
+    artifact_ids: list[Identifier] = Field(default_factory=list, max_length=24)
     files: list[str] = Field(default_factory=list, max_length=8)
     task_check_ids: list[Identifier] = Field(default_factory=list, max_length=8)
 
