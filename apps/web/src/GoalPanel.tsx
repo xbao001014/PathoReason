@@ -1,3 +1,4 @@
+import {StatusPanelResize} from './StatusPanelResize';
 import {useResearchStage} from './ResearchStageContext';
 import {ManuscriptReview,type ManuscriptView} from './ManuscriptReview';
 import {OutputRecovery} from './OutputRecovery';
@@ -73,6 +74,7 @@ export function GoalPanel({cid,readOnly,running,onChange,onError,onNavigate,onBu
  const windowUsed=goal?(goal.turns_used??0)-(goal.turn_window?.start_turns??0):0;
  return <section className={'goal-panel'+(manuscript?' goal-panel-manuscript':'')} aria-label={panelLabel} data-expanded={expanded} hidden={!goal&&!review&&!trainingStatus} onKeyDown={e=>{if(manuscript&&e.key==='Escape'&&!e.defaultPrevented){setExpanded(false);heading.current?.focus();}}}>
   <div className="goal-body" id={bodyId} hidden={!expanded}>
+   <StatusPanelResize expanded={expanded} bodyId={bodyId}/>
    <div className="goal-module-tabs" role="tablist" aria-label={manuscript?'审核与任务分类':'任务与训练分类'} onKeyDown={navigateModules} style={{gridTemplateColumns:`repeat(${Math.max(1,modules.length)},minmax(0,1fr))`}}>{modules.map(value=><button key={value} id={bodyId+'-tab-'+value} ref={value==='review'?reviewTab:undefined} type="button" role="tab" aria-label={moduleLabels[value][0]} aria-selected={selectedModule===value} aria-controls={bodyId+(value==='goal'?'-goal':value==='review'?'-review':'-training')} tabIndex={selectedModule===value?0:-1} onClick={()=>chooseModule(value)}><span className="goal-tab-full">{moduleLabels[value][0]}</span><span className="goal-tab-short" aria-hidden="true">{moduleLabels[value][1]}</span></button>)}</div>
    {review&&<div className="goal-module-panel goal-review-panel" role="tabpanel" id={bodyId+'-review'} aria-labelledby={bodyId+'-tab-review'} hidden={selectedModule!=='review'} ref={reviewPanel}>
     <ManuscriptReview key={cid} cid={cid} value={review} readOnly={readOnly} running={running} onError={onError} onUpdate={next=>{updateReview(next);onChange();}}/>
