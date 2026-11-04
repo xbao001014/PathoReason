@@ -1,5 +1,7 @@
 # PathoReason 执行计划
 
+2026-11-04 最新更新：按用户要求，稿件审核反馈成功保存后重新计算本节点回合；目标累计、项目回合与 Agent 时间仍累计，暂停状态保留。兼容旧目标，不回写历史反馈。当前真实节点 review revision14/awaiting_review、目标13/14；详见 [审核回合窗口与验证边界](docs/p5/MANUSCRIPT_REVIEW_TURNS.md)。
+
 2026-11-04 更新：子Skill显式依赖、正文读取、Introduction证据材料、Seedream草稿路由和24项checkpoint容量已修复；容量/稿件/目标44项回归通过。用户改用Flash并调整额度后，真实Agent读图确认Seedream v3修正，提交v10/Bib v7/13项材料；draft revision12/audit passed，等待作者审阅。目标12/14，尚余约21分钟；未增实验或代批。详见 [执行记录](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，部分背景引用仍摘要级，实际进展包含开发检查反馈，不能当作独立科学审核通过。
 
 版本：v0.8  

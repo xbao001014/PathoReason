@@ -3,7 +3,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .contracts import Identifier, canonical_digest
 from .formal import StudyView, StudyBudget
-from .goals import GoalView
+from .goals import GoalView, turns_in_window
 from .persistence import Conflict, encoded, now
 from .timing import totals
 
@@ -78,8 +78,8 @@ class BudgetSettings:
                     if body.goal:
                         if not goal or goal['id']!=body.goal.goal_id or goal.get('limit_revision',0)!=body.goal.expected_revision:raise Conflict('goal_limit_revision_conflict')
                         if goal['state'] in ('completed','cancelled'):raise Conflict('goal_already_terminal')
-                        if body.goal.max_turns<goal['turns_used']:raise Conflict('goal_limit_below_usage')
-                        goal_before={'id':goal['id'],'max_turns':goal['max_turns'],'limit_revision':goal.get('limit_revision',0),'turns_used':goal['turns_used']}
+                        if body.goal.max_turns<turns_in_window(goal):raise Conflict('goal_limit_below_usage')
+                        goal_before={'id':goal['id'],'max_turns':goal['max_turns'],'limit_revision':goal.get('limit_revision',0),'turns_used':goal['turns_used'],'turn_window':goal.get('turn_window')}
                         if goal['max_turns']!=body.goal.max_turns:
                             goal.update(max_turns=body.goal.max_turns,limit_revision=goal.get('limit_revision',0)+1,updated_at=now())
                             # Execution revision/grants remain valid for the in-flight turn.
@@ -92,9 +92,9 @@ class BudgetSettings:
                     if budget!=before or body.goal:
                         for row in db.execute('SELECT document FROM research_goals WHERE project_id=?',(pid,)).fetchall():
                             candidate=json.loads(row[0])
-                            if candidate['state']=='budget_exhausted' and candidate['turns_used']<candidate['max_turns'] and len(rows)<budget['max_turns'] and usage['budget_seconds']<budget['max_wall_seconds']:
+                            if candidate['state']=='budget_exhausted' and turns_in_window(candidate)<candidate['max_turns'] and len(rows)<budget['max_turns'] and usage['budget_seconds']<budget['max_wall_seconds']:
                                 candidate.update(state='paused',reason='budget_updated')
                                 self.s.goals._save(db,candidate,'budget_available')
-                    receipt={'at':now(),'conversation_id':cid,'project_before':before,'project_after':budget,'budget_revision':revision,'used_turns':len(rows),'used_budget_seconds':usage['budget_seconds'],'goal_before':goal_before,'goal_after':({'id':goal['id'],'max_turns':goal['max_turns'],'limit_revision':goal.get('limit_revision',0)} if body.goal else None)}
+                    receipt={'at':now(),'conversation_id':cid,'project_before':before,'project_after':budget,'budget_revision':revision,'used_turns':len(rows),'used_budget_seconds':usage['budget_seconds'],'goal_before':goal_before,'goal_after':({'id':goal['id'],'max_turns':goal['max_turns'],'limit_revision':goal.get('limit_revision',0),'turn_window':goal.get('turn_window')} if body.goal else None)}
                     db.execute('INSERT INTO budget_changes VALUES(?,?,?,?)',(pid,body.request_key,digest,encoded(receipt)))
             return self.view(cid)

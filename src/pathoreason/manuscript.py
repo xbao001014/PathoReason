@@ -238,10 +238,16 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
                 if stage['status']=='completed' and body.action=='reopen':
                     stage['history'].append({'kind':'revision_requested','stage_id':'manuscript','conversation_id':cid,'handoff':stage['handoff'],'at':now()})
                     stage.update(status='active',handoff=None);self.s.stages.save(db,stage,'manuscript_reopened')
-                if goal and goal['state'] not in ('completed','cancelled','paused'):
+                if goal and goal['state'] not in ('completed','cancelled'):
+                    # Same transaction as the author receipt. Retries return above;
+                    # agent checkpoints and ordinary chat never reset this window.
+                    goal['turn_window']={'kind':'manuscript_review','gate':GATES[w['index']][0] if w['index']<5 else 'handoff',
+                        'review_revision':w['revision'],'action':body.action,'start_turns':goal['turns_used']}
+                    goal['limit_revision']=goal.get('limit_revision',0)+1
                     goal['user_instructions']=[*goal.get('user_instructions',[]),{'source':'manuscript_author_review','text':encoded({k:v for k,v in receipt.items() if k not in ('packet','invalidated')}),'review_digest':packet['digest'] if packet else None}][-12:]
-                    goal.update(state='active',completion_scope='not_complete',reason='manuscript_author_decision',blocker=None,wait_for=None,stagnant_turns=0,
-                        next_action=GATES[w['index']][3] if w['index']<5 else '作者已确认交付文件；登记成果并提交稿件阶段交接，不投稿。')
+                    if goal['state']!='paused':
+                        goal.update(state='active',completion_scope='not_complete',reason='manuscript_author_decision',blocker=None,wait_for=None,stagnant_turns=0,
+                            next_action=GATES[w['index']][3] if w['index']<5 else '作者已确认交付文件；登记成果并提交稿件阶段交接，不投稿。')
                     self.s.goals._save(db,goal,'manuscript_author_decision')
         self.s.goals.start();return self.view(cid)
     def archived_material(self,cid,review_id,artifact_id):

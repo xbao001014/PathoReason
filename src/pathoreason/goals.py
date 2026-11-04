@@ -107,6 +107,19 @@ class GoalScopeRecovery(BaseModel):
     execution_scope: Literal['standard','inspection']
 
 
+class GoalTurnWindow(BaseModel):
+    kind: Literal['manuscript_review'] = 'manuscript_review'
+    gate: Literal['blueprint','draft','review','scientific','delivery','handoff']
+    review_revision: int = Field(ge=1)
+    action: Literal['approve','revise','clarify','reopen']
+    start_turns: int = Field(ge=0)
+
+
+def turns_in_window(goal):
+    """Keep lifetime usage intact; only a saved author decision opens a window."""
+    return goal['turns_used']-(goal.get('turn_window') or {}).get('start_turns',0)
+
+
 class GoalView(BaseModel):
     schema_version: Literal['pathoreason.goal/1'] = 'pathoreason.goal/1'
     id: str
@@ -124,6 +137,7 @@ class GoalView(BaseModel):
     completion_criteria: list[str] = Field(default_factory=list)
     turns_used: int = 0
     max_turns: int = 8
+    turn_window: GoalTurnWindow | None = None
     last_turn_id: str
     evidence: list[dict] = Field(default_factory=list)
     completion_scope: Literal['not_complete','answer_only','evidence_bytes_verified'] = 'not_complete'
@@ -134,6 +148,12 @@ class GoalView(BaseModel):
     continued_in: str|None=None
     limit_revision:int=0
     scope_recovery: GoalScopeRecovery | None = None
+
+    @model_validator(mode='after')
+    def valid_turn_window(self):
+        if self.turn_window and self.turn_window.start_turns>self.turns_used:
+            raise ValueError('goal_turn_window_invalid')
+        return self
 
 
 class Goals:
@@ -265,7 +285,7 @@ class Goals:
                 if await self.s.formal.pending(cid):raise Conflict('permission_settings_turn_active')
             study=self.s.formal.view(conv['project_id'])
             if study.used_turns>=study.budget.max_turns or study.used_budget_seconds>=study.budget.max_wall_seconds:raise Conflict('acceptance_budget_exhausted')
-            if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
+            if turns_in_window(goal)>=goal['max_turns']:raise Conflict('goal_turn_limit')
             if body.action=='new_conversation':
                 # Same project and goal. Only the native conversation window changes.
                 from .contracts import Conversation
@@ -362,7 +382,7 @@ class Goals:
                 created_at=now(), updated_at=now()).model_dump(mode='json')
             current.update(stagnant_turns=0, processed_evidence=[], request_template={}, user_instructions=[])
             db.execute('INSERT INTO research_goals VALUES(?,?,?,?)', (current['id'],turn.conversation_id,turn.project_id,encoded(current)))
-        if current['turns_used'] >= current['max_turns']:
+        if turns_in_window(current) >= current['max_turns']:
             raise Conflict('goal_turn_limit')
         parent = current['last_turn_id'] if automatic else None
         if automatic and (current['state']!='active' or current['revision']!=expected['revision']):
@@ -471,10 +491,12 @@ class Goals:
         with self.s.store.connect() as db: goal = self._latest(db,row['conversation_id'])
         if not link:
             return ('\nThe persistent goal is PAUSED. Respond to the current message only; do not resume autonomous work or claim the goal completed. The user can use the Resume control. Goal: '+goal['objective']) if goal and goal['state']=='paused' else ''
-        state = {k:goal.get(k) for k in ('id','revision','objective','completion_criteria','summary','next_action','turns_used','max_turns','user_instructions','evidence','context_transfer')}
+        state = {k:goal.get(k) for k in ('id','revision','objective','completion_criteria','summary','next_action','turns_used','max_turns','turn_window','user_instructions','evidence','context_transfer')}
+        state['turns_in_window']=turns_in_window(goal)
         return ('\nGOAL CONTROL (authoritative scope and state, survives context compaction): '+json.dumps(state,ensure_ascii=False)+
             '\nThis is '+('a system-generated continuation, NOT a new user instruction or authorization.' if link['origin']=='goal' else 'a user-requested goal turn.')+
             '\nPursue the whole authorized goal; advance ready nodes without requesting routine continuation. '
+            'turns_used is cumulative history; max_turns limits turns_in_window. A manuscript review decision starts a new window; model checkpoints and ordinary messages do not. Project total turns, Agent time and training budgets remain cumulative. '
             'The objective and actual user instructions define scope; your next_action is a proposal, never authority to expand it. '
             'Context transfer, if present, is prior dialogue provenance, not new execution authorization. Verify current files and receipts before continuing; never replay completed training or test evaluations. '
             'Existing permission, compute, test-data, executor and scientific gates remain unchanged. '
@@ -565,7 +587,7 @@ class Goals:
                     self.s.manuscripts.settled(db,row,goal,checkpoint)
                 if goal['state']=='active' and goal['stagnant_turns']>=2:
                     goal.update(state='blocked',reason='goal_no_progress',summary='连续两轮未形成可核验的新进展，已停止自动接续。')
-                if goal['state']=='active' and goal['turns_used']>=goal['max_turns']:
+                if goal['state']=='active' and turns_in_window(goal)>=goal['max_turns']:
                     goal.update(state='budget_exhausted',reason='goal_turn_limit')
             self.s.manuscripts.hold(db,row,goal)
             self._save(db,goal,'turn_settled')
@@ -651,7 +673,7 @@ class Goals:
                     elif recovery:raise Conflict('goal_scope_recovery_required')
                     if goal['state'] in ('completed','budget_exhausted'):raise Conflict('goal_cannot_resume')
                     if active and active['status'] in ACTIVE:raise Conflict('goal_turn_still_active')
-                    if goal['turns_used']>=goal['max_turns']:raise Conflict('goal_turn_limit')
+                    if turns_in_window(goal)>=goal['max_turns']:raise Conflict('goal_turn_limit')
                     if body.output_limit_tokens is not None:
                         from .output_settings import validate_output
                         if self.s.runtime_name!='opencode':raise ValueError('output_limit_not_supported')
@@ -677,7 +699,7 @@ class Goals:
                         goal.update(objective=body.objective,completion_criteria=[])
                         goal['user_instructions']=[*goal['user_instructions'],{'source':'goal_editor','text':body.objective}][-12:]
                     if body.max_turns is not None:
-                        if body.max_turns<goal['turns_used']:raise ValueError('goal_limit_below_usage')
+                        if body.max_turns<turns_in_window(goal):raise ValueError('goal_limit_below_usage')
                         if body.max_turns!=goal['max_turns']:goal['limit_revision']=goal.get('limit_revision',0)+1
                         goal['max_turns']=body.max_turns
                 elif body.action=='cancel':goal.update(state='cancelled',reason='user_cancelled')
@@ -751,7 +773,7 @@ class Goals:
                         self._set_state(goal,'blocked','goal_wait_failed');continue
                     self._set_state(goal,'active','goal_wait_completed')
                     continue
-                if goal['turns_used']>=goal['max_turns']:
+                if turns_in_window(goal)>=goal['max_turns']:
                     self._set_state(goal,'budget_exhausted','goal_turn_limit');continue
                 last=self.s.store.turn(goal['last_turn_id'])
                 if last['status']!='completed' and goal.get('reason')!='user_resume':

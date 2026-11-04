@@ -1,5 +1,7 @@
 # PathoReason 开发交接
 
+2026-11-04 最新机制：稿件每次有效作者审核反馈保存后，开启新的目标回合计数窗口，沿用原上限；累计回合、项目总额度和 Agent 时间保留。旧目标在下一次有效反馈前保持原计数，不能模拟作者操作触发重置。当前实时节点已由用户推进到 review/awaiting_review（revision14），目标13/14；此前 draft 状态为历史快照。实现与验收见 [审核回合窗口](docs/p5/MANUSCRIPT_REVIEW_TURNS.md)。
+
 2026-11-04 最新：用户调整额度并切到Flash后，实际图像附件读取与Seedream v3分类头修订已验证；研究Agent提交正文v10/Bib v7/13项材料，draft revision12、audit passed、awaiting_review，尚无作者批准。目标12/14，时间15959.964/17220秒；不得自行增额或推进作者门禁。已补子Skill正文读取、中央背景来源和论证，部分背景引用仍为摘要级。继续前读 [执行证据与边界](docs/p5/MANUSCRIPT_SKILL_EXECUTION.md)，保留开发反馈与模型修改的区分。
 
 ## 通用开发规则（长期适用）

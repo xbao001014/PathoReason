@@ -1,0 +1,63 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Run Id"
+    },
+    "unit_id": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit Id"
+    },
+    "source_file": {
+      "anyOf": [
+        {
+          "maxLength": 300,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source File"
+    },
+    "audit_offset": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Audit Offset",
+      "type": "integer"
+    },
+    "audit_limit": {
+      "default": 10,
+      "maximum": 25,
+      "minimum": 1,
+      "title": "Audit Limit",
+      "type": "integer"
+    }
+  },
+  "title": "TrainingAuditQuery",
+  "type": "object"
+}
