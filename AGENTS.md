@@ -1,5 +1,7 @@
 # PathoReason 开发交接
 
+2026-11-04 最新：工作台以平台阶段／审核包展示当前成果，新增分析、稿件图件和不可变快照预览；历史批准与失效批准分离。实时稿件已由作者完成五节点批准，v13 正文与 9 页 PDF 已交付，原科学节点待审说明为历史快照。此开发不调用研究模型、不修改研究材料、批准或额度。见 [工作台当前成果](docs/p5/WORKBENCH_OUTCOMES.md)。
+
 2026-11-04 最新执行：明确重写意图已由 Flash 经受限路由在同回合转入 scientific 并生成新稿。后续纠正执行记录与摘要披露遗漏后，当前 v13、scientific revision23/awaiting_review，未批准新版。目标19累计/本窗口4/14，项目126/160，Agent16918.476/17220秒；不得自行增额。见 [实际执行、失败与最终核验](docs/p5/MANUSCRIPT_REVISION_ROUTING.md#真实模型执行与最终状态)。
 
 2026-11-04 最新：交付阶段已明确的正文重写请求，可由研究 Agent 绑定原话调用受限修订路由（delivery→scientific），保留原件并同回合准备新版本，不要求重复 reopen 授权；模糊请求用现有 clarification/continue 选项澄清。接口不批准新版、不重置消耗、不增额度。见 [修订意图与验证](docs/p5/MANUSCRIPT_REVISION_ROUTING.md)。

@@ -31,6 +31,7 @@ from .goals import GoalCheckpoint,GoalControl,GoalView,GoalRecoveryInput
 from .budget_settings import BudgetSettingsUpdate,BudgetSettingsView
 from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision,TrainingAuditQuery
 from .research_workbench import ResearchWorkbenchView, project_snapshot
+from .workbench_outcomes import review_material
 from .training_progress import TrainingProgressView,TrainingTelemetryView,project_progress,telemetry
 
 class ProjectInput(BaseModel):
@@ -282,7 +283,7 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.39-p5-revision-routing'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.40-p5-workbench-outcomes'}
 @app.get('/api/v1/research-projects',response_model=list[ManagedProject])
 async def projects(include_archived:bool=False):return service().projects.list(include_archived)
 @app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)
@@ -384,8 +385,25 @@ async def workbench(pid:str):
     return {'project_id':pid,'facts':facts,'stages':stages,'stage_note':'历史实验冻结流程；独立复验与稿件各自保留来源和状态。' if stages else '尚未绑定研究流程。'}
 
 @app.get('/api/v2/research-projects/{pid}/research-workbench',response_model=ResearchWorkbenchView)
-def research_workbench(pid:str):
+def research_workbench(pid:str,response:Response):
+    response.headers['Cache-Control']='private, no-store'
     return project_snapshot(service(),pid)
+
+@app.get('/api/v2/research-projects/{pid}/research-workbench/reviews/{review_id}/materials/{artifact_id}')
+def workbench_review_material(pid:str,review_id:str,artifact_id:str,download:bool=False):
+    raw,kind=review_material(service(),pid,review_id,artifact_id)
+    safe=kind if kind in ('application/pdf','image/png','image/jpeg','image/webp','application/zip') else 'text/plain'
+    headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}
+    # CSP sandbox disables Chromium's native PDF viewer (blank iframe). Restrict
+    # embedding to this origin while allowing the browser's PDF object renderer.
+    if safe=='application/pdf':
+        if not raw.startswith(b'%PDF-'):raise Conflict('manuscript_pdf_signature_invalid')
+        headers['Content-Security-Policy']="default-src 'none'; object-src 'self'; frame-ancestors 'self'"
+    if download or safe=='application/zip':
+        suffix={'application/pdf':'.pdf','image/png':'.png','image/jpeg':'.jpg','image/webp':'.webp','application/zip':'.zip'}.get(safe,'.txt')
+        headers['Content-Disposition']='attachment; filename="'+artifact_id+suffix+'"'
+    return Response(raw,media_type=safe,headers=headers)
+
 @app.get('/api/v2/research-projects/{pid}/training-progress',response_model=TrainingProgressView)
 def training_progress(pid:str,response:Response):
     response.headers['Cache-Control']='private, no-store'

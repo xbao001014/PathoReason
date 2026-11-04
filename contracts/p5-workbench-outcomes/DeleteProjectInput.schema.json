@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "confirm": {
+      "const": true,
+      "title": "Confirm",
+      "type": "boolean"
+    },
+    "confirmation_title": {
+      "title": "Confirmation Title",
+      "type": "string"
+    },
+    "delete_assets": {
+      "title": "Delete Assets",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "confirm",
+    "confirmation_title",
+    "delete_assets"
+  ],
+  "title": "DeleteProjectInput",
+  "type": "object"
+}

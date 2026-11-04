@@ -1,0 +1,102 @@
+{
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.research-workbench/1",
+      "default": "pathoreason.research-workbench/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "string"
+    },
+    "observed_at": {
+      "title": "Observed At",
+      "type": "string"
+    },
+    "default_task_id": {
+      "title": "Default Task Id",
+      "type": "string"
+    },
+    "tasks": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Tasks",
+      "type": "array"
+    },
+    "families": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Families",
+      "type": "array"
+    },
+    "changes": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Changes",
+      "type": "array"
+    },
+    "activity": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Activity",
+      "type": "array"
+    },
+    "notices": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Notices",
+      "type": "array"
+    },
+    "artifact_count": {
+      "title": "Artifact Count",
+      "type": "integer"
+    },
+    "outcomes": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Outcomes"
+    },
+    "execution_authority": {
+      "const": false,
+      "default": false,
+      "title": "Execution Authority",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "project_id",
+    "revision",
+    "observed_at",
+    "default_task_id",
+    "tasks",
+    "families",
+    "changes",
+    "activity",
+    "notices",
+    "artifact_count"
+  ],
+  "title": "ResearchWorkbenchView",
+  "type": "object"
+}

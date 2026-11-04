@@ -3,6 +3,7 @@ import {ComposerSelect} from './ComposerSelect';
 import {statusTone} from './status';
 import './researchWorkbench.css';
 import {TrainingProgress} from './TrainingProgress';
+import {WorkbenchOutcomes,type Outcomes} from './WorkbenchOutcomes';
 
 type Artifact={id:string;title:string;media_type:string;path:string;sha256:string;size_bytes:number};
 type Turn={id:string;conversation_id:string;created_at:string;user_text:string;association?:string};
@@ -14,10 +15,10 @@ type Proposal={proposal_id:string;revision:string;title:string;hypothesis:string
 type Result={model:string;seed:number;val_best:number|null;test:Record<string,number>;artifact_id:string;state:string;plan_binding:string};
 type Task={id:string;title:string;kind:string;basis:string;parent_task_id:string|null;code_revision:number|null;snapshots:{id:string;scope:string;execution_ready:false}[];plan:Plan|null;family_ids:string[];focus_stage:string;stages:{id:string;title:string;status:string;label:string;material_count:number}[];innovations:Proposal[];reported_results:Result[];exposures:{artifact_id:string;text:string}[];execution_state:string};
 type Change={id:string;task_id:string;family_id:string;title:string;kind:string;turn:Turn;artifact_ids:string[];diff:Diff[];order:number};
-type Snapshot={schema_version:string;project_id:string;revision:string;observed_at:string;default_task_id:string;tasks:Task[];families:Family[];changes:Change[];activity:(Turn&{status:string})[];notices:string[];artifact_count:number};
+type Snapshot={outcomes?:Outcomes|null;schema_version:string;project_id:string;revision:string;observed_at:string;default_task_id:string;tasks:Task[];families:Family[];changes:Change[];activity:(Turn&{status:string})[];notices:string[];artifact_count:number};
 type Props={pid:string;studySummary?:ReactNode;canDiscuss:boolean;onArtifact:(id:string)=>void;onTurn:(turn:Turn)=>void;onDiscuss:(text:string,ids:string[])=>void;onTrainingConversation:(cid:string)=>void};
-type Tab='overview'|'innovation'|'materials'|'history'|'runs';
-const tabs:[Tab,string][]=[['overview','概览'],['innovation','创新方案'],['materials','阶段材料'],['history','修订脉络'],['runs','实验运行']];
+type Tab='analysis'|'manuscript'|'overview'|'innovation'|'materials'|'history'|'runs';
+const tabs:[Tab,string][]=[['overview','当前成果'],['analysis','分析与验证'],['manuscript','稿件与图件'],['innovation','创新方案'],['materials','阶段材料'],['history','修订脉络'],['runs','实验运行']];
 const fmt=(a:Artifact)=>a.media_type==='application/json'?'JSON':a.media_type==='text/csv'?'CSV':a.media_type==='application/pdf'?'PDF':a.media_type.startsWith('image/')?'图件':'可读报告';
 const localTime=(s:string)=>new Date(s).toLocaleString('zh-CN',{hour12:false});
 const modelKey=(s:string)=>s.toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -44,8 +45,8 @@ export function ResearchWorkbench({pid,studySummary,canDiscuss,onArtifact,onTurn
  useEffect(()=>{if(detail){returnFocus.current=document.activeElement as HTMLElement;dialog.current?.showModal();}else if(dialog.current?.open)dialog.current.close();},[detail]);
  const data=snapshot?.project_id===pid?snapshot:null;
  const task=data?.tasks.find(t=>t.id===taskId)||data?.tasks.find(t=>t.id===data.default_task_id)||data?.tasks[0];
- const families=data?.families.filter(f=>f.task_id===task?.id)||[];
- const changes=data?.changes.filter(c=>c.task_id===task?.id)||[];
+ const families=data?.families.filter(f=>task?.family_ids.includes(f.id))||[];
+ const changes=data?.changes.filter(c=>task?.kind==='project_outcomes'||c.task_id===task?.id)||[];
  const proposalGroups=useMemo(()=>{const map=new Map<string,Proposal[]>();for(const p of task?.innovations||[])map.set(p.proposal_id,[...(map.get(p.proposal_id)||[]),p]);return [...map.values()].map(rows=>({latest:rows.at(-1)!,rows}));},[task]);
  const selectedProposal=proposalGroups.find(p=>p.latest.proposal_id===proposalId)||proposalGroups[0];
  function selectTask(id:string){setTaskId(id);setStage('all');setProposalId('');setSearch('');setDetail(null);setAllHistory(false);}
@@ -65,14 +66,15 @@ export function ResearchWorkbench({pid,studySummary,canDiscuss,onArtifact,onTurn
  }
  if(loading&&!data)return <section className="workbench rw"><p role="status">正在读取研究状态与材料关系…</p></section>;
  if(!data||!task)return <section className="workbench rw"><p role="alert">{error||'暂无研究记录'}</p><button onClick={()=>setRefresh(x=>x+1)}>重试</button></section>;
+ const projectOutcomes=task.kind==='project_outcomes'?data.outcomes:null;
  const latest=families[0],stageName=task.stages.find(s=>s.id===task.focus_stage)?.title||'研究记录';
  return <section className="workbench rw"><div className="workbench-content rw-content">
-  <header className="rw-heading"><div><p className="rw-caption">{task.kind==='registered_task'?'已登记研究任务':task.kind==='unassigned'?'项目材料':'研究方向 · 历史展示分组'}</p><h1>{task.title}</h1><p className="rw-muted">{task.basis}</p></div><div className="rw-task-select"><ComposerSelect label="切换研究任务" variant="form" value={task.id} options={data.tasks.map(t=>({value:t.id,label:t.title}))} onChange={selectTask}/></div></header>
+  <header className="rw-heading"><div><p className="rw-caption">{task.kind==='project_outcomes'?'项目进展':task.kind==='registered_task'?'已登记研究任务':task.kind==='unassigned'?'项目材料':'研究方向 · 历史展示分组'}</p><h1>{task.title}</h1><p className="rw-muted">{task.basis}</p></div><div className="rw-task-select"><ComposerSelect label="切换研究任务" variant="form" value={task.id} options={data.tasks.map(t=>({value:t.id,label:t.title}))} onChange={selectTask}/></div></header>
   <div className="rw-sync" role="status"><span>{error?'更新中断 · 最后记录':'已同步'} {localTime(data.observed_at)}</span><span>Agent：{data.activity.length?'有 '+data.activity.length+' 个活动回合':'当前无活动回合'} · 训练进度独立展示</span><button className="text-link" onClick={()=>setRefresh(x=>x+1)}>刷新</button></div>{error&&<p className="rw-error" role="alert">{error}</p>}
-  <nav className="rw-stages" aria-label="研究阶段">{task.stages.map((s,i)=><button key={s.id} className={(task.focus_stage===s.id?'current ':'')+(stage===s.id?'selected':'')} aria-current={task.focus_stage===s.id?'step':undefined} onClick={()=>{setStage(s.id);if(s.id==='innovation')setTab('innovation');else if(s.id==='innovation_runs'){setTab('runs');setScope('innovation');}else if(s.id==='baseline'){setTab('runs');setScope('baseline');}else setTab('materials');}}><strong>{String(i+1).padStart(2,'0')} {s.title}</strong><small>{s.label}{s.material_count?' · '+s.material_count:''}</small></button>)}</nav>
+  <nav className="rw-stages" aria-label="研究阶段">{task.stages.map((s,i)=><button key={s.id} className={(task.focus_stage===s.id?'current ':'')+(stage===s.id?'selected':'')} aria-current={task.focus_stage===s.id?'step':undefined} onClick={()=>{setStage(s.id);if(s.id==='innovation')setTab('innovation');else if(s.id==='innovation_runs'){setTab('runs');setScope('innovation');}else if(s.id==='baseline'){setTab('runs');setScope('baseline');}else if(s.id==='analysis'&&projectOutcomes)setTab('analysis');else if(s.id==='delivery'&&projectOutcomes)setTab('manuscript');else setTab('materials');}}><strong>{String(i+1).padStart(2,'0')} {s.title}</strong><small>{s.label}{s.material_count?' · '+s.material_count:''}</small></button>)}</nav>
   <nav className="rw-tabs" aria-label="研究工作台视图">{tabs.map(([id,label])=><button key={id} className={tab===id?'selected':''} aria-current={tab===id?'page':undefined} onClick={()=>setTab(id)}>{label}</button>)}</nav>
-  <div className="rw-panel">{(tab==='overview'||tab==='runs')&&<TrainingProgress key={pid} pid={pid} taskId={task.kind==='registered_task'?task.id:undefined} compact={tab==='overview'} onOpen={()=>setTab('runs')} onConversation={onTrainingConversation}/>}
-  {tab==='overview'?<>
+  <div className="rw-panel">{((tab==='overview'&&!projectOutcomes)||tab==='runs')&&<TrainingProgress key={pid} pid={pid} taskId={task.kind==='project_outcomes'?'项目进展':task.kind==='registered_task'?task.id:undefined} compact={tab==='overview'} onOpen={()=>setTab('runs')} onConversation={onTrainingConversation}/>}
+  {projectOutcomes&&['overview','analysis','manuscript'].includes(tab)?<WorkbenchOutcomes key={pid} pid={pid} mode={tab as 'overview'|'analysis'|'manuscript'} outcomes={projectOutcomes} families={families} onConversation={onTrainingConversation} onArtifact={onArtifact} onTab={setTab}/>:['analysis','manuscript'].includes(tab)?<section className="rw-card"><h2>项目成果</h2><p>稿件审核与阶段结论按项目汇总展示。</p>{data.outcomes?<button onClick={()=>selectTask(data.default_task_id)}>查看当前项目成果</button>:<p>当前项目尚无平台阶段或稿件审核记录，可从阶段材料查看已登记文件。</p>}</section>:tab==='overview'?<>
    <section className="rw-card rw-hero"><header><span>最近材料所在阶段 · {stageName}</span><Badge>研究状态按证据核对</Badge></header><h2>{latest?.title||'研究任务已登记'}</h2><p className="rw-excerpt">{latest?.versions[0].summary||'按阶段查看研究材料，保留历次修订与原始证据。'}</p><div className="rw-stats"><div><strong>{task.plan?.fits??'—'}</strong><span>报告计划训练单元</span></div><div><strong>{task.reported_results.length||'—'}</strong><span>已报告结果条目</span></div><div><strong>{task.innovations.length||'—'}</strong><span>创新方案修订记录</span></div></div><div className="rw-buttons">{latest&&<button className="primary-button" onClick={()=>openVersion(latest,latest.versions[0])}>查看最新研究记录</button>}<button className="outline-button" disabled={!canDiscuss} onClick={()=>discuss('请核对当前进展和剩余阻碍，在已有授权范围内说明下一步；不要将报告完成等同于整个研究完成。',latest?.versions[0].artifacts.map(a=>a.id))}>回到对话推进</button></div></section>
    <div className="rw-two">{planCard()}<section className="rw-card"><header><h2>近期研究修订</h2><button className="text-link" onClick={()=>setTab('history')}>全部修订</button></header>{historyRows(2)}</section></div>
    <section className="rw-card"><header><h2>本阶段优先阅读</h2><button className="text-link" onClick={()=>{setStage(task.focus_stage);setTab('materials');}}>阶段材料</button></header>{families.filter(f=>f.stage_id===task.focus_stage).slice(0,3).map(familyRow)}</section>

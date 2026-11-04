@@ -2,6 +2,7 @@
 export type StatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 const tones: Record<string, StatusTone> = {
   gpu_idle:'success',gpu_busy:'danger',
+  approved:'success',preparing:'info',awaiting_switch:'warning',
   admitted:'success',awaiting_review:'warning',needs_repair:'danger',needs_reconciliation:'warning',budget_exhausted:'danger',
   active:'info',paused:'danger',blocked:'warning',waiting_input:'warning',waiting:'warning',
   running:'info', interrupt_requested:'info', pending_login:'info',

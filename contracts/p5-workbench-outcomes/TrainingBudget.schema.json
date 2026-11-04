@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "max_wall_seconds": {
+      "exclusiveMinimum": 0,
+      "maximum": 2592000,
+      "title": "Max Wall Seconds",
+      "type": "number"
+    },
+    "max_gpu_seconds": {
+      "maximum": 2592000,
+      "minimum": 0,
+      "title": "Max Gpu Seconds",
+      "type": "number"
+    },
+    "max_unit_seconds": {
+      "exclusiveMinimum": 0,
+      "maximum": 604800,
+      "title": "Max Unit Seconds",
+      "type": "number"
+    },
+    "max_attempts_per_unit": {
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Max Attempts Per Unit",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "max_wall_seconds",
+    "max_gpu_seconds",
+    "max_unit_seconds",
+    "max_attempts_per_unit"
+  ],
+  "title": "TrainingBudget",
+  "type": "object"
+}

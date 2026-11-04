@@ -16,6 +16,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from .contracts import canonical_digest
 from .persistence import now
+from .workbench_outcomes import project_outcomes, navigation_stage
 
 STAGES = [('data','数据与任务'),('plan','研究方案'),('readiness','执行准备'),
           ('baseline','基线实验'),('innovation','创新方案'),('innovation_runs','创新实验'),
@@ -76,6 +77,7 @@ class ResearchWorkbenchView(BaseModel):
     activity: list[dict]
     notices: list[str]
     artifact_count: int
+    outcomes: dict | None = None
     execution_authority: Literal[False] = False
 
 
@@ -109,7 +111,8 @@ def stage_for(a,doc):
     if name.startswith('smoke') or name=='block-results':return 'baseline','schema'
     if name=='task-switch-audit':return 'analysis','schema'
     if a.get('kind')=='figure' and a.get('evidence_role')=='manuscript_review':return 'delivery','metadata'
-    return 'unassigned','unknown'
+    hint=navigation_stage(a)
+    return (hint,'navigation_hint') if hint else ('unassigned','unknown')
 
 
 def references(doc, known):
@@ -189,6 +192,11 @@ def project_snapshot(service,pid):
         code_tasks=[json.loads(r[0]) for r in db.execute('SELECT document FROM task_code_tasks WHERE project_id=? ORDER BY rowid',(pid,))] if 'task_code_tasks' in tables else []
         snapshots=[{'task_id':r[0],**json.loads(r[1])} for r in db.execute('''SELECT s.task_id,s.document FROM task_code_snapshots s
             JOIN task_code_tasks t ON t.id=s.task_id WHERE t.project_id=? ORDER BY s.rowid''',(pid,))] if 'task_code_snapshots' in tables else []
+        platform={}
+        for table,key in [('research_workflows','research'),('manuscript_workflows','manuscript')]:
+            row=db.execute('SELECT document FROM '+table+' WHERE project_id=?',(pid,)).fetchone() if table in tables else None
+            platform[key]=json.loads(row[0]) if row else None
+        platform['visible_conversations']={r[0] for r in db.execute('SELECT id FROM conversations WHERE project_id=? AND NOT EXISTS(SELECT 1 FROM conversation_deletions d WHERE d.conversation_id=conversations.id)',(pid,))}
     docs={};errors=[];used=0
     for a in artifacts:
         if a.get('media_type')!='application/json':continue
@@ -201,10 +209,11 @@ def project_snapshot(service,pid):
             if isinstance(value,dict):docs[a['id']]=value
         except (ValueError,OSError,KeyError,TypeError,RecursionError):
             errors.append(a['id']+'：来源读取或摘要核验失败，未用于推断状态')
-    return build_projection(pid,artifacts,docs,turns,code_tasks,snapshots,errors)
+    return build_projection(pid,artifacts,docs,turns,code_tasks,snapshots,errors,**platform)
 
 
-def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=()):
+def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=(),*,research=None,manuscript=None,visible_conversations=None):
+    outcomes,platform_stages,platform_notices=project_outcomes(pid,artifacts,research,manuscript,visible_conversations)
     by_id={a['id']:a for a in artifacts};order={a['id']:i for i,a in enumerate(artifacts)}
     known={a.get('source_ref',{}).get('resource_id',a.get('relative_path','')):a['id'] for a in artifacts}
     paths={a['id']:a.get('source_ref',{}).get('resource_id',a.get('relative_path','')) for a in artifacts}
@@ -231,7 +240,7 @@ def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=
                         for x in snapshots if x.get('task_id')==tid]}
     common='shared';tasks[common]={'id':common,'title':'共享与待归类材料','kind':'unassigned','basis':'归属未确认',
                                  'parent_task_id':None,'code_revision':None,'snapshots':[]}
-    explicit={};warnings=list(errors)
+    explicit={};warnings=[*errors,*platform_notices]
     for a in artifacts:
         aid=a['id'];doc=docs.get(aid,{})
         if doc.get('schema_version')!='pathoreason.workbench-manifest/1':continue
@@ -303,9 +312,10 @@ def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=
         aid=a['id'];tid=assignment[aid];doc=docs.get(aid,{});key,revision=series(paths[aid])
         if aid in explicit:
             _,link=explicit[aid];key='declared:'+link.family_id;revision=link.revision;stages[aid]=link.stage_id
+        if aid in platform_stages:stages[aid]=platform_stages[aid];basis[aid]='平台阶段交接／稿件审核包'
         fid=view_id(tid+':'+key)
         family=families.setdefault(fid,{'id':fid,'task_id':tid,'title':re.sub(r'[（(]?v\d+.*$','',a['title'],flags=re.I).rstrip(' ·（('),
-                   'stage_id':stages[aid],'basis':basis[aid],'versions':[],'latest_order':order[aid]})
+                   'stage_id':stages[aid],'stage_basis':'平台审核／交接关联' if aid in platform_stages else '材料路径归类，非审核记录' if stage_for(a,doc)[1]=='navigation_hint' else '材料字段／结构关联','basis':basis[aid],'versions':[],'latest_order':order[aid]})
         if stages[aid]!='unassigned':family['stage_id']=stages[aid]
         version=next((x for x in family['versions'] if x['label']==revision),None)
         if version is None:
@@ -369,7 +379,18 @@ def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=
     # Default is the latest plan episode, not the largest version number across tasks.
     default=max(plan_ids,key=lambda a:order[a]) if plan_ids else None
     default_task=plan_ids[default] if default else next((t['id'] for t in task_list if t['kind']=='registered_task'),common)
-    payload={'project_id':pid,'default_task_id':default_task,'tasks':task_list,
+    if outcomes:
+        aggregate={'id':'project_outcomes','title':'当前项目成果','kind':'project_outcomes','basis':'平台阶段与作者审核记录',
+            'parent_task_id':None,'code_revision':None,'snapshots':[],'plan':None,
+            'family_ids':list(families),'latest_order':len(artifacts),'focus_stage':outcomes['stage_id'],
+            'stages':[{'id':sid,'title':title,'status':outcomes['status'] if sid==outcomes['stage_id'] else 'unknown',
+                'material_count':sum(len(v['artifacts']) for f in families.values() if f['stage_id']==sid for v in f['versions']),
+                'label':outcomes['status_label'] if sid==outcomes['stage_id'] else '关联材料'} for sid,title in STAGES],
+            'innovations':[p for t in task_list for p in t['innovations']],
+            'reported_results':[p for t in task_list for p in t['reported_results']],
+            'exposures':[p for t in task_list for p in t['exposures']],'execution_state':'unknown'}
+        task_list.insert(0,aggregate);default_task='project_outcomes'
+    payload={'outcomes':outcomes,'project_id':pid,'default_task_id':default_task,'tasks':task_list,
         'families':sorted(families.values(),key=lambda f:f['latest_order'],reverse=True),
         'changes':sorted(changes,key=lambda x:x['order'],reverse=True), 'activity':activity,
         'notices':warnings,'artifact_count':len(artifacts)}

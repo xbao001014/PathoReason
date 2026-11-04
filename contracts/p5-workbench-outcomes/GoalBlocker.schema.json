@@ -1,0 +1,40 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "platform",
+        "permission",
+        "input",
+        "resource"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "capability": {
+      "anyOf": [
+        {
+          "const": "training_execution",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Capability"
+    },
+    "required_action": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Required Action",
+      "type": "string"
+    }
+  },
+  "required": [
+    "kind",
+    "required_action"
+  ],
+  "title": "GoalBlocker",
+  "type": "object"
+}

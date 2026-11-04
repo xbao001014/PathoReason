@@ -1,0 +1,31 @@
+{
+  "properties": {
+    "model": {
+      "title": "Model",
+      "type": "string"
+    },
+    "default": {
+      "type": "integer",
+      "title": "Default"
+    },
+    "choices": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Choices",
+      "type": "array"
+    },
+    "capability_max_tokens": {
+      "title": "Capability Max Tokens",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "model",
+    "default",
+    "choices",
+    "capability_max_tokens"
+  ],
+  "title": "OutputOptions",
+  "type": "object"
+}
