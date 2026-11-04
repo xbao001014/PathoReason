@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "label": {
+      "maxLength": 50,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "maxLength": 160,
+      "title": "Description",
+      "type": "string"
+    },
+    "scope": {
+      "enum": [
+        "clarify",
+        "plan",
+        "inspect",
+        "continue"
+      ],
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "label",
+    "scope"
+  ],
+  "title": "Choice",
+  "type": "object"
+}

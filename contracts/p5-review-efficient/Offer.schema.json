@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "Choice": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 50,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "maxLength": 160,
+          "title": "Description",
+          "type": "string"
+        },
+        "scope": {
+          "enum": [
+            "clarify",
+            "plan",
+            "inspect",
+            "continue"
+          ],
+          "title": "Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "scope"
+      ],
+      "title": "Choice",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": [
+        "clarification",
+        "next_step"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "question": {
+      "maxLength": 180,
+      "minLength": 1,
+      "title": "Question",
+      "type": "string"
+    },
+    "options": {
+      "items": {
+        "$ref": "#/$defs/Choice"
+      },
+      "maxItems": 3,
+      "minItems": 1,
+      "title": "Options",
+      "type": "array"
+    },
+    "artifact_ids": {
+      "items": {
+        "maxLength": 160,
+        "minLength": 1,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+        "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Artifact Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "kind",
+    "question",
+    "options"
+  ],
+  "title": "Offer",
+  "type": "object"
+}
