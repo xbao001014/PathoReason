@@ -2,7 +2,7 @@
 name: method-results-to-manuscript
 description: Turn an existing methodology, implemented model, experiment record, or result tables into a staged, evidence-grounded scientific manuscript with literature support, claim boundaries, integrity checks, review, revision, and versioned deliverables. Use when substantive methods/results already exist and the user wants a paper, manuscript plan, literature-backed draft, or end-to-end mid-entry workflow. Do not use for a broad topic without an answerable research question or for running new experiments unless explicitly requested.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
   workflow_type: "mid-entry research-to-paper"
 ---
 
@@ -176,6 +176,13 @@ Do not imply statistical significance without an appropriate paired analysis and
 
 ### Manuscript narrative
 
+- Explicitly load `baseline-comparison-writing` when planning, drafting or
+  substantively revising predictive/model-comparison content. Read its
+  `references/paper-patterns.md`; explain comparator roles, actual comparability,
+  selection provenance and quantitative contrasts, with literature-only context
+  separated from same-study experiments. Produce its SHA-bound `baseline_review`
+  and include it in the current integrity review. This applies to negative-result
+  papers too; it does not require a new method or authorize additional experiments.
 - Structure Results around question → number → contrast → implication, not execution chronology.
 - State what the study implemented and observed before discussing limitations. Avoid apologetic repetition, but never strengthen a claim beyond its evidence.
 - Unless the work is explicitly a third-party reanalysis, review, replication,
@@ -220,6 +227,9 @@ reference is mandatory for draft and substantive revision:
 - `paper-lookup`: reproducible scholarly discovery and full-text retrieval.
 - `citation-management`: metadata, DOI/PMID, BibTeX, deduplication, and citation-existence checks.
 - `scientific-writing`: evidence-grounded drafting and consistency auditing.
+- `baseline-comparison-writing`: comparator rationale, fair-comparison reporting,
+  quantitative results, literature positioning and distinction from ablations;
+  draft/scientific revisions produce a version-bound comparison review.
 - `anti-defensive-writing`: evidence-led authorial narrative and whole-manuscript
   semantic review; publish the style and voice reports, not just a read receipt.
 - `statistical-analysis`: analysis-plan or reported-statistics review; it does not authorize rerunning experiments.

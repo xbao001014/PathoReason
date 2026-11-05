@@ -18,6 +18,13 @@ metadata:
 Produce clear scientific prose without inventing evidence or concealing uncertainty.
 Keep drafting, evidence verification, and submission approval as separate stages.
 
+On PathoReason, explicitly load `baseline-comparison-writing` when drafting or
+substantively revising predictive-model comparisons. Read its paper-patterns
+reference and execute its comparator/protocol/quantitative-reporting review.
+Integrate the exact-version `baseline_review` into the manuscript integrity
+materials; merely naming comparison methods is insufficient. This hosted
+dependency does not apply to formatting-only work or authorize new experiments.
+
 The accountable human authors control scientific decisions and final approval. AI is
 not an author, and generated fluency is never evidence [SW-S01, SW-S03].
 

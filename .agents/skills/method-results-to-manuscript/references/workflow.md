@@ -30,6 +30,10 @@ Actions:
 4. Separate claims supported by project data from claims requiring external literature.
 5. Create a missing-evidence list prioritized as blocking, strengthening, or optional.
 
+For prediction/model-comparison content, load `baseline-comparison-writing` and
+read its paper-patterns reference. Plan comparator roles and claim boundaries in
+the argument; unavailable optional comparisons do not authorize new experiments.
+
 **Deliverables:** paper blueprint, claim registry, missing-evidence list, figure/table plan.
 
 **Author checkpoint:** approve the research question, contribution boundary, primary result framing, and target language before full drafting.
@@ -79,6 +83,13 @@ Recommended order:
 5. Conclusion, then Abstract, title, highlights, and keywords.
 
 Results paragraphs follow question → number → contrast → implication. Keep protocol/status language out of the Results unless the paper itself is a protocol. Unrun experiments belong in a planning artifact, not in a completed-results narrative.
+
+Execute `baseline-comparison-writing` for comparison content. Connect comparator
+rationale and actual protocol to a quantitative table (or equivalent), separate
+literature context from head-to-head results, and register its SHA-bound
+`baseline_review`. M5 checks it; M6 refreshes it for the revised scientific
+content before M7 freeze. Missing required comparison evidence is handled by
+correcting/narrowing claims or recording an unresolved issue, not extra training.
 
 Write from the study authors' perspective rather than as an auditor describing
 files supplied to the pipeline. At this working stage, machine claim/evidence

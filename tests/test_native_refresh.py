@@ -31,12 +31,13 @@ def test_innovation_catalog_exposes_hashed_resources_without_scientific_claims()
     skills={s['id']:s for s in project_skills(True)}
     navigation=json.loads((ROOT/'config/skill-navigation.json').read_text())
     registered={s for category in navigation for stage in category['stages'] for s in stage['skill_ids']}
-    for name in ('baseline-innovation','innovation-experiments','innovation-checkpoint'):
+    for name in ('baseline-innovation','innovation-experiments','innovation-checkpoint','baseline-comparison-writing'):
         skill=SkillDefinition.model_validate(skills[name])
         assert name in registered
         assert skill.evidence_scope=='contract_only'
         assert any('SKILL.md#sha256=' in ref for ref in skill.instruction_refs)
     assert any('method-and-cost.md#sha256=' in ref for ref in skills['innovation-experiments']['instruction_refs'])
+    assert any('paper-patterns.md#sha256=' in ref for ref in skills['baseline-comparison-writing']['instruction_refs'])
 
 
 @pytest.mark.parametrize('stale,connected',[(False,True),(True,True),(False,False)])

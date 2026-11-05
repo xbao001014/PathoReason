@@ -99,6 +99,7 @@ def project_skills(server):
         ('baseline-innovation','基线创新设计','围绕已选基线检索原始来源，提出可证伪候选与最小判别实验。','已选基线、冻结协议与实际结果'),
         ('innovation-experiments','创新实验管理','自主适配候选，核验方法实现和成本，按独立训练预算准备与接续。','已选候选、任务源码、真实回执与授权范围'),
         ('innovation-checkpoint','创新复盘与接续','恢复创新目标和真实证据，检查方法、失败与预算，衔接下一有效节点。','当前目标、候选版本、实验回执与预算'),
+        ('baseline-comparison-writing','基线对比写作','从已有实验写清比较对象、可比条件、定量结果与领域定位，区分消融和文献对照并记录版本核查。','当前稿件、基线结果、评价协议与文献证据'),
     ]
     result=[]
     for name,title,description,required in definitions:

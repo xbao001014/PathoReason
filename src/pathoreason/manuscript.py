@@ -357,6 +357,10 @@ CREATE TABLE IF NOT EXISTS manuscript_review_commands(project_id TEXT NOT NULL,r
 
     def prompt(self,cid):
         v=self.view(cid)
+        if v['gate'] in ('blueprint','draft','scientific'):
+            v['next_work']+=' 对预测模型/比较研究显式调用 baseline-comparison-writing，完整读取 references/paper-patterns.md。blueprint 将比较目的和基线角色纳入 argument；draft/scientific 核对基线选择理由、实际公平条件、宿主/检查点/阈值各自的选择依据，展示主指标及已有不确定性，分开同条件实验、文献定位、消融和稳定性检验。提交绑定确切正文 SHA 的 baseline_comparison_review.json，作为 baseline_review 登记、纳入 checkpoint evidence 与 skill_usage，并由 integrity 引用。阴性结果同样适用；缺少额外实验可收窄论断，不新增训练或额度，不伪造显著性或将跨任务指标直接排名。适用性及未解决问题由研究 Agent 据实际证据判断；报告不是作者批准。'
+        elif v['gate']=='review':
+            v['next_work']+=' 对模型比较内容显式调用 baseline-comparison-writing，核对 draft 的 baseline_review 与稿件/结果版本，定位基线选择、可比性、选择偏倚、数值及领域定位缺口，纳入现有审稿裁定。缺失记录是待核查事项，不能推断实验未做；不新增作者节点。'
         if v['gate']=='delivery':
             v['next_work']+=presentation_instructions(str(Path(__file__).resolve().parents[2]/'scripts/manuscript_revision.py'))
         if v['gate'] in ('draft','scientific'):

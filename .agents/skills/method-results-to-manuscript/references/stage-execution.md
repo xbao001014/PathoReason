@@ -8,12 +8,13 @@ not new author approvals. Execute inline using the configured research Agent.
 | Work | Explicitly load | Read and execute | Observable output |
 | --- | --- | --- | --- |
 | Literature discovery or background strengthening | paper-lookup; citation-management; academic-research-suite | paper-lookup references for each queried database; ARS literature_strategist_agent.md | dated queries/endpoints, retrieved identifiers and access levels, deduplicated bibliography, claim-to-source locators |
+| Baseline/comparator planning, drafting or substantive scientific revision | baseline-comparison-writing | its references/paper-patterns.md; authoritative comparison results and latest synthesis/adjudication | comparator inventory in argument/literature, manuscript comparison table or equivalent, SHA-bound baseline_comparison_review.json registered as baseline_review |
 | Synthesis and prose drafting/revision | scientific-writing; academic-research-suite; anti-defensive-writing | this skill's authorial-voice.md; scientific-writing references/evidence_workflow.md; ARS draft_writer_agent.md | paragraph evidence plan and public scientific argument, revised manuscript, SHA-bound reader_facing_style_review.json and reader_facing_voice_report.json |
 | Pathology conceptual illustration in draft | pathology-figures; pathology-mil-paper-figures; scientific-schematics; manuscript-to-latex (figure capability only) | manuscript-to-latex references/methodology-figures.md and references/raster-generation.md; relevant task reference selected by pathology-mil-paper-figures | evidence-bound visual brief, actual Seedream original, provider receipt, caption, image inspection and manuscript binding |
 | Numerical plots changed | scientific-visualization | its relevant plotting/export reference | data-bound plots and source/units/uncertainty verification |
 | Statistical interpretation reviewed | statistical-analysis | relevant reported-statistics reference | reported analysis/uncertainty review; no new experiment authority |
 | Actual tissue/patch/attention panels | histolab via pathology-figures | coordinate/scale references | real image source and mapping; generated art is never specimen evidence |
-| Model-assisted peer review after draft approval | peer-review; anti-defensive-writing (record review) | applicable intake/evidence references; verify draft semantic/voice records | located review findings, including missing/stale style checks, subject to author adjudication |
+| Model-assisted peer review after draft approval | peer-review; anti-defensive-writing (record review); baseline-comparison-writing for comparison claims | applicable intake/evidence references; verify draft semantic/voice and comparison records | located review findings, including missing/stale records, subject to author adjudication |
 | Frozen-content typesetting/delivery | manuscript-to-latex; anti-defensive-writing (verification only); documents/pdf if actually available and needed | verify approved-manuscript style/voice reports before packaging and page-QA references | source/PDF/page checks and exact-byte style verification; missing reports are explicit, never silently repaired by rewriting frozen content |
 
 Attempt each applicable native `skill` load. A current native failure may use a
@@ -49,6 +50,14 @@ and audits to the new manuscript/image bytes; partial outputs do not constitute
 a complete replacement packet.
 
 ## Introduction and research rationale
+
+For predictive/model-comparison manuscripts explicitly execute
+`baseline-comparison-writing`, including negative-result studies. Integrate its
+comparison inventory with the literature and argument materials below, rather
+than creating an unrelated bibliography. At draft/scientific review include its
+exact-version `baseline_review` and reference its findings in integrity. Existing
+approved delivery and presentation-only changes do not acquire a retrospective
+scientific gate merely because this dependency was added.
 
 Read the current introduction and identify missing evidence roles before searching:
 disease/task significance, existing clinical/pathology assessment and its limits,

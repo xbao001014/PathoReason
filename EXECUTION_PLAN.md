@@ -1,5 +1,7 @@
 # PathoReason 执行计划
 
+2026-11-05：补齐基线对比写作的显式 Skill 及阶段调用，覆盖比较目的、实际协议、选择偏倚、量化结果与领域定位；保留五节点作者审核、现有科学冻结和预算。当前 v13 未改写，新机制工程/原生及模型验证边界见 [基线写作实施](docs/p5/BASELINE_COMPARISON_WRITING.md)。
+
 2026-11-04 最新状态：受限修订路由已由真实 Flash 跑通；研究 Agent 修复执行记录与摘要披露后提交 v13，scientific revision23待审。无新增作者批准、实验或额度；约余5分钟Agent时间。真实过程含开发复核反馈，不能算独立科学审核。详见 [执行记录](docs/p5/MANUSCRIPT_REVISION_ROUTING.md#真实模型执行与最终状态)。
 
 2026-11-04 更新：修复明确重写请求滞留交付节点的问题，新增绑定用户指令的 Agent 修订路由和模糊意图选项指导；保留作者复审及预算边界。见 [实施与验收](docs/p5/MANUSCRIPT_REVISION_ROUTING.md)。
