@@ -9,12 +9,17 @@ CONFIG = ROOT / "config/pathoreason.local.json"
 def settings():
     value=json.loads(CONFIG.read_text())
     value["data_root"]=str(data_root(CONFIG))
-    return value
+    from .provider_config import effective_settings
+    return effective_settings(value)
 
 def credential():
+    cfg=settings()
+    if cfg.get('provider_profiles_enabled'):
+        from .provider_config import key_for
+        return key_for(cfg,cfg['provider']['id'])
     if os.environ.get("DEEPSEEK_API_KEY"):
         return os.environ["DEEPSEEK_API_KEY"]
-    file=Path(settings().get("credential_file","/home/bxn/.config/pathoreason/credentials.env"))
+    file=Path(cfg.get("credential_file","/home/bxn/.config/pathoreason/credentials.env"))
     if not file.exists():return ""
     if file.is_symlink() or file.stat().st_mode & 0o077:
         return ""

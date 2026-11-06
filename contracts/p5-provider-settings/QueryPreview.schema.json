@@ -1,0 +1,155 @@
+{
+  "$defs": {
+    "FigureMatch": {
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "next_step": {
+          "title": "Next Step",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "state",
+        "reason",
+        "next_step"
+      ],
+      "title": "FigureMatch",
+      "type": "object"
+    },
+    "PreviewQuery": {
+      "additionalProperties": false,
+      "properties": {
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "page": {
+          "default": 1,
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "page_size": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Page Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "endpoint"
+      ],
+      "title": "PreviewQuery",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "query_id": {
+      "title": "Query Id",
+      "type": "string"
+    },
+    "query": {
+      "$ref": "#/$defs/PreviewQuery"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "queried_at": {
+      "title": "Queried At",
+      "type": "string"
+    },
+    "rows": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Fields",
+      "type": "array"
+    },
+    "row_count": {
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "has_more": {
+      "title": "Has More",
+      "type": "boolean"
+    },
+    "scope": {
+      "title": "Scope",
+      "type": "string"
+    },
+    "nonempty": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Nonempty",
+      "type": "object"
+    },
+    "response_sha256": {
+      "title": "Response Sha256",
+      "type": "string"
+    },
+    "figures": {
+      "items": {
+        "$ref": "#/$defs/FigureMatch"
+      },
+      "title": "Figures",
+      "type": "array"
+    }
+  },
+  "required": [
+    "query_id",
+    "query",
+    "title",
+    "queried_at",
+    "rows",
+    "fields",
+    "row_count",
+    "has_more",
+    "scope",
+    "nonempty",
+    "response_sha256",
+    "figures"
+  ],
+  "title": "QueryPreview",
+  "type": "object"
+}

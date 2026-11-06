@@ -4,8 +4,8 @@ from pathlib import Path
 
 class OpenCode:
     name="opencode"
-    def __init__(self,data_root:Path,port:int):
-        self.root=data_root;self.port=port
+    def __init__(self,data_root:Path,port:int,config=None):
+        self.root=data_root;self.port=port;self.config=config
     def client(self):
         password=(self.root/"runtime/control/opencode-password").read_text().strip()
         return httpx.AsyncClient(base_url=f"http://127.0.0.1:{self.port}",auth=("opencode",password),timeout=15,trust_env=False)
@@ -20,6 +20,7 @@ class OpenCode:
         record=self.root/"runtime/control/opencode.json"
         health["credential_loaded"]=bool(json.loads(record.read_text()).get("credential_loaded")) if record.exists() else False
         health["output_token_max"]=json.loads(record.read_text()).get("output_token_max",32000) if record.exists() else 32000
+        health['provider_revision']=json.loads(record.read_text()).get('provider_revision') if record.exists() else None
         return health
     async def delete_session(self,session,directory):
         from .persistence import Conflict
@@ -68,7 +69,7 @@ class OpenCode:
         await self.call("POST",f"/session/{session}/prompt_async",directory,{**await self.reasoning_variant(model,reasoning_effort,directory),"messageID":message_id,"model":{"providerID":self.provider(model),"modelID":model},"agent":"pathoreason","parts":[{"type":"text","text":prompt}]})
     async def output_profile(self,model,limit,directory):
         from .output_settings import validate_output
-        profile=validate_output(model,limit)
+        profile=validate_output(model,limit,self.config)
         if limit>(await self.health()).get('output_token_max',32000):raise ValueError('output_profile_reload_required')
         providers=await self.call('GET','/provider',directory)
         provider=next((p for p in providers['all'] if p['id']==self.provider(model)),{})
@@ -83,11 +84,13 @@ class OpenCode:
         providers=await self.call('GET','/provider',directory)
         provider=next((p for p in providers['all'] if p['id']==self.provider(model)),{})
         variant=provider.get('models',{}).get(model,{}).get('variants',{}).get(effort)
-        if variant!={'reasoningEffort':effort}:raise ValueError('reasoning_variant_reload_required')
+        from .provider_config import native_config
+        expected=native_config(self.config)['provider'].get(self.provider(model),{}).get('models',{}).get(model,{}).get('variants',{}).get(effort)
+        if not expected or variant!=expected:raise ValueError('reasoning_variant_reload_required')
         return {'variant':effort}
     def provider(self,model):
-        from .settings import ROOT
-        config=json.loads((ROOT/'config/opencode.json').read_text())
+        from .provider_config import native_config
+        config=native_config(self.config)
         providers=[pid for pid,p in config['provider'].items() if model in p.get('models',{})]
         if len(providers)!=1:raise ValueError('ambiguous_model_provider')
         return providers[0]

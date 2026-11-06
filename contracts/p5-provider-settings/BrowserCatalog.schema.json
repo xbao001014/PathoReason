@@ -1,0 +1,98 @@
+{
+  "$defs": {
+    "Endpoint": {
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "group": {
+          "title": "Group",
+          "type": "string"
+        },
+        "filters": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Filters",
+          "type": "array"
+        },
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "paginated": {
+          "default": true,
+          "title": "Paginated",
+          "type": "boolean"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "title",
+        "group",
+        "filters",
+        "fields",
+        "columns",
+        "note"
+      ],
+      "title": "Endpoint",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "endpoints": {
+      "items": {
+        "$ref": "#/$defs/Endpoint"
+      },
+      "title": "Endpoints",
+      "type": "array"
+    },
+    "labels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Labels",
+      "type": "object"
+    },
+    "credential_configured": {
+      "title": "Credential Configured",
+      "type": "boolean"
+    },
+    "available": {
+      "title": "Available",
+      "type": "boolean"
+    },
+    "preview_limit": {
+      "default": 100,
+      "title": "Preview Limit",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "endpoints",
+    "labels",
+    "credential_configured",
+    "available"
+  ],
+  "title": "BrowserCatalog",
+  "type": "object"
+}

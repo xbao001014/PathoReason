@@ -1,0 +1,10 @@
+.provider-settings{min-width:0}
+.provider-settings fieldset{border:0;padding:0;margin:0;min-width:0;display:grid;gap:var(--spacing-16)}
+.provider-settings .provider-field{display:flex;flex-direction:column;gap:9px;font-size:var(--text-body);color:var(--color-ink);min-width:0}
+.settings-body .provider-settings label{margin:0;font-size:var(--text-body)}
+.provider-settings input{min-width:0;max-width:100%}
+.provider-settings .provider-hint{font-size:var(--text-caption);color:var(--color-text-muted);margin:12px 0;line-height:1.6}
+.provider-settings .provider-actions{display:flex;justify-content:flex-end;margin-top:var(--spacing-16)}
+.provider-settings .settings-heading{flex-wrap:wrap}
+.provider-settings .settings-heading>div{min-width:160px}
+.provider-settings [role="alert"],.provider-settings [role="status"]{margin:16px 0 0}

@@ -1,0 +1,75 @@
+{
+  "$defs": {
+    "ProviderProfileView": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "base_url": {
+          "title": "Base Url",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "credential_present": {
+          "title": "Credential Present",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "base_url",
+        "model",
+        "models",
+        "credential_present"
+      ],
+      "title": "ProviderProfileView",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "active": {
+      "title": "Active",
+      "type": "string"
+    },
+    "profiles": {
+      "items": {
+        "$ref": "#/$defs/ProviderProfileView"
+      },
+      "title": "Profiles",
+      "type": "array"
+    },
+    "scope": {
+      "const": "deployment",
+      "default": "deployment",
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "revision",
+    "active",
+    "profiles"
+  ],
+  "title": "ProviderSettingsView",
+  "type": "object"
+}

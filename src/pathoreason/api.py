@@ -34,6 +34,7 @@ from .training_contracts import TrainingView,TrainingToolInput,TrainingDecision,
 from .research_workbench import ResearchWorkbenchView, project_snapshot
 from .workbench_outcomes import review_material
 from .training_progress import TrainingProgressView,TrainingTelemetryView,project_progress,telemetry
+from .provider_settings import ProviderSettings,ProviderSettingsView,ProviderSettingsUpdate
 
 class ProjectInput(BaseModel):
     model_config=ConfigDict(extra='forbid',str_strip_whitespace=True)
@@ -122,6 +123,9 @@ class WorkbenchView(BaseModel):
 class CompactionView(BaseModel):
     auto:bool;prune:bool;reserved_tokens:int
 class RuntimeStatus(BaseModel):
+    provider_management:bool=False
+    provider_id:str|None=None
+    provider_title:str|None=None
     environment:str="bxn-server"
     business_enabled:bool=True
     runtime:str;version:str|None=None;connected:bool;credential_present:bool;model:str;readiness:str;compaction:CompactionView;inference_verified:bool;codex_server_inference_enabled:bool
@@ -154,7 +158,7 @@ async def security(request,call_next):
     if request.method not in ('GET','HEAD','OPTIONS') and origin and urlsplit(origin).netloc!=request.headers.get('host'):
         return JSONResponse({'detail':'origin_not_allowed'},status_code=403)
     response=await call_next(request)
-    if '/data-browser/' in request.url.path:response.headers['Cache-Control']='no-store'
+    if '/data-browser/' in request.url.path or '/settings/provider' in request.url.path:response.headers['Cache-Control']='no-store'
     response.headers['X-Content-Type-Options']='nosniff';response.headers['Referrer-Policy']='same-origin'
     return response
 
@@ -168,6 +172,14 @@ async def conflict(_,exc):return JSONResponse({'detail':str(exc)},status_code=40
 async def not_ready(_,exc):return JSONResponse({'detail':str(exc)},status_code=503)
 @app.exception_handler(ValueError)
 async def bad_input(_,exc):return JSONResponse({'detail':str(exc)},status_code=422)
+
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request,exc):
+    if request.url.path.startswith('/api/v1/settings/provider'):
+        return JSONResponse({'detail':'provider_configuration_invalid'},status_code=422,headers={'Cache-Control':'no-store'})
+    return await request_validation_exception_handler(request,exc)
 
 
 @app.exception_handler(DataBrowserError)
@@ -320,7 +332,7 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.43-p5-data-browser'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.44-p5-provider-profiles'}
 @app.get('/api/v1/research-projects',response_model=list[ManagedProject])
 async def projects(include_archived:bool=False):return service().projects.list(include_archived)
 @app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)
@@ -456,10 +468,16 @@ async def runtime_status():
     try:health=await service().runtime.health()
     except Exception:health={'healthy':False}
     s=service();ready=s.credential_ready()
-    return {'runtime':s.runtime_name,'environment':s.config.get('execution_environment','bxn-server'),'business_enabled':s.config.get('business_enabled',True),'version':health.get('version'),'connected':health.get('healthy',False),'credential_present':ready,'model':s.config.get('codex',{}).get('model','deepseek-v4-pro') if s.runtime_name=='codex' else s.config.get('provider',{}).get('model','deepseek-v4-pro'),'readiness':'credential_missing' if not ready else 'runtime_unavailable' if not health.get('healthy') else 'reload_required' if not health.get('credential_loaded',True) else 'ready_for_inference_check','compaction':{'auto':True,'prune':False,'reserved_tokens':20000 if s.runtime_name=='opencode' else 0},'inference_verified':s.inference_verified(),'codex_server_inference_enabled':False}
+    from .provider_config import PROVIDERS
+    pid=s.config.get('provider',{}).get('id','deepseek-direct')
+    loaded=health.get('credential_loaded',True) and (not s.config.get('provider_profiles_enabled') or health.get('provider_revision')==s.config.get('provider_revision'))
+    return {'provider_management':bool(s.config.get('provider_profiles_enabled')),'provider_id':pid,'provider_title':PROVIDERS.get(pid,{}).get('title'),'runtime':s.runtime_name,'environment':s.config.get('execution_environment','bxn-server'),'business_enabled':s.config.get('business_enabled',True),'version':health.get('version'),'connected':health.get('healthy',False),'credential_present':ready,'model':s.config.get('codex',{}).get('model','deepseek-v4-pro') if s.runtime_name=='codex' else s.config.get('provider',{}).get('model','deepseek-v4-pro'),'readiness':'credential_missing' if not ready else 'runtime_unavailable' if not health.get('healthy') else 'reload_required' if not loaded else 'ready_for_inference_check','compaction':{'auto':True,'prune':False,'reserved_tokens':20000 if s.runtime_name=='opencode' else 0},'inference_verified':s.inference_verified(),'codex_server_inference_enabled':False}
 
 @app.post('/api/v1/settings/provider/reload')
 async def reload_provider():
+    if service().config.get('provider_profiles_enabled'):
+        try:return await ProviderSettings(service()).reload()
+        except RuntimeError as exc:raise NotReady(str(exc)) from None
     async with service().lock:
         if service().store.active():raise Conflict('runtime_busy')
         if service().runtime_name=='codex':
@@ -468,6 +486,14 @@ async def reload_provider():
         await asyncio.wait_for(process.wait(),15)
         if process.returncode:raise NotReady('runtime_restart_failed')
         return {'status':'reloading'}
+
+@app.get('/api/v1/settings/providers',response_model=ProviderSettingsView)
+async def provider_settings():return ProviderSettings(service()).view()
+
+@app.put('/api/v1/settings/providers',response_model=ProviderSettingsView)
+async def update_provider_settings(body:ProviderSettingsUpdate):
+    try:return await ProviderSettings(service()).update(body)
+    except RuntimeError as exc:raise NotReady(str(exc)) from None
 
 @app.get('/api/v1/settings/codex',response_model=AuthStatus)
 async def codex_status():return await app.state.auth.status()
@@ -554,7 +580,7 @@ async def index():
 from .output_settings import OutputOptions,TurnOutputView,configured_options as output_options,turn_output
 @app.get('/api/v2/models/output',response_model=list[OutputOptions])
 def model_output_options():
-    return output_options() if service().runtime_name=='opencode' else []
+    return output_options(service().config) if service().runtime_name=='opencode' else []
 
 @app.get('/api/v2/turns/{tid}/output',response_model=TurnOutputView)
 async def output_diagnostics(tid:str):

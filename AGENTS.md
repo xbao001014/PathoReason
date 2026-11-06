@@ -1,3 +1,5 @@
+2026-11-06：0.6.44 将 DeepSeek 官方与百炼 DeepSeek 双配置接入「连接与模型设置」，Key 按部署隔离、写入不回显，空闲时切换并自动重载，失败恢复原配置。双方暂保留官方连接，百炼尚无 Key。644 项工程测试通过、3 跳过；真实原生引擎的模拟接口、工具与压缩及六组 UI 检查通过，真实百炼模型行为待验证。详见 [双提供商配置](docs/p5/PROVIDER_PROFILES.md)。
+
 ## 2026-11-06 稳定交付与开发隔离（本次交付完成后优先）
 
 甲方通过 Tailscale 使用胃间叶源性肿瘤案例。当前根目录是稳定交付环境，分支 release/client-20261106；后续修改在 /home/bxn/worktrees/PathoReason-dev 的 PathoReason 分支进行，数据为 /data/bxn/PathoReason-dev。不得在交付目录日常编辑、pull、安装依赖或覆盖前端构建。main 仍为初始化基线。发布与维护、案例备份及验证边界见 [交付运维](docs/p5/CLIENT_DELIVERY.md)。

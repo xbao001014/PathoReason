@@ -3,6 +3,7 @@ import argparse, json, os, signal, socket, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"src"))
 from pathoreason.settings import ROOT, settings, credential
+from pathoreason.provider_config import native_config,atomic_private
 from pathoreason.service_ports import wait_until_bindable
 
 cfg=settings(); data=Path(cfg["data_root"]); control=data/"runtime/control";control.mkdir(parents=True,exist_ok=True)
@@ -51,13 +52,19 @@ def start(name):
             import secrets
             password_file.write_text(secrets.token_urlsafe(32));password_file.chmod(0o600)
         env["OPENCODE_SERVER_PASSWORD"]=password_file.read_text().strip()
-        env["OPENCODE_CONFIG"]=str(cfg.get('opencode_config_file',ROOT/"config/opencode.json"))
+        effective=control/'opencode-effective.json'
+        atomic_private(effective,(json.dumps(native_config(cfg),indent=2)+'\n').encode())
+        env["OPENCODE_CONFIG"]=str(effective)
         env["OPENCODE_DISABLE_PROJECT_CONFIG"]="true"
         env["OPENCODE_DISABLE_EXTERNAL_SKILLS"]="true"
         env["OPENCODE_DISABLE_AUTOUPDATE"]="true"
         env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]="65536"  # Ceiling only; base profiles still request 8192.
         env["OPENCODE_ENABLE_EXA"]="1"  # Native search for non-Zen providers; permission still applies.
-        env["DEEPSEEK_API_KEY"]=credential()
+        if cfg.get('provider_profiles_enabled'):
+            for variable in ['DEEPSEEK_API_KEY','DASHSCOPE_API_KEY','OPENAI_API_KEY','OPENAI_API_BASE','OPENAI_BASE_URL','PATHOREASON_PROVIDER_API_KEY']:
+                env.pop(variable,None)
+            env['PATHOREASON_PROVIDER_API_KEY']=credential()
+        else:env["DEEPSEEK_API_KEY"]=credential()
         command=[cfg["opencode_binary"],"serve","--pure","--hostname","127.0.0.1","--port",str(port)]
         cwd=data/"projects/runtime";cwd.mkdir(exist_ok=True)
     else:
@@ -65,7 +72,7 @@ def start(name):
         cwd=ROOT
     with (control/f"{name}.log").open("ab") as log:
         child=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)
-    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"credential_loaded":bool(env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None,"output_token_max":int(env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]) if name=="opencode" else None})+"\n")
+    (control/f"{name}.json").write_text(json.dumps({"pid":child.pid,"identity":identity(child.pid),"port":port,"provider_revision":cfg.get("provider_revision"),"credential_loaded":bool(env.get("PATHOREASON_PROVIDER_API_KEY") or env.get("DEEPSEEK_API_KEY")) if name=="opencode" else None,"output_token_max":int(env["OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX"]) if name=="opencode" else None})+"\n")
     time.sleep(.4)
     if child.poll() is not None:raise RuntimeError(name+" failed; inspect its service log")
 
@@ -80,7 +87,7 @@ with (control/"service.lock").open("a") as lock:
         from pathoreason.runtime import OpenCode
         from pathoreason.native_refresh import maintenance_directories,refresh_idle_instances,configured_skills,bound_directories,inspect_skills
         if cfg.get("primary_runtime")=="codex":raise RuntimeError('native_refresh_requires_opencode')
-        required= configured_skills(ROOT,json.loads(Path(cfg.get('opencode_config_file',ROOT/'config/opencode.json')).read_text()))
+        required= configured_skills(ROOT,native_config(cfg))
         if args.action=='refresh-native':
             if record('app'):raise RuntimeError('native_refresh_requires_app_offline')
             directories=maintenance_directories(data,cfg['api_port'])

@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "project_id": {
+      "pattern": "^prj_[A-Za-z0-9_-]+$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "query_id": {
+      "pattern": "^dq_[0-9a-f]{32}$",
+      "title": "Query Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "query_id"
+  ],
+  "title": "SnapshotInput",
+  "type": "object"
+}

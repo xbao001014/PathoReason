@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 1,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "provider_id": {
+      "enum": [
+        "deepseek-direct",
+        "dashscope-deepseek"
+      ],
+      "title": "Provider Id",
+      "type": "string"
+    },
+    "base_url": {
+      "maxLength": 300,
+      "title": "Base Url",
+      "type": "string"
+    },
+    "model": {
+      "maxLength": 100,
+      "title": "Model",
+      "type": "string"
+    },
+    "api_key": {
+      "anyOf": [
+        {
+          "format": "password",
+          "maxLength": 512,
+          "type": "string",
+          "writeOnly": true
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Api Key"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "provider_id",
+    "base_url",
+    "model"
+  ],
+  "title": "ProviderSettingsUpdate",
+  "type": "object"
+}

@@ -22,9 +22,13 @@ class TurnOutputView(BaseModel):
     source: str = 'unavailable'
 
 
-def configured_options():
+def configured_options(config=None):
     configured=json.loads((ROOT/'config/output-limits.json').read_text())
-    native=json.loads((ROOT/'config/opencode.json').read_text())['provider']
+    from .provider_config import native_config
+    native=native_config(config)['provider']
+    if 'dashscope-deepseek' in native:
+        configured={'models':{m:{'provider':'dashscope-deepseek','capability_max_tokens':393216,'choices':[8192,32768,65536]}
+            for m in native['dashscope-deepseek']['models'] if not m.startswith(PROFILE_PREFIX)}}
     result=[]
     for model,entry in configured['models'].items():
         models=native.get(entry['provider'],{}).get('models',{})
@@ -44,8 +48,8 @@ def profile_name(model,limit):
     return f'{PROFILE_PREFIX}{limit}-{model}'
 
 
-def validate_output(model,limit):
-    option=next((o for o in configured_options() if o.model==model),None)
+def validate_output(model,limit,config=None):
+    option=next((o for o in configured_options(config) if o.model==model),None)
     if type(limit) is not int or not option or limit not in option.choices:
         raise ValueError('output_limit_not_supported')
     return model if limit==option.default else profile_name(model,limit)

@@ -7,6 +7,7 @@ from .persistence import Store, ACTIVE, Conflict, Missing, encoded, now, uid
 from .runtime import OpenCode, visible_response
 from .legacy import read_verified_file
 from .settings import ROOT, settings, credential
+from .provider_config import native_config
 
 class NotReady(Exception):pass
 
@@ -18,7 +19,7 @@ class Service:
         if self.runtime_name=='codex':
             from .codex_runtime import Codex
             self.runtime=runtime or Codex(self.config,self.store)
-        else:self.runtime=runtime or OpenCode(self.data,self.config['opencode_port'])
+        else:self.runtime=runtime or OpenCode(self.data,self.config['opencode_port'],self.config)
         from .context import Context
         self.context=Context(self)
         self.tasks={};self.lock=asyncio.Lock();self.stopping=False
@@ -85,18 +86,29 @@ class Service:
         return getattr(self.runtime,'authenticated',False) if self.runtime_name=='codex' else bool(credential())
     def inference_verified(self,model=None):
         with self.store.connect() as db:
-            return any(not model or json.loads(r[0])['model']['model']==model for r in db.execute("SELECT document FROM turns WHERE status='completed' AND text<>''"))
+            for r in db.execute("SELECT document FROM turns WHERE status='completed' AND text<>''"):
+                turn=json.loads(r[0]);descriptor=turn['model']
+                if model and descriptor['model']!=model:continue
+                if self.runtime_name=='opencode':
+                    provider=self.config.get('provider',{}).get('id','deepseek-direct')
+                    if descriptor['provider']!=provider:continue
+                    if self.config.get('provider_profiles_enabled'):
+                        frozen=db.execute('SELECT document FROM runtime_configs WHERE digest=?',(turn['config_digest'],)).fetchone()
+                        endpoint=(json.loads(frozen[0]).get('opencode') or {}).get('provider',{}).get(provider,{}).get('options',{}).get('baseURL') if frozen else None
+                        if endpoint!=self.config['provider']['endpoint']:continue
+                return True
+            return False
     def models(self):
         if self.runtime_name=='codex':
             metadata_path=self.data/'runtime/codex/model-metadata.json'
             metadata=json.loads(metadata_path.read_text()) if metadata_path.exists() else {}
             catalog={m['model'] for m in getattr(self.runtime,'catalog',[])}
             return [c.ModelDescriptor(runtime='codex',provider='openai',model=name,context_limit_tokens=metadata.get(name,{}).get('context_window'),input_limit_tokens=None,output_limit_tokens=None,tool_support=metadata.get(name,{}).get('tool_support','unknown'),usage_source='runtime',metadata_source=metadata.get(name,{}).get('source','unknown'),availability=('inference_verified' if self.inference_verified(name) else 'authenticated') if self.credential_ready() and name in catalog else 'unavailable').model_dump(mode='json') for name in self.config['codex']['models']]
-        config=json.loads((ROOT/'config/opencode.json').read_text())['provider']
-        return [c.ModelDescriptor(runtime='opencode',provider=provider,model=name,context_limit_tokens=item.get('limit',{}).get('context'),input_limit_tokens=item.get('limit',{}).get('input'),output_limit_tokens=item.get('limit',{}).get('output'),tool_support='supported' if item.get('tool_call') else 'unknown',usage_source='runtime',metadata_source='Configured provider limits; runtime usage reported separately',availability=('inference_verified' if self.inference_verified(name) else 'catalog_only') if self.credential_ready() and provider=='deepseek-direct' else 'unavailable').model_dump(mode='json') for provider,cfg in config.items() for name,item in cfg.get('models',{}).items() if not name.startswith('pathoreason-output-')]
+        config=native_config(self.config)['provider']
+        return [c.ModelDescriptor(runtime='opencode',provider=provider,model=name,context_limit_tokens=item.get('limit',{}).get('context'),input_limit_tokens=item.get('limit',{}).get('input'),output_limit_tokens=item.get('limit',{}).get('output'),tool_support='supported' if item.get('tool_call') else 'unknown',usage_source='runtime',metadata_source='Configured provider limits; runtime usage reported separately',availability=('inference_verified' if self.inference_verified(name) else 'catalog_only') if self.credential_ready() and provider==self.config.get('provider',{}).get('id','deepseek-direct') else 'unavailable').model_dump(mode='json') for provider,cfg in config.items() for name,item in cfg.get('models',{}).items() if not name.startswith('pathoreason-output-')]
     def reasoning_options(self):
         from .reasoning import configured_options
-        return configured_options(json.loads((ROOT/'config/opencode.json').read_text())) if self.runtime_name=='opencode' else []
+        return configured_options(native_config(self.config)) if self.runtime_name=='opencode' else []
     def artifact_bytes(self,artifact):
         root=Path('/data/bxn/auto-research/acceptance') if artifact['storage_root']=='legacy_evidence' else self.data/'artifacts'
         return read_verified_file(root,artifact['relative_path'],artifact['sha256'])
@@ -128,6 +140,8 @@ class Service:
             health=await self.runtime.health()
             if not health.get('healthy'):raise NotReady('runtime_unavailable')
             if not health.get('credential_loaded',True):raise NotReady('runtime_credentials_reload_required')
+            if self.config.get('provider_profiles_enabled') and health.get('provider_revision')!=self.config.get('provider_revision'):
+                raise NotReady('runtime_credentials_reload_required')
             await self.context.ensure_other_operations_idle()
             models={m['model']:m for m in self.models()}
             if request['model'] not in models:raise ValueError('model_not_configured')
@@ -136,7 +150,7 @@ class Service:
             if output_limit is not None:
                 from .output_settings import validate_output
                 if self.runtime_name!='opencode':raise ValueError('output_limit_not_supported')
-                validate_output(request['model'],output_limit)
+                validate_output(request['model'],output_limit,self.config)
                 models[request['model']]={**models[request['model']],'output_limit_tokens':output_limit,
                     'input_limit_tokens':models[request['model']]['context_limit_tokens']-output_limit}
             reasoning=next((o for o in self.reasoning_options() if o['model']==request['model']),None)
@@ -168,7 +182,7 @@ class Service:
             if mode=='research':raw['constraints']=['正式研究独立工作区；数据/训练/图像调用须遵循具体方案、预算及用户操作确认；科学批准独立']
             snapshot=new_snapshot(raw,artifacts,business_context)
             conv_doc=json.loads(conv['document'])
-            runtime_config={'execution_mode':mode,'business_context':business_context,'model':request['model'],'agent':'pathoreason','skill':skill,'opencode':json.loads((ROOT/'config/opencode.json').read_text()) if self.runtime_name=='opencode' else None,'runtime':self.runtime_name,'environment':self.config.get('execution_environment','bxn-server'),'context_policy':'native_compaction_with_authoritative_project_reload'}
+            runtime_config={'execution_mode':mode,'business_context':business_context,'model':request['model'],'agent':'pathoreason','skill':skill,'opencode':native_config(self.config) if self.runtime_name=='opencode' else None,'runtime':self.runtime_name,'environment':self.config.get('execution_environment','bxn-server'),'context_policy':'native_compaction_with_authoritative_project_reload'}
             if self.runtime_name=='codex':runtime_config.update(codex=self.config['codex'],native_config_digest=hashlib.sha256((self.data/'runtime/codex/config.toml').read_bytes()).hexdigest(),model_descriptor=models[request['model']])
             from .schema_v2 import RuntimeConfiguration,InvocationPolicy
             limits=study['budget'] if study else self.config.get('p1_test_limits',{})
