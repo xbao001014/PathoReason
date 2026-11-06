@@ -1,4 +1,4 @@
-# AutoResearch integration (project-local 1.1.0)
+# AutoResearch integration (project-local 1.1.1)
 
 ## Resolve the real checkout
 
@@ -27,6 +27,12 @@ Before invoking a provider, read the actual versions of:
 | `development_ablation` | Same adapter; executed full/removal mapping and matched fold/seed RMSE differences; no causal or significance claim |
 
 The development adapter is opt-in for candidate engineering. It does not promote a development experiment into a paper or bypass independent-confirmation requirements. It reads only copied plan, bundles and hash-bound outcome JSON; it never invokes a controller, checkpoint loader or trainer. Complete replication cells are required; missing/failed matrices are refused with an explicit reason, never silently shortened. SVG export requires `svg_generation_enabled=True`. Default manuscript figure output remains PNG/PDF.
+
+The current engine also registers the opt-in context_residual_paper package:
+linear_context_residual_architecture and verified_regression_summary. These remain
+bound to the specific executed method/source and checksum-verified result assets;
+they do not add arbitrary architecture or pathology-API cohort plot support.
+For API field-to-provider matching, read [api-capability-matching.md](api-capability-matching.md).
 
 ## Registered spatial package
 

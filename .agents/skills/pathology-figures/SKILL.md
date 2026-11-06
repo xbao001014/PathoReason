@@ -9,6 +9,11 @@ metadata:
 
 Use the author-confirmed research subject and TaskSpec, not a default method-paper narrative. Before confirmation, produce figure candidates and missing-input inventories only. The host manuscript workflow owns approvals, versioning and phase order.
 
+When figures depend on the pathology data API, first read
+[API capability matching](../pathology-mil-paper-figures/references/api-capability-matching.md).
+Match actual fields and files to the requested panel and registered provider;
+keep missing data, missing adapters and pending environment checks separate.
+
 ## Select the route from the evidence
 
 For a requested conceptual pathology illustration during draft, explicitly load

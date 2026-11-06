@@ -383,3 +383,5 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 2026-11-05 成果预览已分离圆角外框与正文滚动层，增加 8px 内缩及共享细滚动条；PDF 外框同步，图片行为保持。只读浏览器验证与静态发布记录见 docs/p5/ARTIFACT_PREVIEW_SCROLL.md。
 
 2026-11-06 按用户纠正修复对话交付文件预览弹窗：外框停止滚动，标题固定、内缩主体单独滚动。真实对话 citation 入口四尺寸/四格式共16组合通过，不能与工作台内嵌预览混淆；见 docs/p5/ARTIFACT_PREVIEW_SCROLL.md。
+
+2026-11-06 数据接口与图件能力匹配：10 类端点有界抽查、字段/像素/空间归因/提供器分层匹配已接入三个 Skill。样本切片路径为空，不能宣称热点图已接通；保留现有 spatial 提供器与独立 FXio 适配缺口，不改研究结果。实现、回执及验证见 [能力匹配记录](docs/p5/DATA_FIGURE_CAPABILITY_MATCHING.md)。

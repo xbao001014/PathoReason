@@ -21,15 +21,20 @@
 
 ## 数据接口
 
-配置：`config/p5/data-source.json`，来源是原仓库 `data_api.png`。GET `http://ai.gzfxyl.cn/api/v1/pathology/diseases/slides`，参数 `DiseaseName`、`Limit`；没有凭空增加认证头或改变接口。当前交付只核对配置，不获取真实患者记录。
+当前服务使用接口 2.0：X-AiData-Key 鉴权、PageIndex/PageSize 分页。先读取
+skills/pathology-data-api/SKILL.md 及无凭据协议摘要；密钥只由 helper 在进程内读取。
+config/p5/data-source.json 与 study_io.py data 保留历史 Limit 协议，不能作为当前完整采集入口。
 
-在正式项目内，确认实际病种、范围后：
+在已授权的正式项目范围内，按真实疾病字典身份编写 plans/data-queries-vNEW.json，再运行：
 
 ```bash
-/home/bxn/projects/PathoReason/.venv/bin/python /home/bxn/projects/PathoReason/scripts/study_io.py data --project PROJECT_ID --disease '实际病种' --limit 1000 --output inputs/source-v1
+/home/bxn/projects/PathoReason/.venv/bin/python /home/bxn/projects/PathoReason/skills/pathology-data-api/scripts/fetch_pages.py --project PROJECT_ID --plan plans/data-queries-vNEW.json --output inputs/source-vNEW
 ```
 
-输出目录必须全新；保存原 JSON 和响应 SHA/大小/查询参数回执，不自动重试。不在聊天中输出患者原始记录。接口返回远端 FeaturePath/原始图像路径不等于可训练样本：核对服务器可访问路径、患者/玻片/标本对应、标签来源、特征格式、完整性与划分。不能凭一次接口成功声称数据验证通过。
+查询计划、分页完成和中断核对规则见 helper 参考。FilePath/FeaturePath 可能为空；
+非空路径也不证明可读、可训练或具备真实坐标。图表能力按
+[接口与图件匹配](../../.agents/skills/pathology-mil-paper-figures/references/api-capability-matching.md)
+核验，实际接口抽查与实现边界见 [本次记录](DATA_FIGURE_CAPABILITY_MATCHING.md)。
 
 ## 原有 Skill 与业务执行
 

@@ -22,7 +22,7 @@ Build a figure set that carries the paper's scientific argument. Start from the 
 1. Classify the study as method-centric, application/biomarker, foundation-model, multimodal or clinical-validation.
 2. Record task family, prediction unit, cohorts/centers, split strategy, endpoint and target venue.
 3. Inventory patient/slide/patch counts, predictions, metrics, uncertainty, checkpoints, WSI pixels, coordinates, attributions, annotations and outcomes.
-4. Mark unavailable inputs explicitly.
+4. Mark unavailable inputs explicitly. For pathology API inputs, read [api-capability-matching.md](references/api-capability-matching.md); record API evidence, file/space evidence and provider readiness separately before selecting panels.
 5. Give every panel one narrative role, one evidence source, one transformation and one allowed caption claim.
 6. Generate exact-data panels reproducibly.
 7. Refuse or downgrade panels whose required evidence is absent.
@@ -86,7 +86,7 @@ Every figure must contain:
 
 ## References and version
 
-Project-local version: 1.1.0. The project manifest pins every file; a hash change requires a new manuscript candidate revision.
+Project-local version: 1.1.1. The project manifest pins every file; a hash change requires a new manuscript candidate revision.
 
 - For inventories and panel admission, read [figure-taxonomy.md](references/figure-taxonomy.md).
 - For the task's minimum figure set and forbidden inferences, read [task-recipes.md](references/task-recipes.md).
