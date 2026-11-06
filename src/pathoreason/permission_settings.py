@@ -2,6 +2,7 @@
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .persistence import Conflict, encoded, now
+from .settings import ROOT
 import json
 
 Action = Literal['allow', 'ask', 'deny']
@@ -63,7 +64,7 @@ def formal_rules(directory, settings=None, execution_scope="standard"):
         {'permission': 'websearch', 'pattern': '*', 'action': policy.action('webfetch')},
         # Trusted project directories are already inside the study's access boundary.
         *([{'permission': 'external_directory', 'pattern': p, 'action': 'allow'}
-           for p in [directory+'/*', '/home/bxn/projects/PathoReason/*']]
+           for p in [directory+'/*', str(ROOT)+'/*']]
           if policy.external_directory != 'deny' else []),
         *[{'permission': 'read', 'pattern': p, 'action': 'deny'} for p in
           ['*.env', '*.env.*', '*/.config/pathoreason/*', '*image-generation*.json',

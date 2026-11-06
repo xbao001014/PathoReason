@@ -147,7 +147,8 @@ def main():
     args = ap.parse_args()
     if not re.fullmatch(r'prj_[A-Za-z0-9_-]+', args.project):
         raise ValueError('invalid_project')
-    data = Path('/data/bxn/PathoReason')
+    repo = Path(__file__).resolve().parents[3]
+    data = Path(json.loads((repo / 'config/pathoreason.local.json').read_text())['data_root'])
     with sqlite3.connect('file:' + str(data / 'state/pathoreason.sqlite3') + '?mode=ro', uri=True) as db:
         row = db.execute('SELECT document FROM formal_studies WHERE project_id=?', (args.project,)).fetchone()
     if not row:
@@ -166,7 +167,7 @@ def main():
         validate(query)
     key = os.environ.get('PATHOREASON_DATA_API_KEY')
     if not key:
-        doc = Path('/home/bxn/projects/PathoReason/接口文档2.0.md')
+        doc = repo / '接口文档2.0.md'
         if doc.is_symlink() or doc.stat().st_mode & 0o077:
             raise ValueError('credential_document_permissions')
         match = re.search(r'X-AiData-Key:\s*([0-9a-fA-F-]{36})', doc.read_text())

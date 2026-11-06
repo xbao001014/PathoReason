@@ -1,3 +1,7 @@
+## 2026-11-06 稳定交付与开发隔离（本次交付完成后优先）
+
+甲方通过 Tailscale 使用胃间叶源性肿瘤案例。当前根目录是稳定交付环境，分支 release/client-20261106；后续修改在 /home/bxn/worktrees/PathoReason-dev 的 PathoReason 分支进行，数据为 /data/bxn/PathoReason-dev。不得在交付目录日常编辑、pull、安装依赖或覆盖前端构建。main 仍为初始化基线。发布与维护、案例备份及验证边界见 [交付运维](docs/p5/CLIENT_DELIVERY.md)。
+
 # PathoReason 开发交接
 
 2026-11-05：新增显式 `baseline-comparison-writing`，将基线角色、可比协议、选择依据、定量结果及文献定位接入规划/起草/审稿/科学修订。参考四篇相关原始论文；新稿由研究 Agent 输出版本绑定的 baseline_review。现有终审稿与呈现返修不追溯新增门禁，不增加实验或额度。实施与验证见 [基线对比写作](docs/p5/BASELINE_COMPARISON_WRITING.md)。

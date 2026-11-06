@@ -51,7 +51,7 @@ def start(name):
             import secrets
             password_file.write_text(secrets.token_urlsafe(32));password_file.chmod(0o600)
         env["OPENCODE_SERVER_PASSWORD"]=password_file.read_text().strip()
-        env["OPENCODE_CONFIG"]=str(ROOT/"config/opencode.json")
+        env["OPENCODE_CONFIG"]=str(cfg.get('opencode_config_file',ROOT/"config/opencode.json"))
         env["OPENCODE_DISABLE_PROJECT_CONFIG"]="true"
         env["OPENCODE_DISABLE_EXTERNAL_SKILLS"]="true"
         env["OPENCODE_DISABLE_AUTOUPDATE"]="true"
@@ -61,7 +61,7 @@ def start(name):
         command=[cfg["opencode_binary"],"serve","--pure","--hostname","127.0.0.1","--port",str(port)]
         cwd=data/"projects/runtime";cwd.mkdir(exist_ok=True)
     else:
-        command=[str(ROOT/".venv/bin/python"),"-m","uvicorn","pathoreason.api:app","--host","127.0.0.1","--port",str(port),"--timeout-graceful-shutdown","2"]
+        command=[str(ROOT/".venv/bin/python"),"-m","pathoreason.server"]
         cwd=ROOT
     with (control/f"{name}.log").open("ab") as log:
         child=subprocess.Popen(command,cwd=cwd,env=env,stdin=subprocess.DEVNULL,stdout=log,stderr=log,start_new_session=True)

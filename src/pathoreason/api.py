@@ -148,7 +148,8 @@ def service():return app.state.service
 @app.middleware('http')
 async def security(request,call_next):
     host=request.headers.get('host','').split(':')[0]
-    if host not in ('127.0.0.1','localhost','testserver'):return JSONResponse({'detail':'host_not_allowed'},status_code=403)
+    cfg=getattr(getattr(request.app.state,'service',None),'config',{})
+    if host not in ('127.0.0.1','localhost','testserver',*cfg.get('allowed_hosts',[])):return JSONResponse({'detail':'host_not_allowed'},status_code=403)
     origin=request.headers.get('origin')
     if request.method not in ('GET','HEAD','OPTIONS') and origin and urlsplit(origin).netloc!=request.headers.get('host'):
         return JSONResponse({'detail':'origin_not_allowed'},status_code=403)
