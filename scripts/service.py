@@ -80,7 +80,7 @@ with (control/"service.lock").open("a") as lock:
         from pathoreason.runtime import OpenCode
         from pathoreason.native_refresh import maintenance_directories,refresh_idle_instances,configured_skills,bound_directories,inspect_skills
         if cfg.get("primary_runtime")=="codex":raise RuntimeError('native_refresh_requires_opencode')
-        required= configured_skills(ROOT)
+        required= configured_skills(ROOT,json.loads(Path(cfg.get('opencode_config_file',ROOT/'config/opencode.json')).read_text()))
         if args.action=='refresh-native':
             if record('app'):raise RuntimeError('native_refresh_requires_app_offline')
             directories=maintenance_directories(data,cfg['api_port'])

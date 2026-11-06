@@ -18,8 +18,9 @@ def backup_sqlite(src,dst):
 def platform_state(path):
     with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True) as db:
         active=db.execute("select count(*) from turns where status in ('queued','running','interrupt_requested','recovery_required')").fetchone()[0]
-        active+=sum(json.loads(r[0]).get('state') in {'active','running','executing'} for r in db.execute('select document from research_goals'))
-        active+=sum(json.loads(r[0]).get('status') in {'queued','running','starting','recovery_required'} for r in db.execute('select document from training_attempts'))
+        active+=sum(json.loads(r[0]).get('state') not in {'completed','cancelled','paused','blocked'} for r in db.execute('select document from research_goals'))
+        active+=sum(json.loads(r[0]).get('status') not in {'completed','failed','cancelled','stopped','interrupted'} for r in db.execute('select document from training_attempts'))
+        active+=db.execute("select count(*) from context_operations where status in ('running','recovery_required')").fetchone()[0]
         if active: raise RuntimeError('research_busy_backup_skipped')
         h=hashlib.sha256()
         for (table,) in db.execute("select name from sqlite_master where type='table' order by name"):
