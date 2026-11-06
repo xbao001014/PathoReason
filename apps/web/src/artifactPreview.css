@@ -8,3 +8,17 @@
 .preview-scroll::-webkit-scrollbar-button{display:none}
 @supports selector(::-webkit-scrollbar){.preview-scroll{scrollbar-width:auto;scrollbar-color:auto}}
 @media(forced-colors:active){.preview-scroll{scrollbar-color:auto}}
+
+/* Chat delivery preview: the dialog clips the corners; only the inset body scrolls. */
+dialog.artifact-preview[open]{display:flex;flex-direction:column;overflow:hidden;max-height:90dvh}
+dialog.artifact-preview>header{flex:0 0 auto;gap:var(--spacing-16)}
+dialog.artifact-preview>header h2{min-width:0;overflow-wrap:anywhere}
+dialog.artifact-preview>header .icon-button{flex-shrink:0}
+.artifact-preview>.artifact-preview-body{min-height:0;overflow:auto;margin:var(--spacing-8);border-radius:calc(var(--radius-cards) - var(--spacing-8))}
+.artifact-preview-body:focus-visible{outline:2px solid var(--color-control-border);outline-offset:-2px}
+.artifact-preview .preview-content{height:auto;overflow:visible;border-radius:var(--radius-buttons)}
+.artifact-preview .preview-content-pdf{height:65dvh;min-height:200px;overflow:hidden}
+.artifact-preview .preview-content iframe{display:block}
+.artifact-preview .preview-toolbar{flex-wrap:wrap}
+.artifact-preview .preview-toolbar>div{flex-wrap:wrap}
+@media(max-width:760px){.artifact-preview .preview-content-pdf{height:60dvh}.artifact-preview>header{padding:var(--spacing-20)}.artifact-preview .preview-toolbar,.artifact-preview .preview-foot{padding:var(--spacing-16)}}

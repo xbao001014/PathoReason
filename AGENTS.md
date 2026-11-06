@@ -381,3 +381,5 @@ scripts/study_io.py 提供 data/image/publish；来源回执、独占输出和 S
 2026-11-04 Skill 目录按用户要求改为分组展开的五列卡片，关联 Skill 同步复用；窄屏自适应，详情弹窗保留原选用门禁及草稿追加。验证与发布记录见 docs/p5/USAGE_GUIDE.md 的 Skill 卡片节。
 
 2026-11-05 成果预览已分离圆角外框与正文滚动层，增加 8px 内缩及共享细滚动条；PDF 外框同步，图片行为保持。只读浏览器验证与静态发布记录见 docs/p5/ARTIFACT_PREVIEW_SCROLL.md。
+
+2026-11-06 按用户纠正修复对话交付文件预览弹窗：外框停止滚动，标题固定、内缩主体单独滚动。真实对话 citation 入口四尺寸/四格式共16组合通过，不能与工作台内嵌预览混淆；见 docs/p5/ARTIFACT_PREVIEW_SCROLL.md。
