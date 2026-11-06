@@ -1,3 +1,4 @@
+import {requestId} from './requestId';
 import {StageDisclosure} from './StageDisclosure';
 import {useEffect,useRef,useState} from 'react';
 import {formalApi} from './FormalStudy';
@@ -25,7 +26,7 @@ export function ManuscriptReview({cid,value,readOnly,running,onUpdate,onError}:{
   if(flight.current||readOnly||running||(action==='approve'&&!canApprove))return;
   if(action!=='approve'&&!comment.trim()){onError(new Error('请填写修改要求、补充事实或返工原因。'));return;}
   const payload={expected_revision:value.revision,action,...(action==='approve'&&answerWithPlan?{confirm_answers:true}:{}),comment:action==='approve'&&written?affirm+(comment.trim()?'\n'+comment.trim():''):comment.trim(),issues:action==='approve'&&value.gate==='review'?issues.map(i=>({issue_id:i.id,...choices[i.id]})):[],...(action==='reopen'?{target_gate:target}:{})};
-  const signature=JSON.stringify(payload);if(!retry.current||retry.current.signature!==signature)retry.current={signature,key:crypto.randomUUID()};
+  const signature=JSON.stringify(payload);if(!retry.current||retry.current.signature!==signature)retry.current={signature,key:requestId()};
   flight.current=true;setBusy(true);
   try{const result=await formalApi<ManuscriptView>('/conversations/'+cid+'/manuscript-review',{method:'POST',body:JSON.stringify({...payload,request_key:retry.current.key})});retry.current=undefined;onUpdate(result);}
   catch(e){const msg=e instanceof Error?e.message:String(e);onError(new Error(reviewErrors[msg]||msg));try{onUpdate(await formalApi<ManuscriptView>('/conversations/'+cid+'/manuscript-review'));}catch{}}

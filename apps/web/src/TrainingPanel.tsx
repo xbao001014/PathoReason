@@ -1,3 +1,4 @@
+import {requestId} from './requestId';
 import {createRefreshScheduler} from './refreshScheduler';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {formalApi} from './FormalStudy';
@@ -32,7 +33,7 @@ export function TrainingPanel({cid,readOnly,onStatus,section,onSectionChange}:{c
    const seconds=(text:string,old:number|undefined)=>old!==undefined&&text===String(hours(old))?old:Number(text)*3600;
    const budget:TrainingBudget={max_wall_seconds:seconds(wall,previous?.max_wall_seconds),max_gpu_seconds:seconds(gpu,previous?.max_gpu_seconds),max_unit_seconds:seconds(unit,previous?.max_unit_seconds),max_attempts_per_unit:Number(retries)+1};
    if(['authorize','budget'].includes(action)&&(!Number.isFinite(budget.max_wall_seconds)||budget.max_wall_seconds<=0||!Number.isFinite(budget.max_gpu_seconds)||budget.max_gpu_seconds<0||!Number.isFinite(budget.max_unit_seconds)||budget.max_unit_seconds<=0||budget.max_unit_seconds>budget.max_wall_seconds||!Number.isInteger(budget.max_attempts_per_unit)||budget.max_attempts_per_unit<1||budget.max_attempts_per_unit>10))throw new Error('请填写有效预算：单元时长不能超过累计上限，重试次数为 0–9 的整数。');
-   const body:TrainingDecision={expected_revision:draft.revision,request_key:'training_'+crypto.randomUUID().replaceAll('-',''),action,...(action==='resume'&&draft.status==='needs_reconciliation'?{acknowledge_unknown:true}:{}),...(['authorize','budget'].includes(action)?{budget}:{})};
+   const body:TrainingDecision={expected_revision:draft.revision,request_key:'training_'+requestId().replaceAll('-',''),action,...(action==='resume'&&draft.status==='needs_reconciliation'?{acknowledge_unknown:true}:{}),...(['authorize','budget'].includes(action)?{budget}:{})};
    const v=await formalApi<TrainingView>('/conversations/'+cid+'/training/'+draft.id,{method:'POST',body:JSON.stringify(body)});if(epoch!==generation.current)return;choose(v);await load();
   }catch(e){if(epoch!==generation.current)return;const message=e instanceof Error?e.message:String(e);setError(errors[message]||message);}finally{setBusy(false);}
  }

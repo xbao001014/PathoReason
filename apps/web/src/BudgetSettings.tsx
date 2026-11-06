@@ -1,3 +1,4 @@
+import {requestId} from './requestId';
 import {useEffect,useRef,useState} from 'react';
 import {ComposerSettingIcon} from './ComposerSetting';
 import {formalApi} from './FormalStudy';
@@ -10,11 +11,11 @@ const errors:Record<string,string>={budget_revision_conflict:'项目额度已在
 export function BudgetSettings({cid,open,onOpen,readOnly,running,onSaved}:{cid:string;open:boolean;onOpen:(open:boolean)=>void;readOnly:boolean;running:boolean;onSaved:(v:StudyView)=>void}){
  const [value,setValue]=useState<BudgetSettingsView|null>(null),[turns,setTurns]=useState(''),[minutes,setMinutes]=useState(''),[goalTurns,setGoalTurns]=useState('');
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[stale,setStale]=useState(false);
- const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null),requestKey=useRef(crypto.randomUUID()),generation=useRef(0);
- async function reload(){const epoch=++generation.current;setValue(null);setError('');setStale(false);try{const v=await formalApi<BudgetSettingsView>('/conversations/'+cid+'/budget-settings');if(epoch!==generation.current)return;setValue(v);setTurns(String(v.project.budget.max_turns));setMinutes(String(v.project.budget.max_wall_seconds/60));setGoalTurns(String(v.goal?.max_turns??8));requestKey.current=crypto.randomUUID();}catch(e){if(epoch===generation.current)setError(e instanceof Error?e.message:String(e));}}
+ const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null),requestKey=useRef(requestId()),generation=useRef(0);
+ async function reload(){const epoch=++generation.current;setValue(null);setError('');setStale(false);try{const v=await formalApi<BudgetSettingsView>('/conversations/'+cid+'/budget-settings');if(epoch!==generation.current)return;setValue(v);setTurns(String(v.project.budget.max_turns));setMinutes(String(v.project.budget.max_wall_seconds/60));setGoalTurns(String(v.goal?.max_turns??8));requestKey.current=requestId();}catch(e){if(epoch===generation.current)setError(e instanceof Error?e.message:String(e));}}
  useEffect(()=>{if(open){dialog.current?.showModal();void reload();}return()=>{generation.current++;dialog.current?.close();};},[open,cid]);
  function close(){if(busy)return;dialog.current?.close();onOpen(false);trigger.current?.focus();}
- function edit(set:(v:string)=>void,v:string){set(v);requestKey.current=crypto.randomUUID();}
+ function edit(set:(v:string)=>void,v:string){set(v);requestKey.current=requestId();}
  const goal=value?.goal,editableGoal=Boolean(goal&&!goal.continued_in&&!['completed','cancelled'].includes(goal.state));
  const windowUsed=goal?(goal.turns_used??0)-(goal.turn_window?.start_turns??0):0;
  const projectChanged=Boolean(value&&(Number(turns)!==value.project.budget.max_turns||Number(minutes)!==value.project.budget.max_wall_seconds/60));
