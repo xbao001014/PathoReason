@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "query_id": {
+      "title": "Query Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "queried_at": {
+      "title": "Queried At",
+      "type": "string"
+    },
+    "row_count": {
+      "title": "Row Count",
+      "type": "integer"
+    },
+    "page": {
+      "title": "Page",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "query_id",
+    "title",
+    "queried_at",
+    "row_count",
+    "page"
+  ],
+  "title": "QuerySummary",
+  "type": "object"
+}

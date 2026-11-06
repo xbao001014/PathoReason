@@ -21,6 +21,7 @@ from .formal_contracts import FormalArtifact
 from .formal import StudyCreate,StudyView,EntryStatus,NativePermission,PermissionReply
 from .permission_settings import PermissionSettingsView,PermissionSettingsUpdate
 from .hardware import HardwareSnapshot
+from .data_browser import DataBrowser, DataBrowserError, BrowserCatalog, PreviewQuery, QueryPreview, QuerySummary, SnapshotInput, SnapshotResult
 from .gpu_settings import GpuSettingsView,GpuSettingsUpdate
 from .schema_v2 import ProjectDomainView,ArtifactRecord,ContextSnapshotV2,LegacyHistoryEntry,TransferBundle,RuntimeConfiguration
 from .business import BusinessRequest,BusinessView,BusinessArtifact
@@ -136,6 +137,7 @@ async def lifespan(app):
         if cfg.get('primary_runtime')=='codex':
             try:await app.state.service.runtime.health()
             except Exception:pass
+        app.state.service.data_browser=DataBrowser(app.state.service)
         await app.state.service.recover()
         yield
         await app.state.service.close();await app.state.auth.close()
@@ -151,6 +153,7 @@ async def security(request,call_next):
     if request.method not in ('GET','HEAD','OPTIONS') and origin and urlsplit(origin).netloc!=request.headers.get('host'):
         return JSONResponse({'detail':'origin_not_allowed'},status_code=403)
     response=await call_next(request)
+    if '/data-browser/' in request.url.path:response.headers['Cache-Control']='no-store'
     response.headers['X-Content-Type-Options']='nosniff';response.headers['Referrer-Policy']='same-origin'
     return response
 
@@ -164,6 +167,39 @@ async def conflict(_,exc):return JSONResponse({'detail':str(exc)},status_code=40
 async def not_ready(_,exc):return JSONResponse({'detail':str(exc)},status_code=503)
 @app.exception_handler(ValueError)
 async def bad_input(_,exc):return JSONResponse({'detail':str(exc)},status_code=422)
+
+
+@app.exception_handler(DataBrowserError)
+async def data_browser_error(_,exc):
+    return JSONResponse({'detail':exc.code},status_code=exc.status,headers={'Cache-Control':'no-store'})
+
+def data_browser():
+    s=service()
+    if not hasattr(s,'data_browser'):s.data_browser=DataBrowser(s)
+    return s.data_browser
+
+@app.get('/api/v2/data-browser/catalog',response_model=BrowserCatalog)
+def data_browser_catalog():return data_browser().catalog()
+
+@app.post('/api/v2/data-browser/query',response_model=QueryPreview)
+def data_browser_query(body:PreviewQuery):return data_browser().query(body)
+
+@app.get('/api/v2/data-browser/recent',response_model=list[QuerySummary])
+def data_browser_recent():return data_browser().recent()
+
+@app.get('/api/v2/data-browser/queries/{query_id}',response_model=QueryPreview)
+def data_browser_preview(query_id:str):return data_browser().get(query_id)[0]
+
+@app.get('/api/v2/data-browser/snapshots',response_model=list[QuerySummary])
+def data_browser_snapshots(project_id:str):return data_browser().snapshots(project_id)
+
+@app.get('/api/v2/data-browser/snapshots/{project_id}/{query_id}',response_model=QueryPreview)
+def data_browser_saved_preview(project_id:str,query_id:str):return data_browser().load_snapshot(project_id,query_id)
+
+@app.post('/api/v2/data-browser/snapshots',response_model=SnapshotResult)
+async def data_browser_snapshot(body:SnapshotInput):
+    async with service().lock:
+        return await asyncio.to_thread(data_browser().save,body)
 
 
 @app.get('/api/v1/research-projects/{pid}/business',response_model=BusinessView)
@@ -283,7 +319,7 @@ async def manuscript_material(cid:str,review_id:str,artifact_id:str):
     return Response(raw,media_type=safe,headers=headers)
 
 @app.get('/health')
-async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.42-p5-baseline-writing'}
+async def health():return {'status':'ok','name':'PathoReason','phase':'P5-entry','release':'0.6.43-p5-data-browser'}
 @app.get('/api/v1/research-projects',response_model=list[ManagedProject])
 async def projects(include_archived:bool=False):return service().projects.list(include_archived)
 @app.get('/api/v1/research-projects/{pid}/lifecycle',response_model=ProjectLifecycleView)

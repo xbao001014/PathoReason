@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "PermissionSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "semantics_version": {
+          "const": 2,
+          "default": 2,
+          "title": "Semantics Version",
+          "type": "integer"
+        },
+        "mode": {
+          "default": "ask",
+          "enum": [
+            "ask",
+            "auto",
+            "custom"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "bash": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Bash",
+          "type": "string"
+        },
+        "edit": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Edit",
+          "type": "string"
+        },
+        "webfetch": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "Webfetch",
+          "type": "string"
+        },
+        "external_directory": {
+          "default": "ask",
+          "enum": [
+            "allow",
+            "ask",
+            "deny"
+          ],
+          "title": "External Directory",
+          "type": "string"
+        }
+      },
+      "title": "PermissionSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "expected_revision": {
+      "minimum": 0,
+      "title": "Expected Revision",
+      "type": "integer"
+    },
+    "settings": {
+      "$ref": "#/$defs/PermissionSettings"
+    }
+  },
+  "required": [
+    "expected_revision",
+    "settings"
+  ],
+  "title": "PermissionSettingsUpdate",
+  "type": "object"
+}

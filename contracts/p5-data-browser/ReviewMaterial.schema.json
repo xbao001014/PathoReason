@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "role": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Role",
+      "type": "string"
+    },
+    "label": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+    },
+    "artifact_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Artifact Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "role",
+    "label",
+    "artifact_id"
+  ],
+  "title": "ReviewMaterial",
+  "type": "object"
+}

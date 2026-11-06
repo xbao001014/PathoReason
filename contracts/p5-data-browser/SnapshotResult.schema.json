@@ -1,0 +1,28 @@
+{
+  "properties": {
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "query_id": {
+      "title": "Query Id",
+      "type": "string"
+    },
+    "relative_path": {
+      "title": "Relative Path",
+      "type": "string"
+    },
+    "draft": {
+      "title": "Draft",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "query_id",
+    "relative_path",
+    "draft"
+  ],
+  "title": "SnapshotResult",
+  "type": "object"
+}

@@ -1,0 +1,361 @@
+{
+  "$defs": {
+    "GoalBlocker": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "platform",
+            "permission",
+            "input",
+            "resource"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "capability": {
+          "anyOf": [
+            {
+              "const": "training_execution",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Capability"
+        },
+        "required_action": {
+          "maxLength": 600,
+          "minLength": 1,
+          "title": "Required Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "required_action"
+      ],
+      "title": "GoalBlocker",
+      "type": "object"
+    },
+    "GoalScopeRecovery": {
+      "properties": {
+        "source_turn_id": {
+          "title": "Source Turn Id",
+          "type": "string"
+        },
+        "execution_scope": {
+          "enum": [
+            "standard",
+            "inspection"
+          ],
+          "title": "Execution Scope",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_turn_id",
+        "execution_scope"
+      ],
+      "title": "GoalScopeRecovery",
+      "type": "object"
+    },
+    "GoalTurnWindow": {
+      "properties": {
+        "kind": {
+          "const": "manuscript_review",
+          "default": "manuscript_review",
+          "title": "Kind",
+          "type": "string"
+        },
+        "gate": {
+          "enum": [
+            "blueprint",
+            "draft",
+            "review",
+            "scientific",
+            "delivery",
+            "handoff"
+          ],
+          "title": "Gate",
+          "type": "string"
+        },
+        "review_revision": {
+          "minimum": 1,
+          "title": "Review Revision",
+          "type": "integer"
+        },
+        "action": {
+          "enum": [
+            "approve",
+            "revise",
+            "clarify",
+            "reopen"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "start_turns": {
+          "minimum": 0,
+          "title": "Start Turns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "gate",
+        "review_revision",
+        "action",
+        "start_turns"
+      ],
+      "title": "GoalTurnWindow",
+      "type": "object"
+    },
+    "GoalWait": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "synthetic_run",
+            "training_run"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "run_id": {
+          "maxLength": 160,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+          "title": "Run Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "run_id"
+      ],
+      "title": "GoalWait",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": "pathoreason.goal/1",
+      "default": "pathoreason.goal/1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "project_id": {
+      "title": "Project Id",
+      "type": "string"
+    },
+    "revision": {
+      "title": "Revision",
+      "type": "integer"
+    },
+    "objective": {
+      "title": "Objective",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "active",
+        "paused",
+        "blocked",
+        "waiting_input",
+        "waiting",
+        "completed",
+        "budget_exhausted",
+        "cancelled"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "blocker": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalBlocker"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "suggested_reasoning_effort": {
+      "anyOf": [
+        {
+          "enum": [
+            "low",
+            "none"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Suggested Reasoning Effort"
+    },
+    "summary": {
+      "default": "",
+      "title": "Summary",
+      "type": "string"
+    },
+    "next_action": {
+      "default": "",
+      "title": "Next Action",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "wait_for": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalWait"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "completion_criteria": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Completion Criteria",
+      "type": "array"
+    },
+    "turns_used": {
+      "default": 0,
+      "title": "Turns Used",
+      "type": "integer"
+    },
+    "max_turns": {
+      "default": 8,
+      "title": "Max Turns",
+      "type": "integer"
+    },
+    "turn_window": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalTurnWindow"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "last_turn_id": {
+      "title": "Last Turn Id",
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "completion_scope": {
+      "default": "not_complete",
+      "enum": [
+        "not_complete",
+        "answer_only",
+        "evidence_bytes_verified"
+      ],
+      "title": "Completion Scope",
+      "type": "string"
+    },
+    "scientific_approval": {
+      "const": false,
+      "default": false,
+      "title": "Scientific Approval",
+      "type": "boolean"
+    },
+    "created_at": {
+      "title": "Created At",
+      "type": "string"
+    },
+    "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+    },
+    "continued_from": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Continued From"
+    },
+    "continued_in": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Continued In"
+    },
+    "limit_revision": {
+      "default": 0,
+      "title": "Limit Revision",
+      "type": "integer"
+    },
+    "scope_recovery": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GoalScopeRecovery"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "id",
+    "conversation_id",
+    "project_id",
+    "revision",
+    "objective",
+    "state",
+    "last_turn_id",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "GoalView",
+  "type": "object"
+}

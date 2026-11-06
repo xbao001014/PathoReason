@@ -87,3 +87,7 @@ export AUTORESEARCH_COMPUTE_CONFIG=/data/bxn/PathoReason/projects/PROJECT_ID/com
 ## FXio 玻片读取（2026-10-31）
 
 服务器已安装 FXio 0.1.2。读取接口记录中核验后的实际切片路径时，使用 `/home/bxn/projects/PathoReason/.venv/bin/python`，Python 入口为 `from wsi import open_wsi`。真实 ZYP/MRXS 的元信息、区域和缩略图读取已验证；其他格式和可选功能需分别核验。调用、依赖恢复与安装证据见 [FXio 环境说明](FXIO.md)。元信息清单写入当前项目 inputs/，图件和报告分别写入 figures/、outputs/，原切片只读。
+
+## 数据查询页面（2026-11-06）
+
+左侧数据查询支持直接预览 10 类接口，无需启动研究模型；保存快照绑定当前项目，带入研究对话会追加可编辑草稿。最近查询保留 30 分钟，项目快照持久保存；路径与热点图输入按实际证据检查。功能、限制与验证见 [数据查询模块](DATA_BROWSER.md)。

@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "original_artifact_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Original Artifact Id",
+      "type": "string"
+    },
+    "revised_artifact_id": {
+      "maxLength": 160,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$",
+      "title": "Revised Artifact Id",
+      "type": "string"
+    },
+    "description": {
+      "maxLength": 600,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    }
+  },
+  "required": [
+    "original_artifact_id",
+    "revised_artifact_id",
+    "description"
+  ],
+  "title": "PresentationChange",
+  "type": "object"
+}
