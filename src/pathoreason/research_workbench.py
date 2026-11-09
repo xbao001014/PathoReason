@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 import hashlib
+import csv
+import io
 import json
 import math
 from pathlib import PurePosixPath
@@ -199,12 +201,17 @@ def project_snapshot(service,pid):
         platform['visible_conversations']={r[0] for r in db.execute('SELECT id FROM conversations WHERE project_id=? AND NOT EXISTS(SELECT 1 FROM conversation_deletions d WHERE d.conversation_id=conversations.id)',(pid,))}
     docs={};errors=[];used=0
     for a in artifacts:
-        if a.get('media_type')!='application/json':continue
+        legacy_csv=a.get('source_ref',{}).get('adapter')=='auto_research.evidence_file' and PurePosixPath(a.get('relative_path','')).name in {'performance.csv','cell_metrics.csv'}
+        if a.get('media_type')!='application/json' and not legacy_csv:continue
         size=a.get('size_bytes',0)
         if size>MAX_FILE or used+size>MAX_BYTES:
             errors.append(a['id']+'：超过结构化摘要读取范围，原文件仍可查看');continue
         try:
             raw=service.artifact_bytes(a);used+=len(raw)
+            if legacy_csv:
+                rows=list(csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))))
+                if len(rows)>5000:raise ValueError('csv_too_large')
+                docs[a['id']]={'_legacy_csv':rows};continue
             value=json.loads(raw,parse_constant=lambda x: (_ for _ in ()).throw(ValueError('nonfinite_json')))
             if isinstance(value,dict):docs[a['id']]=value
         except (ValueError,OSError,KeyError,TypeError,RecursionError):
@@ -214,6 +221,11 @@ def project_snapshot(service,pid):
 
 def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=(),*,research=None,manuscript=None,visible_conversations=None):
     outcomes,platform_stages,platform_notices=project_outcomes(pid,artifacts,research,manuscript,visible_conversations)
+    legacy=False
+    if outcomes is None:
+        from .legacy_workbench import legacy_outcomes
+        outcomes,platform_stages,platform_notices=legacy_outcomes(pid,artifacts,docs)
+        legacy=outcomes is not None
     by_id={a['id']:a for a in artifacts};order={a['id']:i for i,a in enumerate(artifacts)}
     known={a.get('source_ref',{}).get('resource_id',a.get('relative_path','')):a['id'] for a in artifacts}
     paths={a['id']:a.get('source_ref',{}).get('resource_id',a.get('relative_path','')) for a in artifacts}
@@ -312,10 +324,10 @@ def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=
         aid=a['id'];tid=assignment[aid];doc=docs.get(aid,{});key,revision=series(paths[aid])
         if aid in explicit:
             _,link=explicit[aid];key='declared:'+link.family_id;revision=link.revision;stages[aid]=link.stage_id
-        if aid in platform_stages:stages[aid]=platform_stages[aid];basis[aid]='平台阶段交接／稿件审核包'
+        if aid in platform_stages:stages[aid]=platform_stages[aid];basis[aid]='历史来源文件关联' if legacy else '平台阶段交接／稿件审核包'
         fid=view_id(tid+':'+key)
         family=families.setdefault(fid,{'id':fid,'task_id':tid,'title':re.sub(r'[（(]?v\d+.*$','',a['title'],flags=re.I).rstrip(' ·（('),
-                   'stage_id':stages[aid],'stage_basis':'平台审核／交接关联' if aid in platform_stages else '材料路径归类，非审核记录' if stage_for(a,doc)[1]=='navigation_hint' else '材料字段／结构关联','basis':basis[aid],'versions':[],'latest_order':order[aid]})
+                   'stage_id':stages[aid],'stage_basis':('历史材料关联，非平台审核' if legacy else '平台审核／交接关联') if aid in platform_stages else '材料路径归类，非审核记录' if stage_for(a,doc)[1]=='navigation_hint' else '材料字段／结构关联','basis':basis[aid],'versions':[],'latest_order':order[aid]})
         if stages[aid]!='unassigned':family['stage_id']=stages[aid]
         version=next((x for x in family['versions'] if x['label']==revision),None)
         if version is None:
@@ -380,12 +392,12 @@ def build_projection(pid,artifacts,docs,turns,code_tasks=(),snapshots=(),errors=
     default=max(plan_ids,key=lambda a:order[a]) if plan_ids else None
     default_task=plan_ids[default] if default else next((t['id'] for t in task_list if t['kind']=='registered_task'),common)
     if outcomes:
-        aggregate={'id':'project_outcomes','title':'当前项目成果','kind':'project_outcomes','basis':'平台阶段与作者审核记录',
+        aggregate={'id':'project_outcomes','title':'当前项目成果','kind':'project_outcomes','basis':'历史成果与来源记录' if legacy else '平台阶段与作者审核记录',
             'parent_task_id':None,'code_revision':None,'snapshots':[],'plan':None,
             'family_ids':list(families),'latest_order':len(artifacts),'focus_stage':outcomes['stage_id'],
             'stages':[{'id':sid,'title':title,'status':outcomes['status'] if sid==outcomes['stage_id'] else 'unknown',
                 'material_count':sum(len(v['artifacts']) for f in families.values() if f['stage_id']==sid for v in f['versions']),
-                'label':outcomes['status_label'] if sid==outcomes['stage_id'] else '关联材料'} for sid,title in STAGES],
+                'label':outcomes['status_label'] if sid==outcomes['stage_id'] else '尚无关联材料' if legacy and not any(f['stage_id']==sid for f in families.values()) else '关联材料'} for sid,title in STAGES],
             'innovations':[p for t in task_list for p in t['innovations']],
             'reported_results':[p for t in task_list for p in t['reported_results']],
             'exposures':[p for t in task_list for p in t['exposures']],'execution_state':'unknown'}
